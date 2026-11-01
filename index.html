@@ -284,7 +284,17 @@ td.num{text-align:right}
 .acc[open]>summary::after{transform:rotate(-135deg)}
 .accb{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px}
 .accb>.btn,.accb>.row{align-self:flex-start}
-.pcard{border:1px solid var(--line);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--surface-2)}
+.plist{display:flex;flex-direction:column;gap:6px}
+.pcard{border:1px solid var(--line);border-radius:9px;background:var(--surface-2)}
+.pcard>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 10px;min-width:0}
+.pcard>summary::-webkit-details-marker{display:none}
+.pn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ibtn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px;color:var(--accent);text-decoration:none;flex:none}
+.ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pbody{padding:2px 10px 10px;display:flex;flex-direction:column;gap:8px}
+.caddr{margin-top:6px;font-size:15px}
+.lnk{border:0;background:none;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;font:inherit}
+@media (max-width:640px){.ibtn .small{display:none}}
 .pott{display:flex;flex-direction:column;gap:6px}
 .poth,.potr{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) repeat(3,minmax(0,.7fr));gap:6px;align-items:center}
 .poth{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
@@ -404,13 +414,14 @@ function toast(msg){$$(".toast").forEach(x=>x.remove());const t=document.createE
 /* ---------- Zustand ---------- */
 const DEF={ver:5,ttKey:"",briefMin:5,notesMin:10,travelPct:10,earliestVisit:"07:30",maxVisitsNear:6,home:{label:"Zuhause",address:"",lat:null,lng:null},speed:60,roadFactor:1.3,overhead:0,clusterMin:20,
   travelDays:[1,2,3,4],dayStart:"06:00",dayEnd:"17:00",lunchFrom:"11:45",lunchTo:"13:30",lunchMin:60,minTravelH:8,minTravelFriH:4,maxVisits:5,
-  horizonWeeks:4,pullForward:7,defInterval:60,defDuration:45,dueX:14,freeDays:"24.12., 31.12.",custTypes:["Verarbeiter","Großhandel","GH-Außendienst","Abholmarkt","Planungsbüro","Bauträger","Fachberufsschule"],prodGroups:["Hausabfluss (POLO-KAL)","Kanal","Wohnraumlüftung (POLO-KWL)","Installationselemente (POLO-BOX)"],docTypes:["PL 2026","KWL Folder","POLO-KAL Folder","Weihnachtskampagne 2026"],vacationDays:25,sample:false,
+  horizonWeeks:4,pullForward:7,defInterval:60,defDuration:45,dueX:14,freeDays:"24.12., 31.12.",custTypes:["Verarbeiter","Verarbeiter-Filiale","Großhandel","Abholmarkt","Planungsbüro","Bauträger","Fachberufsschule"],prodGroups:["Hausabfluss (POLO-KAL)","Kanal","Wohnraumlüftung (POLO-KWL)","Installationselemente (POLO-BOX)"],docTypes:["PL 2026","KWL Folder","POLO-KAL Folder","Weihnachtskampagne 2026"],vacationDays:25,sample:false,
   cap:{perWeek:4,perDay:4.5,customers:250,withVacation:false}};
 const S={settings:clone(DEF),customers:[],appts:[],days:{}};
 function migrate(s){const o=Object.assign(clone(DEF),s||{});o.cap=Object.assign(clone(DEF.cap),o.cap||{});
   if(!s||!s.ver||s.ver<2){Object.assign(o,{travelDays:[1,2,3,4],dayStart:"07:00",dayEnd:"17:00",lunchFrom:"11:45",lunchTo:"13:30",lunchMin:60,defDuration:60,maxVisits:6});delete o.workdays;delete o.lunchStart}
   if(!s||!s.ver||s.ver<3){if(!s||!s.ver||s.ver<2||o.defInterval===101)o.defInterval=60}
   if(!s||!s.ver||s.ver<4){o.dayStart="06:00";o.maxVisits=5}
+  if(s&&Array.isArray(s.custTypes)&&s.custTypes.includes("GH-Außendienst")){o.custTypes=s.custTypes.filter(x=>x!=="GH-Außendienst");if(!o.custTypes.includes("Verarbeiter-Filiale"))o.custTypes.splice(1,0,"Verarbeiter-Filiale");o._migrated=true}
   if(!s||!s.ver||s.ver<5){Object.assign(o,{briefMin:5,notesMin:10,travelPct:10,overhead:0,defDuration:45});o.ver=5;o._migrated=!!s}
   return o}
 const ui={showActive:(()=>{try{return localStorage.getItem("tp.showActive")!=="0"}catch(e){return true}})(),showInactive:(()=>{try{return localStorage.getItem("tp.showInactive")!=="0"}catch(e){return true}})(),tab:"overview",week:mondayOf(todayISO()),filter:"all",search:"",mapDay:"",sel:null,custFilter:"all",sort:"due"};
@@ -1079,12 +1090,19 @@ const mapView={
     S.appts.filter(a=>isHotel(a)&&a.date>=todayISO()).forEach(a=>L.marker([a.loc.lat,a.loc.lng],{icon:L.divIcon({className:"hotelic",html:"H",iconSize:[18,18]})}).bindTooltip(esc(a.title)+" · "+fmtD(a.date)).addTo(this.layer))},
   drawRoutes(){if(!this.map)return;this.routes.clearLayers();const leg=$("#rlegend");const rd=routeDays();
     const sl=$("#mapbox .legend");if(sl)sl.hidden=!!rd.length;if(leg){leg.hidden=!rd.length;leg.innerHTML=rd.map(d=>{const s=daySummary(d);return`<span><i style="background:${DAYCOL[dow(d)]}"></i>${fmtD(d)} · ${s.n} Besuche · ${s.km} km · ${hm(s.min)} h${s.real?"":" (geschätzt)"}</span>`}).join("")}
+    const missing=[];
     rd.forEach(d=>{const color=DAYCOL[dow(d)];const seq=[startLoc(d),...dayEntries(d).map(apptLoc).filter(Boolean),endLoc(d)].filter(hasXY);
+      for(let i=0;i<seq.length-1;i++){if(km(seq[i],seq[i+1])>=0.3&&!GEO.get(seq[i],seq[i+1]))missing.push([seq[i],seq[i+1]])}
       for(let i=0;i<seq.length-1;i++){const a=seq[i],b=seq[i+1];if(km(a,b)<0.3)continue;const g=GEO.get(a,b);
         L.polyline(g||[[a.lat,a.lng],[b.lat,b.lng]],{color,weight:g?5:3,opacity:.85,dashArray:g?null:"6 7"}).addTo(this.routes)}
       dayEntries(d).filter(a=>a.type==="visit").forEach((a,i)=>{const l=apptLoc(a);if(!l)return;
-        L.marker([l.lat,l.lng],{icon:L.divIcon({className:"numic",html:`<span style="background:${color}">${i+1}</span>`,iconSize:[22,22],iconAnchor:[-2,24]}),interactive:false}).addTo(this.routes)})})},
+        L.marker([l.lat,l.lng],{icon:L.divIcon({className:"numic",html:`<span style="background:${color}">${i+1}</span>`,iconSize:[22,22],iconAnchor:[-2,24]}),interactive:false}).addTo(this.routes)})});
+    if(missing.length)this.fetchGeo(missing)},
   draw(){if(this.map){this.drawMarkers();this.drawRoutes()}},
+  /* Streckenverlauf nach Straßen nachladen, wenn er auf diesem Gerät noch fehlt (z. B. am iPhone nach dem Abgleich) */
+  async fetchGeo(legs){if(this.geoBusy||!TT.key()||!legs.length)return;this.geoBusy=true;let n=0;
+    try{for(const [a,b] of legs.slice(0,60)){if(GEO.get(a,b))continue;await TT.route(a,b,null,0);n++;await sleep(150)}}catch(e){}
+    this.geoBusy=false;if(n&&this.map)this.drawRoutes()},
   popup(c){if(!this.map||!hasXY(c))return;this.map.setView([c.lat,c.lng],Math.max(this.map.getZoom(),11));const m=this.markers[c.id];if(m)m.openPopup()},
   close(){if(this.map)this.map.closePopup()}
 };
@@ -1197,7 +1215,7 @@ function openDay(d){
   <label class="fld"><span>Tagesart</span><select id="d-mode"><option value="">automatisch (${MODE[am]})</option><option value="reise">Reisetag</option><option value="buero">Büro / Homeoffice</option><option value="urlaub">Urlaub</option><option value="sonderurlaub">Sonderurlaub</option><option value="krank">Krankenstand</option></select></label>
   <p class="hint" style="margin:0">Hotelübernachtungen legst du über „+ Termin“ an. Die Tour endet dann im Hotel, der nächste Tag startet dort.</p>
   <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="saveDay">Speichern</button></div>`);
-  $("#d-mode",w).value=c.mode||"";w.dataset.day=d;
+  $("#d-mode",w).value=c.mode||"";w.dataset.dday=d;
 }
 function openLunch(a){const w=modal(`<div class="hd"><h2>Mittagspause · ${fmtD(a.date)}</h2><button class="x" data-close aria-label="Schließen">×</button></div>
   <div class="row"><input type="time" id="l-t" value="${hm(a.startMin)}" step="900" aria-label="Beginn"><input type="number" id="l-dur" value="${a.dur}" min="15" step="15" style="width:80px" aria-label="Dauer"> min</div>
@@ -1267,11 +1285,15 @@ function renderCustomers(m){
 }
 
 /* --- Einzelkunde: Akkordeons, nur das Wichtige offen --- */
-const contactRow=p=>`<div class="pcard" data-pid="${esc(p.id||uid())}">
-  <div class="fld2"><label class="fld"><span>Name</span><input type="text" class="p-name" value="${esc(p.name||"")}"></label><label class="fld"><span>Funktion</span><input type="text" class="p-role" value="${esc(p.role||"")}" placeholder="z. B. Inhaber, Einkauf, Bauleiter" list="roles"></label></div>
+const telHref=x=>"tel:"+String(x||"").replace(/[^\d+]/g,"");
+const ICON_TEL='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h2.6l1.4 4-2 1.4a12 12 0 0 0 6.5 6.5l1.4-2 4 1.4v2.6A2 2 0 0 1 18.4 20 15.4 15.4 0 0 1 4 5.6a2 2 0 0 1 2.6-2.1z"/></svg>';
+const ICON_MAIL='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/></svg>';
+const contactRow=(p,open)=>`<details class="pcard" data-pid="${esc(p.id||uid())}" ${open?"open":""}><summary><span class="pn"><b class="pname">${esc(p.name||"Neuer Ansprechpartner")}</b>${p.role?`<span class="muted small"> · ${esc(p.role)}</span>`:""}</span>
+  ${p.phone?`<a class="ibtn" href="${telHref(p.phone)}" title="${esc(p.phone)} anrufen" aria-label="${esc(p.name)} anrufen">${ICON_TEL}<span class="small">${esc(p.phone)}</span></a>`:""}${p.email?`<a class="ibtn" href="mailto:${esc(p.email)}" title="${esc(p.email)}" aria-label="E-Mail an ${esc(p.name)}">${ICON_MAIL}</a>`:""}</summary>
+  <div class="pbody"><div class="fld2"><label class="fld"><span>Name</span><input type="text" class="p-name" value="${esc(p.name||"")}"></label><label class="fld"><span>Funktion</span><input type="text" class="p-role" value="${esc(p.role||"")}" placeholder="z. B. Inhaber, Einkauf, Bauleiter" list="roles"></label></div>
   <div class="fld2"><label class="fld"><span>Telefon</span><input type="tel" class="p-phone" value="${esc(p.phone||"")}"></label><label class="fld"><span>E-Mail</span><input type="email" class="p-email" value="${esc(p.email||"")}"></label></div>
   <label class="fld"><span>Notiz</span><input type="text" class="p-note" value="${esc(p.note||"")}"></label>
-  <div class="row"><button class="btn sm warn" data-rm=".pcard">Ansprechpartner entfernen</button>${p.phone?`<a class="btn sm" href="tel:${esc(p.phone.replace(/[^\d+]/g,""))}">Anrufen</a>`:""}${p.email?`<a class="btn sm" href="mailto:${esc(p.email)}">E-Mail</a>`:""}</div></div>`;
+  <div class="row"><button class="btn sm warn" data-rm=".pcard">Ansprechpartner entfernen</button></div></div></details>`;
 function whOptions(sel){const ws=S.customers.filter(isWholesale),src=ws.length?ws:S.customers;return src.map(x=>`<option value="${x.id}" ${x.id===sel?"selected":""}>${esc(x.name)}${x.city?" · "+esc(x.city):""}</option>`).join("")}
 const whRow=w=>`<div class="whrow"><select class="w-id">${whOptions(w.id)}</select><label class="row small" style="gap:4px"><input type="radio" name="w-main" class="w-main" ${w.main?"checked":""}> Haupt</label><input type="text" class="w-note" value="${esc(w.note||"")}" placeholder="Anteil / Notiz"><button class="btn sm warn" data-rm=".whrow" aria-label="Entfernen">×</button></div>`;
 function openCust(id){
@@ -1285,18 +1307,22 @@ function openCust(id){
   const docs=listOf("docTypes").map(d=>({d,date:((c.docs||[]).find(x=>x.d===d)||{}).date||""}));
   (c.docs||[]).forEach(x=>{if(!docs.some(d=>d.d===x.d))docs.push(x)});
   const contacts=contactsOf(c),pt=potTotal(c),whs=c.wholesalers||[];
+  const parent=c.parentId?custById(c.parentId):null,kids=isNew?[]:S.customers.filter(x=>x.parentId===c.id);
   const mainTel=c.phone||((contacts.find(p=>p.phone)||{}).phone)||"",mainMail=c.email||((contacts.find(p=>p.email)||{}).email)||"";
   const w=modal(`<div class="hd"><div style="min-width:0"><h2>${isNew?"Neuer Kunde":esc(c.name)}</h2>${isNew?"":`<div class="row" style="margin-top:6px;gap:6px">${c.type?`<span class="pill p-grey">${esc(c.type)}</span>`:""}<span class="pill p-${dueClass(c)}">${dueText(c)}</span>${n?`<span class="pill p-plan">${n.status==="fixiert"?"fixiert":"Vorschlag"} ${fmtD(n.date)} ${hm(n.startMin)}</span>`:""}</div>
-    <div class="row" style="margin-top:8px">${mainTel?`<a class="btn sm" href="tel:${esc(mainTel.replace(/[^\d+]/g,""))}">Anrufen</a>`:""}${mainMail?`<a class="btn sm" href="mailto:${esc(mainMail)}">E-Mail</a>`:""}<a class="btn sm" href="${gmapsPlace(c)}" target="_blank" rel="noopener">Google Maps</a></div>`}</div><button class="x" data-close aria-label="Schließen">×</button></div>
+    <div class="caddr">${esc([c.street,[c.zip,c.city].filter(Boolean).join(" ")].filter(Boolean).join(", "))||'<span class="muted">keine Adresse</span>'}</div>
+    ${parent?`<div class="small">Gehört zu <button class="lnk" data-cust="${parent.id}">${esc(parent.name)}</button></div>`:""}${kids.length?`<div class="small">Standorte: ${kids.map(k=>`<button class="lnk" data-cust="${k.id}">${esc(k.name)}${k.city?" ("+esc(k.city)+")":""}</button>`).join(", ")}</div>`:""}
+    <div class="row" style="margin-top:8px"><a class="btn sm" href="${gmapsPlace(c)}" target="_blank" rel="noopener">Google Maps</a>${mainTel?`<a class="btn sm" href="${telHref(mainTel)}">Anrufen</a>`:""}${mainMail?`<a class="btn sm" href="mailto:${esc(mainMail)}">E-Mail</a>`:""}</div>`}</div><button class="x" data-close aria-label="Schließen">×</button></div>
   <datalist id="roles"><option>Inhaber</option><option>Geschäftsführer</option><option>Einkauf</option><option>Bauleiter</option><option>Techniker</option><option>Büro</option><option>Außendienst</option><option>Filialleiter</option></datalist>
-  <details class="acc" open><summary>Kontakt</summary><div class="accb">
+  <details class="acc" ${isNew?"open":""}><summary>Kontakt und Adresse <span class="muted small">bearbeiten</span></summary><div class="accb">
     <div class="fld2"><label class="fld"><span>Name / Firma</span><input type="text" id="c-name" value="${esc(c.name)}"></label><label class="fld"><span>Kundentyp</span><select id="c-type"><option value="">–</option>${types.map(x=>`<option ${x===c.type?"selected":""}>${esc(x)}</option>`).join("")}</select></label></div>
     <div class="fld2"><label class="fld"><span>Haupttelefon</span><input type="tel" id="c-phone" value="${esc(c.phone||"")}"></label><label class="fld"><span>Haupt-E-Mail</span><input type="email" id="c-email" value="${esc(c.email||"")}"></label></div>
     <label class="fld"><span>Straße</span><input type="text" id="c-street" value="${esc(c.street)}"></label>
     <div class="fld2"><label class="fld"><span>PLZ</span><input type="text" id="c-zip" value="${esc(c.zip)}"></label><label class="fld"><span>Ort</span><input type="text" id="c-city" value="${esc(c.city)}"></label></div>
     <label class="fld"><span>Hauptnotiz</span><textarea id="c-notes">${esc(c.notes||"")}</textarea></label>
+    <label class="fld"><span>Gehört zu (Zentrale, z. B. bei Abholmarkt oder Filiale)</span><select id="c-parent"><option value="">– eigenständig –</option>${S.customers.filter(x=>x.id!==c.id).sort((a,b)=>(isWholesale(b)-isWholesale(a))||a.name.localeCompare(b.name,"de")).map(x=>`<option value="${x.id}" ${x.id===c.parentId?"selected":""}>${esc(x.name)}${x.city?" · "+esc(x.city):""}</option>`).join("")}</select></label>
   </div></details>
-  <details class="acc" ${contacts.length?"open":""}><summary>Ansprechpartner <span class="muted small">${contacts.length||""}</span></summary><div class="accb"><div id="c-contacts">${contacts.map(contactRow).join("")}</div>
+  <details class="acc" open><summary>Ansprechpartner <span class="muted small">${contacts.length||""}</span></summary><div class="accb"><div id="c-contacts" class="plist">${contacts.map(p=>contactRow(p,false)).join("")||'<p class="muted small" style="margin:0">Noch keine Ansprechpartner.</p>'}</div>
     <button class="btn sm" data-addrow="contact">+ Ansprechpartner</button></div></details>
   <details class="acc" ${isNew?"open":""}><summary>Besuche <span class="muted small">${isActive(c)?"alle "+c.interval+" Tage · "+c.duration+" min":"kein Intervall"}</span></summary><div class="accb">
     <div class="fld2"><label class="fld"><span>Besuchsintervall (Tage, leer = kein aktiver Besuch)</span><input type="number" id="c-interval" min="1" value="${isActive(c)?c.interval:""}" placeholder="kein Intervall"></label><label class="fld"><span>Besuchsdauer (min)</span><input type="number" id="c-duration" min="5" step="5" value="${c.duration}"></label></div>
@@ -1331,7 +1357,7 @@ function openCust(id){
     if(e.target===on&&on.checked&&!dt.value)dt.value=todayISO();if(e.target===on&&!on.checked)dt.value="";if(e.target===dt)on.checked=!!dt.value});
 }
 function readCustForm(w){const c=w.dataset.isnew?{id:w.dataset.cid}:custById(w.dataset.cid);const v=id=>$("#"+id,w).value.trim();
-  c.name=v("c-name")||"Ohne Namen";c.kdnr=v("c-kdnr");c.type=v("c-type");c.street=v("c-street");c.zip=v("c-zip");c.city=v("c-city");
+  c.name=v("c-name")||"Ohne Namen";c.kdnr=v("c-kdnr");c.type=v("c-type");c.parentId=v("c-parent")||null;c.street=v("c-street");c.zip=v("c-zip");c.city=v("c-city");
   const la=num(v("c-lat")),ln=num(v("c-lng"));if(w.dataset.xyChanged&&(la!==c.lat||ln!==c.lng)){c.geo=la!=null?"manuell":null;c.geoAddr=null}c.lat=la;c.lng=ln;
   if(w.dataset.addrChanged&&!w.dataset.xyChanged){c.lat=null;c.lng=null;c.geo=null;c.geoAddr=null}
   const iv=num(v("c-interval"));c.interval=iv&&iv>0?Math.round(iv):null;c.active=true;
@@ -1685,7 +1711,7 @@ document.addEventListener("click",async e=>{
   const w=$("#modal");
   if(t.hasAttribute("data-close")){closeModal();return}
   if(t.dataset.goto){ui.tab=t.dataset.goto;render(true);return}
-  if(t.dataset.addrow){const w=$("#modal");if(t.dataset.addrow==="contact")$("#c-contacts",w).insertAdjacentHTML("beforeend",contactRow({id:uid()}));else{$("#c-whs",w).insertAdjacentHTML("beforeend",whRow({id:"",main:!$$(".whrow",w).length}))}const last=t.previousElementSibling&&t.previousElementSibling.lastElementChild;if(last){const f=$("input,select",last);if(f)f.focus()}return}
+  if(t.dataset.addrow){const w=$("#modal");if(t.dataset.addrow==="contact"){const ph=$("#c-contacts>p",w);if(ph)ph.remove()}if(t.dataset.addrow==="contact")$("#c-contacts",w).insertAdjacentHTML("beforeend",contactRow({id:uid()},true));else{$("#c-whs",w).insertAdjacentHTML("beforeend",whRow({id:"",main:!$$(".whrow",w).length}))}const last=t.previousElementSibling&&t.previousElementSibling.lastElementChild;if(last){const f=$("input,select",last);if(f)f.focus()}return}
   if(t.dataset.rm){const el=t.closest(t.dataset.rm);if(el)el.remove();return}
   if(t.dataset.sel){ui.selDay=t.dataset.sel;render(true);return}
   if(t.dataset.cf){closeModal();ui.custFilter=t.dataset.cf;ui.search="";ui.tab="customers";render(true);window.scrollTo(0,0);return}
@@ -1730,7 +1756,7 @@ document.addEventListener("click",async e=>{
     case"liveGps":checkLive(true);break;
     case"mapFit":mapView.fit();break;
     case"ttTest":{if(!TT.key()){toast("Bitte zuerst einen Schlüssel eintragen.");break}ttDiag();break}
-    case"saveDay":{const d=w.dataset.day;const mode=$("#d-mode",w).value;const old=dayCfg(d).overnight;
+    case"saveDay":{const d=w.dataset.dday;const mode=$("#d-mode",w).value;const old=dayCfg(d).overnight;
       if(old&&hasXY(old)&&!hotelOf(d)){S.appts.push({id:uid(),type:"private",cat:"hotel",title:old.label||"Hotel",date:d,startMin:toMin("18:00"),dur:60,status:"privat",loc:{text:old.label||"",lat:old.lat,lng:old.lng}});save("appts")}
       const c={};if(mode)c.mode=mode;
       if(Object.keys(c).length)S.days[d]=c;else delete S.days[d];save("days");closeModal();render(true);toast(mode==="urlaub"?"Urlaub eingetragen":"Gespeichert – mit „Touren planen“ aktualisieren");break}
@@ -1743,7 +1769,7 @@ document.addEventListener("click",async e=>{
     case"saveCust":{const c=readCustForm(w);if(w.dataset.isnew)S.customers.push(c);save("customers");closeModal();render(true);
       const manual=c.geo==="manuell";const changed=addrOf(c)&&c.geoAddr!==addrOf(c);
       if(addrOf(c)&&!manual&&(!hasXY(c)||changed)){toast("Gespeichert – suche Koordinaten …");geoCustomer(c)}else toast("Gespeichert");break}
-    case"delCust":{if(t.dataset.sure){const id=w.dataset.cid;S.customers=S.customers.filter(c=>c.id!==id);S.appts=S.appts.filter(x=>x.customerId!==id);save("customers","appts");closeModal();render(true);toast("Kunde gelöscht")}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
+    case"delCust":{if(t.dataset.sure){const id=w.dataset.cid;S.customers=S.customers.filter(c=>c.id!==id);S.customers.forEach(c=>{if(c.parentId===id)c.parentId=null;if(c.wholesalers)c.wholesalers=c.wholesalers.filter(x=>x.id!==id)});S.appts=S.appts.filter(x=>x.customerId!==id);save("customers","appts");closeModal();render(true);toast("Kunde gelöscht")}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
     case"custAppt":{const c=readCustForm(w);if(w.dataset.isnew)break;const d=$("#c-ad",w).value,tm=$("#c-at",w).value;if(!d||!tm)break;
       S.appts.push({id:uid(),type:"visit",customerId:c.id,date:d,startMin:toMin(tm),dur:c.duration,status:$("#c-afix",w).checked?"fixiert":"geplant",manual:true});save("customers","appts");closeModal();render(true);toast("Termin am "+fmtD(d)+" angelegt");break}
     case"fix":{const ds=applyApptForm(a,w);a.status="fixiert";a.manual=true;reflow(ds);save("appts");closeModal();render(true);toast("Termin fixiert – bleibt beim Neuplanen");if(TT.key())refineRoutes(ds,true);break}
