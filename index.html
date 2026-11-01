@@ -376,11 +376,11 @@ td.num{text-align:right}
 .homeic span{display:block;width:18px;height:18px;background:var(--ink);border:3px solid var(--surface);border-radius:3px;box-shadow:0 0 0 1px var(--ink)}
 .hotelic{background:var(--soon);color:#fff;border-radius:4px;font-weight:700;font-size:12px;text-align:center;line-height:18px}
 .numic span{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-weight:700;font-size:11.5px;border:2px solid #fff}
-.today{display:grid;grid-template-columns:minmax(0,1.4fr) auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:14px 16px;margin-bottom:16px;border-color:var(--accent)}
-.today h3{margin-top:2px}.today .big{font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1.1}
+.panel.today{display:grid;grid-template-columns:minmax(0,1.4fr) auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:14px 16px;margin-bottom:16px;border-color:var(--accent)}
+.panel.today h3{margin-top:2px}.panel.today .big{font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1.1}
 .soont{color:var(--soon)}
-@media (max-width:900px){.today{grid-template-columns:1fr 1fr}}
-@media (max-width:520px){.today{grid-template-columns:1fr}}
+@media (max-width:900px){.panel.today{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.panel.today{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -403,7 +403,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 02:00";
+const APPVER="2026-11-02 02:20";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -529,7 +529,7 @@ const GH={
       this.lastSync=new Date();
     }catch(e){this.err=e.offline?"offline":e.message}
     this.busy=false;setSaveState();
-    if(changed){mapView.fitted=false;render()}
+    if(changed){healSample();mapView.fitted=false;render()}
     if(lost.length)toast("Auf einem anderen Gerät gab es neuere Änderungen ("+lost.map(k=>({settings:"Einstellungen",customers:"Kunden",appts:"Termine",days:"Tage"}[k])).join(", ")+"). Sie wurden übernommen.");
     if(this.err&&this.err!=="offline"&&!quiet)toast("Abgleich fehlgeschlagen: "+this.err);
     if(this.again){this.again=false;setTimeout(()=>this.sync(),500)}
@@ -1642,7 +1642,7 @@ function doImport(w){
   const {rows}=ui.imp;const map={};$$("[data-map]",w).forEach(s=>map[s.dataset.map]=+s.value);
   if(map.name<0){toast("Bitte eine Spalte für den Namen zuordnen.");return}
   const mode=$("#impMode",w).value;const st=S.settings;
-  if(mode==="replace"){S.customers=[];S.appts=S.appts.filter(a=>a.type==="private");st.sample=false}
+  if(st.sample)dropSample();if(mode==="replace"){S.customers=[];S.appts=S.appts.filter(a=>a.type==="private")}
   const key=c=>c.kdnr?"#"+String(c.kdnr).toLowerCase():(c.name+"|"+(c.zip||c.city||"")).toLowerCase();
   const idx=new Map(S.customers.map(c=>[key(c),c]));let added=0,upd=0;
   rows.slice(1).forEach(r=>{const g=k=>map[k]>=0?r[map[k]]:"";const s=k=>String(g(k)??"").trim();
@@ -1687,6 +1687,13 @@ function exportCsv(){const h=["Kundennummer","Name","Straße","PLZ","Ort","Breit
   download("Kunden_"+todayISO()+".csv","﻿"+[h.join(";"),...rows].join("\r\n"))}
 
 /* ---------- Beispieldaten ---------- */
+/* Entfernt alles, was vom Beispiel stammt (Kunden, Vorschläge, Beispieltermine, Beispiel-Zuhause) */
+function dropSample(){const st=S.settings;const sc=new Set(S.customers.filter(isSampleCust).map(c=>c.id));
+  S.customers=S.customers.filter(c=>!sc.has(c.id));S.appts=S.appts.filter(a=>!(a.customerId&&sc.has(a.customerId))&&!/\(Beispiel\)/.test(a.title||""));
+  if(st.home&&/\(Beispiel\)/.test(st.home.label||""))st.home=clone(DEF.home);st.sample=false}
+function isSampleCust(c){return /beispiel\.at$/i.test(c.email||"")||contactsOf(c).some(p=>/beispiel\.at$/i.test(p.email||""))}
+/* Beim Start: Banner weg, wenn keine Beispielkunden mehr vorhanden sind (z. B. nach Import auf einem anderen Gerät) */
+function healSample(){if(S.settings.sample&&S.customers.length&&!S.customers.some(isSampleCust)){dropSample();save("settings","appts")}}
 function loadSample(){
   const t=todayISO();
   const towns=[["Innsbruck","6020",47.2692,11.4041,22],["Hall in Tirol","6060",47.2833,11.5076,8],["Rum","6063",47.2873,11.4581,4],["Wattens","6112",47.2933,11.5917,5],["Schwaz","6130",47.35,11.70,10],
@@ -1775,7 +1782,7 @@ function openTourAppt(pre){pre=pre||{};const st=S.settings,d0=pre.date||(dayMode
   <div class="fld2"><label class="fld"><span id="ta-dl">Tag</span><input type="date" id="ta-d" value="${d0}"></label><label class="fld" id="ta-d2f"><span>bis (mehrtägig)</span><input type="date" id="ta-d2"></label><label class="fld" id="ta-tf"><span>Beginn</span><input type="time" id="ta-t" value="10:00" step="300"></label></div>
   <div class="fld2" id="ta-durf"><label class="fld"><span>Dauer (min)</span><input type="number" id="ta-dur" min="5" step="5" value="${st.defDuration}"></label><label class="row" id="ta-lunchf" style="gap:6px;align-self:end;padding-bottom:6px"><input type="checkbox" id="ta-lunch"> Mittagessen mit Kunde</label></div>
   <div class="fld2" id="ta-hotf"><label class="fld"><span>Im Hotel ab (Ende der Tour)</span><input type="time" id="ta-hin" value="17:00" step="900"></label><label class="fld"><span>Abreise am nächsten Morgen</span><input type="time" id="ta-hout" value="08:00" step="900"></label></div>
-  <label class="fld" id="ta-addrf"><span id="ta-addrl">Adresse (optional, für Fahrzeiten)</span><input type="text" id="ta-addr" placeholder="z. B. Werkstatt, Post Innsbruck"></label>
+  <label class="fld" id="ta-addrf"><span id="ta-addrl">Adresse (optional, für Fahrzeiten)</span><input type="text" id="ta-addr" placeholder=""></label>
   <label class="fld"><span>Notiz</span><input type="text" id="ta-notes"></label>
   <p class="hint" id="ta-hint" style="margin:0"></p>
   <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn" data-act="saveTourAppt">Speichern</button><button class="btn pri" data-act="saveTourApptPlan">Speichern und Touren neu planen</button></div>`);
@@ -1783,7 +1790,7 @@ function openTourAppt(pre){pre=pre||{};const st=S.settings,d0=pre.date||(dayMode
   const upd=()=>{const k=$('input[name="ta-k"]:checked',w).value,m=$('input[name="ta-m"]:checked',w).value;
     show("ta-custf",k==="kunde"||k==="veranst");show("ta-titlef",k!=="kunde");show("ta-modef",k==="kunde");show("ta-d2f",k==="veranst");
     show("ta-tf",(k==="kunde"&&m==="fix")||k==="kurz");show("ta-durf",k==="kunde"||k==="kurz");show("ta-lunchf",k==="kunde"&&m==="fix");show("ta-addrf",k!=="kunde");show("ta-hotf",k==="hotel");
-    $("#ta-addrl",w).textContent=k==="hotel"?"Adresse des Hotels":k==="veranst"?"Adresse (falls nicht beim Kunden, z. B. Messegelände)":"Adresse (optional, für Fahrzeiten)";
+    $("#ta-addr",w).placeholder=k==="hotel"?"Straße Hausnummer, PLZ Ort des Hotels":k==="veranst"?"leer = beim gewählten Kunden; sonst Straße, PLZ Ort":"Straße Hausnummer, PLZ Ort (oder Firmenname, Ort)";$("#ta-addrl",w).textContent=k==="hotel"?"Adresse des Hotels":k==="veranst"?"Adresse (falls nicht beim Kunden, z. B. Messegelände)":"Adresse (optional, für Fahrzeiten)";
     if(k==="hotel"){$("#ta-title",w).placeholder="Name des Hotels"}else if(k==="veranst"){$("#ta-title",w).placeholder="z. B. Hausmesse, Schulung"}else $("#ta-title",w).placeholder="z. B. Reifenwechsel, Postgang";
     $("#ta-custl",w).textContent=k==="veranst"?"Kunde (Veranstaltungsort)":"Kunde";$("#ta-titlel",w).textContent=k==="veranst"?"Titel (z. B. Hausmesse, Schulung)":"Titel";
     $("#ta-dl",w).textContent=k==="veranst"?"von":k==="hotel"?"Übernachtung am (Abend)":"Tag";
@@ -1920,7 +1927,7 @@ new MutationObserver(()=>mapView.draw()).observe(document.documentElement,{attri
 
 /* ---------- Start ---------- */
 try{const tb=sessionStorage.getItem("tp.tab");if(tb)ui.tab=tb}catch(e){}
-loadLocal();setSaveState();render(true);initStore();
+loadLocal();healSample();setSaveState();render(true);initStore();
 </script>
 </body>
 </html>
