@@ -1,11 +1,11 @@
 {
-  "name": "Tourenplaner",
+  "name": "Poloplast Tourenplaner",
   "short_name": "Tourenplaner",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#eaeef2",
-  "theme_color": "#1c58b0",
+  "background_color": "#0b131c",
+  "theme_color": "#00538a",
   "lang": "de",
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
