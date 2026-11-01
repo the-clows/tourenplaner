@@ -355,11 +355,16 @@ function loadLocal(){const s=lsGet("settings");if(s){S.settings=migrate(s);if(S.
 function applyLoaded(k,v){if(k==="settings"){const m=migrate(v);const mig=m._migrated;delete m._migrated;S.settings=m;if(mig)setTimeout(()=>persist("settings"),50)}else if(k==="days")S.days=v&&typeof v==="object"&&!Array.isArray(v)?clone(v):{};else S[k]=Array.isArray(v)?clone(v):[]}
 function setSaveState(){const el=$("#saveState");const busy=KEYS.some(k=>store.pending[k]||store.busy[k]);
   el.className="save"+(store.db?(busy?" busy":" cloud"):"");
-  el.querySelector("span").textContent=ui.refining?"Fahrzeiten werden berechnet …":"Gespeichert in diesem Browser";if(ui.refining)el.className="save busy";}
+  let txt="Gespeichert in diesem Browser";
+  if(typeof GH!=="undefined"&&GH.on()){const pend=Object.keys(GH.dirty()).length;
+    if(GH.busy||pend){txt=GH.err==="offline"?"Offline – wird später abgeglichen":"Wird abgeglichen …";el.className="save busy"}
+    else if(GH.err){txt=GH.err==="offline"?"Offline – lokal gespeichert":"Abgleich-Fehler";el.className="save busy"}
+    else{txt="Abgeglichen"+(GH.lastSync?" "+GH.lastSync.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"}):"");el.className="save cloud"}}
+  el.querySelector("span").textContent=ui.refining?"Fahrzeiten werden berechnet …":txt;if(ui.refining)el.className="save busy";el.title=typeof GH!=="undefined"&&GH.err&&GH.err!=="offline"?GH.err:"Speicherstatus";}
 function persist(k){
   if(k==="appts"){const lim=addDays(todayISO(),-400);S.appts=S.appts.filter(a=>!(["wahrgenommen","nicht"].includes(a.status)&&a.date<lim)&&!(a.type==="lunch"&&a.date<addDays(todayISO(),-60)))}
   if(k==="days"){const lim=addDays(todayISO(),-500);Object.keys(S.days).forEach(d=>{const c=S.days[d];if(d<lim||(!c.mode&&!c.overnight))delete S.days[d]})}
-  lsSet(k,S[k]);
+  lsSet(k,S[k]);GH.touch(k);
   if(!store.db){setSaveState();return}
   store.pending[k]=true;setSaveState();clearTimeout(store.timers[k]);store.timers[k]=setTimeout(()=>flush(k),600);
 }
@@ -373,7 +378,107 @@ async function flush(k){
   if(store.again[k]){store.again[k]=false;setTimeout(()=>flush(k),800)}
   setSaveState();
 }
-async function initStore(){}
+async function initStore(){if(GH.on())GH.sync()}
+/* ---------- Abgleich zwischen Geräten über ein privates GitHub-Repository ----------
+   Jeder Bereich (Einstellungen, Kunden, Termine, Tage) liegt als eigene Datei data/<bereich>.json im Daten-Repository.
+   Änderungen werden nach kurzer Pause hochgeladen; beim Öffnen und regelmäßig wird der neueste Stand geholt.
+   Bei gleichzeitigen Änderungen gewinnt je Bereich die jüngere. GitHub speichert jede Version (Verlauf). */
+const GH={
+  busy:false,timer:null,lastSync:null,err:null,again:false,
+  ls(k,v){try{if(v===undefined){const x=localStorage.getItem("tp."+k);return x?JSON.parse(x):null}localStorage.setItem("tp."+k,JSON.stringify(v))}catch(e){return null}},
+  cfg(){return this.ls("gh")||{}},
+  on(){const c=this.cfg();return !!(c.repo&&c.token&&c.ok)},
+  meta(){return this.ls("ghmeta")||{}},setMeta(m){this.ls("ghmeta",m)},
+  dirty(){return this.ls("ghdirty")||{}},setDirty(d){this.ls("ghdirty",d)},
+  dev(){const u=navigator.userAgent;return/iPhone/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Android/.test(u)?"Android":/Mac/.test(u)?"Mac":/Windows/.test(u)?"Windows":"Browser"},
+  b64e(str){const b=new TextEncoder().encode(str);let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)},
+  b64d(b64){const s=atob(b64.replace(/\s/g,""));const b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return new TextDecoder().decode(b)},
+  async api(method,path,body,accept){const c=this.cfg();let r;
+    try{r=await fetch("https://api.github.com/repos/"+c.repo+path,{method,cache:"no-store",headers:{Authorization:"Bearer "+c.token,Accept:accept||"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined})}
+    catch(e){const x=new Error("offline");x.offline=true;throw x}
+    const exp=r.headers.get("github-authentication-token-expiration");if(exp){const c2=this.cfg();if(c2.exp!==exp){c2.exp=exp;this.ls("gh",c2)}}
+    return r},
+  errText(r){return r.status===401?"Schlüssel ungültig oder abgelaufen":r.status===403?"Keine Berechtigung – beim Schlüssel „Contents: Read and write“ erlauben":r.status===404?"Repository nicht gefunden oder Schlüssel hat keinen Zugriff darauf":"GitHub antwortet mit Fehler "+r.status},
+  async get(k){const r=await this.api("GET","/contents/data/"+k+".json");
+    if(r.status===404)return null;if(!r.ok)throw new Error(this.errText(r));
+    const j=await r.json();let txt;
+    if(j.content&&j.encoding==="base64")txt=this.b64d(j.content);
+    else{const r2=await this.api("GET","/contents/data/"+k+".json",null,"application/vnd.github.raw+json");if(!r2.ok)throw new Error(this.errText(r2));txt=await r2.text()}
+    let o;try{o=JSON.parse(txt)}catch(e){throw new Error("Datei data/"+k+".json ist beschädigt")}
+    return{sha:j.sha,v:o.v,at:o.at||0,dev:o.dev||""}},
+  async put(k,sha){const at=this.dirty()[k]||Date.now();
+    const body={message:"Tourenplaner: "+({settings:"Einstellungen",customers:"Kunden",appts:"Termine",days:"Tage"}[k]||k)+" ("+this.dev()+")",content:this.b64e(JSON.stringify({v:S[k],at,dev:this.dev()}))};if(sha)body.sha=sha;
+    const r=await this.api("PUT","/contents/data/"+k+".json",body);
+    if(r.status===409||r.status===422){const e=new Error("conflict");e.conflict=true;throw e}
+    if(!r.ok)throw new Error(this.errText(r));
+    const j=await r.json();const m=this.meta();m[k]={sha:j.content.sha,at};this.setMeta(m)},
+  touch(k){if(!this.on())return;const d=this.dirty();d[k]=Date.now();this.setDirty(d);clearTimeout(this.timer);this.timer=setTimeout(()=>this.sync(),2500);setSaveState()},
+  apply(k,v){applyLoaded(k,v);lsSet(k,S[k])},
+  /* Holt neuere Stände und lädt eigene Änderungen hoch */
+  async sync(quiet=true){
+    if(!this.on())return;
+    if(this.busy){this.again=true;return}
+    this.busy=true;this.err=null;setSaveState();let changed=false,lost=[];
+    try{
+      for(const k of KEYS){
+        const meta=this.meta(),dirty=this.dirty(),rem=await this.get(k);
+        if(dirty[k]){
+          let sha=rem?rem.sha:undefined;
+          if(rem&&meta[k]&&rem.sha!==meta[k].sha&&rem.at>dirty[k]){this.apply(k,rem.v);const m=this.meta();m[k]={sha:rem.sha,at:rem.at};this.setMeta(m);changed=true;lost.push(k)}
+          else{try{await this.put(k,sha)}catch(e){if(!e.conflict)throw e;const r2=await this.get(k);await this.put(k,r2?r2.sha:undefined)}}
+          const d=this.dirty();if(d[k]===dirty[k])delete d[k];this.setDirty(d);
+        }else if(rem&&(!meta[k]||meta[k].sha!==rem.sha)){this.apply(k,rem.v);const m=this.meta();m[k]={sha:rem.sha,at:rem.at};this.setMeta(m);changed=true}
+        else if(!rem){await this.put(k)}
+      }
+      this.lastSync=new Date();
+    }catch(e){this.err=e.offline?"offline":e.message}
+    this.busy=false;setSaveState();
+    if(changed){mapView.fitted=false;render()}
+    if(lost.length)toast("Auf einem anderen Gerät gab es neuere Änderungen ("+lost.map(k=>({settings:"Einstellungen",customers:"Kunden",appts:"Termine",days:"Tage"}[k])).join(", ")+"). Sie wurden übernommen.");
+    if(this.err&&this.err!=="offline"&&!quiet)toast("Abgleich fehlgeschlagen: "+this.err);
+    if(this.again){this.again=false;setTimeout(()=>this.sync(),500)}
+  },
+  /* Erstverbindung: Zugriff prüfen, dann entscheiden, welcher Stand gilt */
+  async connect(repo,token){
+    repo=repo.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\.git$/,"").replace(/\/$/,"");token=token.trim();
+    if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){toast("Repository bitte als besitzer/name angeben, z. B. the-clows/tourenplaner-daten");return}
+    this.ls("gh",{repo,token,ok:false});
+    let r;try{r=await this.api("GET","")}catch(e){toast("Keine Verbindung zu GitHub.");return}
+    if(!r.ok){toast(this.errText(r));return}
+    const j=await r.json();
+    if(!j.private&&!confirm("Achtung: Das Repository „"+repo+"“ ist öffentlich. Kundendaten wären für alle sichtbar. Trotzdem verbinden?"))return;
+    if(j.permissions&&!j.permissions.push){toast("Der Schlüssel darf nicht schreiben – beim Schlüssel „Contents: Read and write“ erlauben.");return}
+    let rem;try{rem=await this.get("customers")}catch(e){toast(e.message);return}
+    this.setMeta({});this.setDirty({});
+    const c=this.cfg();c.ok=true;this.ls("gh",c);
+    const localHas=S.customers.length>0;
+    if(rem&&localHas){
+      ghChoice(rem);return}
+    if(rem){await this.sync(false);toast("Verbunden – Daten aus der Cloud geladen.");render(true);return}
+    const d={};KEYS.forEach(k=>d[k]=Date.now());this.setDirty(d);await this.sync(false);toast(this.err?"Verbunden, aber Hochladen fehlgeschlagen: "+this.err:"Verbunden – deine Daten sind jetzt in der Cloud.");render(true)},
+  disconnect(){this.ls("gh",{repo:this.cfg().repo||""});this.setMeta({});this.setDirty({});setSaveState();render(true);toast("Abgleich getrennt. Die Daten bleiben auf diesem Gerät.")}
+};
+function ghChoice(rem){
+  const w=modal(`<div class="hd"><h2>Welche Daten sollen gelten?</h2><button class="x" data-close aria-label="Schließen">×</button></div>
+  <p style="margin:0">In der Cloud liegen bereits Daten (zuletzt gespeichert ${rem.at?new Date(rem.at).toLocaleString("de-AT",{dateStyle:"short",timeStyle:"short"}):"unbekannt"}${rem.dev?" auf "+esc(rem.dev):""}, ${Array.isArray(rem.v)?rem.v.length:"?"} Kunden). Auf diesem Gerät sind ${S.customers.length} Kunden gespeichert.</p>
+  <div class="row"><button class="btn pri" data-act="ghTakeCloud">Cloud-Daten übernehmen</button><button class="btn" data-act="ghPushLocal">Daten dieses Geräts hochladen</button></div>
+  <p class="hint">„Cloud-Daten übernehmen“ ersetzt die Daten auf diesem Gerät (empfohlen für das zweite Gerät). „Hochladen“ ersetzt die Cloud-Daten; ältere Stände bleiben im Verlauf des Repositorys erhalten.</p>`);}
+function ghPanel(){const c=GH.cfg(),on=GH.on();
+  const exp=c.exp?new Date(c.exp.replace(" UTC","Z").replace(" ","T")):null,days=exp&&!isNaN(exp)?Math.round((exp-Date.now())/864e5):null;
+  return`<div class="panel"><h3>Abgleich zwischen Geräten (GitHub)</h3>
+    ${on?`<p style="margin:0"><span class="pill ${GH.err?"p-over":"p-ok"}">${GH.err?(GH.err==="offline"?"offline":"Fehler"):"verbunden"}</span> mit <b>${esc(c.repo)}</b></p>
+      ${GH.err&&GH.err!=="offline"?`<p class="hint" style="color:var(--over)">${esc(GH.err)}</p>`:""}
+      <p class="hint" style="margin:0">${GH.lastSync?"Zuletzt abgeglichen: "+GH.lastSync.toLocaleTimeString("de-AT",{hour:"2-digit",minute:"2-digit"}):"Noch nicht abgeglichen"}${days!=null?` · Schlüssel gültig bis ${exp.toLocaleDateString("de-AT")}${days<=21?' – <b style="color:var(--over)">bald neuen Schlüssel anlegen</b>':""}`:""}</p>
+      <div class="row"><button class="btn sm pri" data-act="ghSync">Jetzt abgleichen</button><button class="btn sm" data-act="ghToken">Neuen Schlüssel eintragen</button><button class="btn sm warn" data-act="ghOff">Trennen</button></div>`
+    :`<label class="fld"><span>Daten-Repository (privat)</span><input type="text" id="gh-repo" value="${esc(c.repo||"the-clows/tourenplaner-daten")}" autocomplete="off" spellcheck="false"></label>
+      <label class="fld"><span>Zugangsschlüssel (Fine-grained Token)</span><input type="password" id="gh-token" value="" autocomplete="off" placeholder="github_pat_…"></label>
+      <div class="row"><button class="btn sm pri" data-act="ghConnect">Verbinden</button></div>`}
+    <p class="hint">Hält iPhone und Laptop auf demselben Stand. Der Schlüssel bleibt nur auf diesem Gerät gespeichert und wird nicht mit hochgeladen. Bei gleichzeitigen Änderungen auf zwei Geräten gewinnt je Bereich die jüngere; ältere Stände bleiben im Verlauf des Repositorys erhalten.</p>
+  </div>`}
+setInterval(()=>{if(GH.on()&&document.visibilityState==="visible"&&!$("#modal"))GH.sync()},120000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&GH.on())GH.sync()});
+window.addEventListener("online",()=>{if(GH.on())GH.sync()});
+
 
 /* ---------- Fachlogik ---------- */
 const hasXY=o=>o&&typeof o.lat==="number"&&typeof o.lng==="number";
@@ -1077,7 +1182,7 @@ function renderSettings(m){
   const s=S.settings,h=s.home;
   const wd=[1,2,3,4,5,6,0].map(d=>`<label><input type="checkbox" data-wd="${d}" ${s.travelDays.includes(d)?"checked":""}>${DOW[d]}</label>`).join("");
   const f=(k,l,type="number",extra="")=>`<label class="fld"><span>${l}</span><input type="${type}" data-k="${k}" id="s-${k}" value="${esc(s[k])}" ${extra}></label>`;
-  m.innerHTML=`<div class="sgrid">
+  m.innerHTML=`<div class="sgrid">${GH.on()?"":ghPanel()}
   <div class="panel"><h3>Zuhause (Start und Ende jeder Tour)</h3>
     <label class="fld"><span>Bezeichnung</span><input type="text" id="h-label" value="${esc(h.label)}"></label>
     <label class="fld"><span>Adresse</span><input type="text" id="h-address" value="${esc(h.address)}" placeholder="Straße, PLZ Ort"></label>
@@ -1130,10 +1235,11 @@ function renderSettings(m){
     <label class="fld"><span>Zusätzliche freie Tage (Firmenregelung, TT.MM.)</span><input type="text" data-k="freeDays" id="s-freeDays" value="${esc(s.freeDays||"")}" placeholder="24.12., 31.12."></label>
     <p class="hint">Österreichische Feiertage und die Firmen-freien Tage werden automatisch blockiert. Hl. Josef, Faschingsdienstag und Karfreitag stehen nur als Hinweis im Kalender. Urlaub, Sonderurlaub und Krankenstand trägst du im Kalender über „+ Termin“ (Art: Abwesenheit) ein; nur Urlaub zählt zum Urlaubsanspruch.</p>
   </div>
+  ${GH.on()?ghPanel():""}
   <div class="panel"><h3>Daten</h3>
     <div class="row"><button class="btn" data-act="backup">Sicherung speichern (JSON)</button><button class="btn" data-act="restore">Sicherung laden</button></div>
     <div class="row"><button class="btn warn" data-act="clearAll">Alle Daten löschen</button></div>
-    <p class="hint">Die Daten liegen nur in diesem Browser auf diesem Gerät. Speichere regelmäßig eine Sicherung. Mit „Sicherung laden“ übernimmst du auch Daten aus der claude.ai-Version.</p>
+    <p class="hint">${GH.on()?"Die Daten werden über GitHub zwischen deinen Geräten abgeglichen. Eine Sicherungsdatei ist trotzdem sinnvoll, z. B. einmal im Monat.":"Die Daten liegen nur in diesem Browser auf diesem Gerät. Speichere regelmäßig eine Sicherung oder richte den Abgleich über GitHub ein."}</p>
   </div></div>`;
 }
 document.addEventListener("change",e=>{
@@ -1451,6 +1557,13 @@ document.addEventListener("click",async e=>{
     case"restore":$("#backupIn").click();break;
     case"doImport":doImport(w);break;
     case"refine":refineRoutes(plannedDates());break;
+    case"ghConnect":{const rp=$("#gh-repo").value,tk=$("#gh-token").value;if(!tk.trim()){toast("Bitte den Zugangsschlüssel einfügen.");break}t.disabled=true;t.textContent="Verbinde …";await GH.connect(rp,tk);t.disabled=false;t.textContent="Verbinden";render(true);break}
+    case"ghTakeCloud":{GH.setMeta({});GH.setDirty({});closeModal();await GH.sync(false);toast("Cloud-Daten übernommen.");render(true);break}
+    case"ghPushLocal":{GH.setMeta({});const d={};KEYS.forEach(k=>d[k]=Date.now());GH.setDirty(d);closeModal();await GH.sync(false);toast(GH.err?"Hochladen fehlgeschlagen: "+GH.err:"Daten dieses Geräts hochgeladen.");render(true);break}
+    case"ghSync":{await GH.sync(false);render(true);if(!GH.err)toast("Abgeglichen.");break}
+    case"ghOff":{if(t.dataset.sure){GH.disconnect()}else{t.dataset.sure="1";t.textContent="Wirklich trennen?"}break}
+    case"ghToken":{const w2=modal(`<div class="hd"><h2>Neuen Zugangsschlüssel eintragen</h2><button class="x" data-close aria-label="Schließen">×</button></div><label class="fld"><span>Zugangsschlüssel</span><input type="password" id="gh-new" autocomplete="off" placeholder="github_pat_…"></label><div class="row" style="justify-content:flex-end"><button class="btn pri" data-act="ghTokenSave">Speichern</button></div>`);break}
+    case"ghTokenSave":{const tk=$("#gh-new").value.trim();if(!tk)break;const c=GH.cfg();c.token=tk;delete c.exp;GH.ls("gh",c);closeModal();await GH.sync(false);render(true);if(!GH.err)toast("Neuer Schlüssel funktioniert.");break}
     case"durAll":{if(t.dataset.sure){const dd=S.settings.defDuration;S.customers.forEach(c=>c.duration=dd);S.appts.forEach(a=>{if(isAutoV(a)&&a.date>=todayISO())a.dur=dd});save("customers","appts");render(true);toast("Alle Kunden: "+dd+" min – „Touren planen“ übernimmt die neue Dauer")}else{t.dataset.sure="1";t.textContent="Wirklich bei allen Kunden ändern?"}break}
     case"live":checkLive(false);break;
     case"liveGps":checkLive(true);break;
