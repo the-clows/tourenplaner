@@ -271,6 +271,15 @@ td.num{text-align:right}
 .bulk{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-top:1px solid var(--line);font-size:14px}
 .bulk input{width:70px}
 
+/* Segmentauswahl */
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface-2)}
+.seg label{flex:1;min-width:0;text-align:center;cursor:pointer;display:flex}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 6px;font-weight:600;font-size:14px;border-right:1px solid var(--line)}
+.seg label:last-child span{border-right:0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink)}
+.seg.sm span{padding:6px;font-size:13px}
+.ev.flex{border-style:solid;background:var(--accent-soft);color:var(--ink)}.ev.flex .t,.ev.flex .c{color:var(--muted);opacity:1}
 /* Kundenliste und Kundenansicht */
 .ctbl{min-width:0;table-layout:auto}
 .ctbl td{padding:9px 10px}
@@ -393,7 +402,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 00:40";
+const APPVER="2026-11-02 01:30";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -449,7 +458,7 @@ function setSaveState(){const el=$("#saveState");const busy=KEYS.some(k=>store.p
   el.querySelector("span").textContent=ui.refining?"Fahrzeiten werden berechnet …":txt;if(ui.refining)el.className="save busy";el.title=typeof GH!=="undefined"&&GH.err&&GH.err!=="offline"?GH.err:"Speicherstatus";}
 function persist(k){
   if(k==="appts"){const lim=addDays(todayISO(),-400);S.appts=S.appts.filter(a=>!(["wahrgenommen","nicht"].includes(a.status)&&a.date<lim)&&!(a.type==="lunch"&&a.date<addDays(todayISO(),-60)))}
-  if(k==="days"){const lim=addDays(todayISO(),-500);Object.keys(S.days).forEach(d=>{const c=S.days[d];if(d<lim||(!c.mode&&!c.overnight))delete S.days[d]})}
+  if(k==="days"){const lim=addDays(todayISO(),-500);Object.keys(S.days).forEach(d=>{const c=S.days[d];if(d<lim||(!c.mode&&!c.overnight&&!c.dep&&!c.arr))delete S.days[d]})}
   lsSet(k,S[k]);GH.touch(k);
   if(!store.db){setSaveState();return}
   store.pending[k]=true;setSaveState();clearTimeout(store.timers[k]);store.timers[k]=setTimeout(()=>flush(k),600);
@@ -602,6 +611,8 @@ const infoOf=d=>holidays(+d.slice(0,4)).info[d]||null;
 
 /* Tagesart: Reisetag, Büro/Homeoffice, Urlaub, Feiertag, Wochenende */
 const dayCfg=d=>S.days[d]||{};
+const dayStartOf=d=>toMin(dayCfg(d).dep||S.settings.dayStart),dayEndOf=d=>toMin(dayCfg(d).arr||S.settings.dayEnd);
+function targetOf(d){const st=S.settings,c=dayCfg(d);let t=(dow(d)===5?st.minTravelFriH:st.minTravelH)*60;if(c.dep||c.arr)t=Math.min(t,Math.max(0,dayEndOf(d)-dayStartOf(d)-30));return t}
 const MODE={reise:"Reisetag",buero:"Büro / Homeoffice",urlaub:"Urlaub",sonderurlaub:"Sonderurlaub",krank:"Krankenstand",feiertag:"Feiertag",frei:"Wochenende",blockiert:"Ganztägiger Termin"};
 const ABS=["urlaub","sonderurlaub","krank"];const isAbs=c=>ABS.includes(c);
 function autoMode(d){if(holidayOf(d))return"feiertag";const w=dow(d);if(S.settings.travelDays.includes(w))return"reise";if(w===0||w===6)return"frei";return"buero"}
@@ -632,7 +643,7 @@ function spanOf(d,list){const st=S.settings;
   const s0=startLoc(d),e0=endLoc(d),f=loc[0],l=loc[loc.length-1];
   const tail=list.filter(a=>a.type==="lunch"&&a.status!=="nicht"&&a.startMin>=l.startMin+l.dur).reduce((m,a)=>Math.max(m,a.startMin+a.dur),0);
   const dep=f.startMin-preB(f)-travelIn(s0,f),ret=Math.max(l.startMin+l.dur,tail)+travelOut(l,e0);
-  const nightIn=s0!==st.home,nightOut=e0!==st.home,target=(dow(d)===5?st.minTravelFriH:st.minTravelH)*60;
+  const nightIn=s0!==st.home,nightOut=e0!==st.home,target=targetOf(d);
   return{dep,ret,span:ret-dep,target,nightIn,nightOut,ok:nightIn||nightOut||ret-dep>=target}}
 function daySummary(d){
   const as=dayEntries(d);const vs=as.filter(a=>a.type==="visit");if(!vs.length)return null;
@@ -642,7 +653,9 @@ function daySummary(d){
   return Object.assign({n:vs.length,km:Math.round(k),min:m,pts,real:locd&&real===locd,partReal:real>0},spanOf(d,as)||{});
 }
 const isLunchE=a=>a.type==="lunch"||(a.type==="visit"&&a.lunchMeet&&a.status!=="nicht");
-const isAutoV=a=>!a.manual&&a.type==="visit"&&a.status==="geplant";
+const isFlexV=a=>a.type==="visit"&&!!a.flex&&(a.status==="geplant"||a.status==="fixiert");
+const isAutoV=a=>a.type==="visit"&&((!a.manual&&a.status==="geplant")||isFlexV(a));
+const isDropV=a=>!a.manual&&a.type==="visit"&&a.status==="geplant";
 const isAutoE=a=>!a.manual&&((a.type==="visit"&&a.status==="geplant")||a.type==="lunch");
 const isAutoLunch=a=>a.type==="lunch"&&!a.manual;
 /* Prüft, ob feste Termine erreichbar sind und die Rückkehr passt (ändert nichts) */
@@ -650,10 +663,10 @@ function checkDay(d){const st=S.settings;const es=dayEntries(d);if(!es.some(a=>a
   let pos=startLoc(d),tm=-1e9,conflict=false,last=null,dropId=null,lastAuto=null,credit=0;
   es.forEach(a=>{if(isAutoLunch(a)&&a.pre){tm=a.startMin+a.dur;credit=a.pre;return}
     const l=apptLoc(a);const arr=tm+(l?Math.max(0,travelIn(pos,a)-credit):0)+preB(a);if(l)credit=0;
-    if(tm>-1e9&&arr>a.startMin+2){conflict=true;if(!dropId){const j=es.indexOf(a);for(let i=isAutoV(a)?j:j-1;i>=0;i--)if(isAutoV(es[i])){dropId=es[i].id;break}}}
-    tm=a.startMin+a.dur+postB(a);if(l){pos=l;last=a}if(isAutoV(a))lastAuto=a});
+    if(tm>-1e9&&arr>a.startMin+2){conflict=true;if(!dropId){const j=es.indexOf(a);for(let i=isAutoV(a)?j:j-1;i>=0;i--)if(isDropV(es[i])){dropId=es[i].id;break}}}
+    tm=a.startMin+a.dur+postB(a);if(l){pos=l;last=a}if(isDropV(a))lastAuto=a});
   if(last)tm=last.startMin+last.dur;
-  const back=last?travelOut(last,endLoc(d)):0;const late=!!(last&&isAutoV(last)&&tm+back>toMin(st.dayEnd)+10&&!nightOf(d));
+  const back=last?travelOut(last,endLoc(d)):0;const late=!!(last&&isAutoV(last)&&tm+back>dayEndOf(d)+10&&!nightOf(d));
   if(late&&!dropId&&lastAuto)dropId=lastAuto.id;
   return{conflict,late,dropId}}
 
@@ -689,7 +702,7 @@ function timeline(d,seq,t0){
   const lastA=seq[seq.length-1];let endT=times[times.length-1]+lastA.dur;
   if(lunchPending&&endT>LF+30){const ls=up5(Math.max(endT,LF));if(ls<=LL){lunch={start:ls,loc:null};endT=ls+LM}else lunchLate=true}
   const back=lastLocA&&hasXY(e0)?travelOut(lastLocA,e0):0;drive+=back;
-  const ret=endT+back,nightIn=s0!==st.home,nightOut=e0!==st.home,target=(dow(d)===5?st.minTravelFriH:st.minTravelH)*60,span=ret-dep;
+  const ret=endT+back,nightIn=s0!==st.home,nightOut=e0!==st.home,target=targetOf(d),span=ret-dep;
   const spanEff=span-removable;
   return{ok,why,lunchLate,times,lunch,idle,removable,drive,dep,ret,span,target,nightIn,nightOut,
     spanOk:nightIn||nightOut||spanEff>=target,
@@ -697,7 +710,7 @@ function timeline(d,seq,t0){
 }
 /* Beste Abfahrtszeit: so spät wie möglich, ohne zusätzliche Wartezeit, ohne die Mindest-Reisezeit zu unterschreiten und mit Rückkehr bis „Ankunft spätestens“ */
 function bestTimes(d,seq){
-  const st=S.settings,ds=toMin(st.dayStart),de=toMin(st.dayEnd);const r0=timeline(d,seq,ds);if(!r0)return null;
+  const st=S.settings,ds=dayStartOf(d),de=dayEndOf(d);const r0=timeline(d,seq,ds);if(!r0)return null;
   let best={t0:ds,r:r0};if(!r0.ok)return best;
   const night=r0.nightIn||r0.nightOut,minSpan=Math.min(r0.target,r0.span),lim=Math.max(de,r0.ret);
   for(let t0=ds+5;t0<=ds+420;t0+=5){const r=timeline(d,seq,t0);
@@ -716,7 +729,7 @@ function scheduleDay(d){
   const seq=dayEntries(d).filter(a=>!isAutoLunch(a));
   if(!seq.some(a=>a.type==="visit")){S.appts=S.appts.filter(a=>!(a.date===d&&isAutoLunch(a)));return}
   const b=bestTimes(d,seq);if(!b)return null;applyDay(d,seq,b.r);
-  if(b.r.lunchLate&&b.r.lunch){const v=seq.filter(a=>isAutoV(a)&&a.startMin<b.r.lunch.start).pop();return{dropId:v?v.id:null}}
+  if(b.r.lunchLate&&b.r.lunch){const v=seq.filter(a=>isDropV(a)&&a.startMin<b.r.lunch.start).pop();return{dropId:v?v.id:null}}
   return{dropId:null}}
 
 /* ---------- Region eines Tages (für Anzeige) ---------- */
@@ -867,8 +880,8 @@ const newVisit=(d,c)=>({id:uid(),type:"visit",customerId:c.id,date:d,startMin:0,
 function daySeqSort(seq){/* feste Termine geben die Reihenfolge vor; Vorschläge stehen dazwischen */return seq}
 /* Baut eine Tagestour durch billigstes Einfügen */
 function buildDay(d,fixed,cands,anchor,lvl){
-  const st=S.settings,ds=toMin(st.dayStart),de=toMin(st.dayEnd);
-  const seq=fixed.slice().sort((a,b)=>a.startMin-b.startMin);
+  const st=S.settings,ds=dayStartOf(d),de=dayEndOf(d);
+  const seq=fixed.filter(a=>!isFlexV(a)).sort((a,b)=>a.startMin-b.startMin),flexs=fixed.filter(isFlexV);
   const base=seq.length?timeline(d,seq,ds):null;
   const lateLimit=Math.max(de+10,base?base.ret:0);
   const capNear=Math.max(st.maxVisits,st.maxVisitsNear||st.maxVisits);
@@ -877,6 +890,12 @@ function buildDay(d,fixed,cands,anchor,lvl){
   const dueDet=(PLAN.det||[60,90,150])[lvl],earlyDet=[st.clusterMin,st.clusterMin*2,Math.max(45,st.clusterMin*2)][lvl];
   const ins=(cand,p)=>{const a=newVisit(d,cand.c);seq.splice(p,0,a);added.push({c:cand.c,a});taken.add(cand.c.id);count++;gain+=cand.u};
   const fits=()=>{const r=timeline(d,seq,ds);return r&&r.ok&&!r.lunchLate&&r.ret<=lateLimit?r:null};
+  /* Flextermine: fester Tag, Uhrzeit wählt der Planer – an der Stelle mit dem kleinsten Umweg einfügen */
+  for(const fa of flexs){const c=custById(fa.customerId);const ps=[];
+    for(let p=0;p<=seq.length;p++){const A=locBefore(seq,p,d),B=locFrom(seq,p,d);ps.push({p,det:c&&hasXY(c)?travel(A,c)+travel(c,B)-travel(A,B):0})}
+    ps.sort((x,y)=>x.det-y.det);let ok=false;
+    for(const {p} of ps){seq.splice(p,0,fa);const r=timeline(d,seq,ds);if(r&&r.ok&&!r.lunchLate){ok=true;break}seq.splice(p,1)}
+    if(!ok)seq.push(fa)}
   if(anchor){let done=false;
     const ps=[];for(let p=0;p<=seq.length;p++){const A=locBefore(seq,p,d),B=locFrom(seq,p,d);ps.push({p,det:travel(A,anchor.c)+travel(anchor.c,B)-travel(A,B)})}
     ps.sort((x,y)=>x.det-y.det);
@@ -1129,7 +1148,7 @@ function coversDay(a,d){if(!isAllDay(a))return false;
   return d>=a.date&&d<=evEnd(a)}
 function eventsOn(d){return S.appts.filter(a=>coversDay(a,d))}
 function blockEvent(d){return eventsOn(d).find(a=>!isAbs(a.cat)&&a.block)||null}
-const CATCOL={sonderurlaub:"var(--sond)",krank:"var(--krank)",privat:"var(--priv)",meeting:"var(--accent)",buero:"var(--muted)",veranstaltung:"var(--ink)",hotel:"var(--soon)",geburtstag:"var(--bday)",urlaub:"var(--ok)"};
+const CATCOL={kurz:"var(--muted)",sonderurlaub:"var(--sond)",krank:"var(--krank)",privat:"var(--priv)",meeting:"var(--accent)",buero:"var(--muted)",veranstaltung:"var(--ink)",hotel:"var(--soon)",geburtstag:"var(--bday)",urlaub:"var(--ok)"};
 function evDays(a){const out=[];for(let d=a.date;d<=evEnd(a)&&out.length<370;d=addDays(d,1))out.push(d);return out}
 /* Vorschläge an Tagen entfernen, die nicht mehr für Touren frei sind */
 function clearBlockedDays(days){const t=todayISO();let n=0;
@@ -1171,15 +1190,16 @@ function renderKalender(m){
 /* --- Tourenplaner (Wochenansicht) --- */
 const PPM=0.9;
 function weekDays(){const out=[];for(let i=0;i<7;i++){const d=addDays(ui.week,i);const w=dow(d);if((w>=1&&w<=5)||dayCfg(d).mode==="reise"||S.appts.some(a=>a.date===d&&!a.allDay&&a.status!=="nicht"&&a.type!=="lunch"))out.push(d)}return out}
-function evClass(a){if(a.type==="lunch")return"pause";if(a.type==="visit"&&a.status==="geplant"&&a.manual)return"geplant moved";if(a.type==="private")return a.cat==="veranstaltung"?"privat event":a.cat==="hotel"?"privat hotel":"privat";return a.status}
-const CAT={privat:"Persönlich",meeting:"Vertriebsmeeting",veranstaltung:"Kundenveranstaltung",buero:"Büro / Meeting",hotel:"Hotelübernachtung",geburtstag:"Geburtstag",urlaub:"Urlaub",sonderurlaub:"Sonderurlaub",krank:"Krankenstand"};
+function evClass(a){if(a.type==="lunch")return"pause";if(isFlexV(a))return"fixiert flex";if(a.type==="visit"&&a.status==="geplant"&&a.manual)return"geplant moved";if(a.type==="private")return a.cat==="veranstaltung"?"privat event":a.cat==="hotel"?"privat hotel":"privat";return a.status}
+const CAT={kurz:"Kurztermin",privat:"Persönlich",meeting:"Vertriebsmeeting",veranstaltung:"Kundenveranstaltung",buero:"Büro / Meeting",hotel:"Hotelübernachtung",geburtstag:"Geburtstag",urlaub:"Urlaub",sonderurlaub:"Sonderurlaub",krank:"Krankenstand"};
 function evLabel(a){if(a.type==="lunch")return"Mittagspause";if(a.type==="private")return esc(a.title||CAT[a.cat||"privat"]);const c=custById(a.customerId);return esc(c?c.name:"(Kunde gelöscht)")}
-function evSub(a){if(a.type==="lunch")return"";if(a.lunchMeet&&a.type==="visit"){const c=custById(a.customerId);return esc([c&&c.city,"Mittagessen mit Kunde"].filter(Boolean).join(" · "))}if(a.type==="private"){const cu=a.customerId&&custById(a.customerId);return esc([CAT[a.cat||"privat"],cu?cu.name:a.loc&&a.loc.text].filter(Boolean).join(" · "))}const c=custById(a.customerId);return esc(c?[c.city,a.status==="geplant"?"Vorschlag":a.status==="fixiert"?"fixiert":a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"].filter(Boolean).join(" · "):"")}
+function evSub(a){if(a.type==="lunch")return"";if(a.lunchMeet&&a.type==="visit"){const c=custById(a.customerId);return esc([c&&c.city,"Mittagessen mit Kunde"].filter(Boolean).join(" · "))}if(a.type==="private"){const cu=a.customerId&&custById(a.customerId);return esc([CAT[a.cat||"privat"],cu?cu.name:a.loc&&a.loc.text].filter(Boolean).join(" · "))}const c=custById(a.customerId);return esc(c?[c.city,a.status==="geplant"?"Vorschlag":a.status==="fixiert"?(a.flex?"Flextermin":"Fixtermin"):a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"].filter(Boolean).join(" · "):"")}
 function dayLabel(d){const h=holidayOf(d),i=infoOf(d),m=dayMode(d),c=dayCfg(d);const parts=[];
   eventsOn(d).forEach(a=>parts.push(`<button class="pill evp" data-appt="${a.id}" style="--c:${CATCOL[a.cat]||"var(--priv)"}">${esc(a.title||CAT[a.cat])}</button>`));const rg=dayRegion(d);if(rg)parts.push(`<span class="pill p-plan">${esc(rg)}</span>`);
   if(h)parts.push(`<span class="pill p-over">${esc(h)}</span>`);
   if(isAbs(m))parts.push(`<span class="pill p-priv">${MODE[m]}</span>`);else if(m==="buero")parts.push('<span class="pill p-grey">Büro / Homeoffice</span>');else if(m==="reise"&&(h||autoMode(d)!=="reise"))parts.push('<span class="pill p-plan">Reisetag</span>');
   if(i)parts.push(`<span class="pill p-grey" title="Hinweis, kein Feiertag">${esc(i)}</span>`);
+  if(c.dep||c.arr)parts.push(`<span class="pill p-soon">${c.dep?"ab "+c.dep:""}${c.dep&&c.arr?" · ":""}${c.arr?"bis "+c.arr:""}</span>`);
   if(nightOf(d))parts.push(`<span class="pill p-soon">Nacht: ${esc(nightOf(d).label||"auswärts")}</span>`);
   return parts.join(" ")}
 function spanTxt(d){const s=daySummary(d);if(!s)return"";const ck=checkDay(d);
@@ -1191,7 +1211,7 @@ function renderCalendar(m){
   const kw=(()=>{const d=pISO(ui.week);d.setDate(d.getDate()+3);const j=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-j)/864e5-3+((j.getDay()+6)%7))/7)})();
   let tools=`<div class="caltool"><h2>KW ${kw} · ${fmtDY(ui.week).slice(0,6)}–${fmtDY(addDays(ui.week,6))}</h2>
     <button class="btn" data-wk="-1" aria-label="Vorige Woche">‹</button><button class="btn" data-wk="0">Heute</button><button class="btn" data-wk="1" aria-label="Nächste Woche">›</button>
-    <button class="btn" data-act="addPrivate">+ Termin</button><button class="btn" data-act="refine" ${TT.key()?"":"disabled title=\"TomTom-Schlüssel in den Einstellungen eintragen\""}>Fahrzeiten<span class="lg"> mit Verkehr</span></button><button class="btn pri" data-act="plan">Touren planen<span class="lg"> (${st.horizonWeeks} Wo.)</span></button></div>`;
+    <button class="btn" data-act="addTourAppt">+ Termin</button><button class="btn" data-act="refine" ${TT.key()?"":"disabled title=\"TomTom-Schlüssel in den Einstellungen eintragen\""}>Fahrzeiten<span class="lg"> mit Verkehr</span></button><button class="btn pri" data-act="plan">Touren planen<span class="lg"> (${st.horizonWeeks} Wo.)</span></button></div>`;
   const nh=!hasXY(st.home)?`<div class="banner warnb">Zuhause hat noch keine Koordinaten – die Planung startet erst, wenn sie in den Einstellungen eingetragen sind.<button class="btn sm" data-goto="settings">Einstellungen</button></div>`:"";
   if(!S.customers.length){m.innerHTML=tools+emptyState();return}
   const legend=`<div class="legend2"><span><i class="sw" style="border-style:dashed"></i>Vorschlag</span><span><i class="sw" style="border-style:dashed;background:var(--accent-soft)"></i>verschoben (bleibt)</span><span><i class="sw" style="background:var(--accent)"></i>fixiert</span><span><i class="sw" style="border-color:var(--ok);background:var(--ok-soft)"></i>wahrgenommen</span><span><i class="sw" style="border-color:var(--priv);background:var(--priv-soft)"></i>persönlich</span><span><i class="sw" style="border-color:var(--ink);background:var(--priv-soft)"></i>Kundenveranstaltung</span><span><i class="sw" style="border-color:var(--soon);box-shadow:0 0 0 1px var(--soon)"></i>Rückmeldung offen</span></div>`;
@@ -1214,7 +1234,7 @@ function renderCalendar(m){
   html+=`<div class="times" style="height:${H}px">`;for(let h=g0+60;h<g1;h+=60)html+=`<div style="top:${(h-g0)*PPM}px">${pad(h/60)}:00</div>`;html+=`</div>`;
   days.forEach(d=>{const md=dayMode(d),wk=md!=="reise";
     html+=`<div class="col ${wk?"wknd":""}" data-date="${d}" style="height:${H}px;background-position:0 ${-(g0%60)*PPM}px">`;
-    if(!wk){const a=toMin(st.dayStart),b=toMin(st.dayEnd);if(a>g0)html+=`<div class="off" style="top:0;height:${(a-g0)*PPM}px"></div>`;if(b<g1)html+=`<div class="off" style="top:${(b-g0)*PPM}px;bottom:0"></div>`}
+    if(!wk){const a=dayStartOf(d),b=dayEndOf(d);if(a>g0)html+=`<div class="off" style="top:0;height:${(a-g0)*PPM}px"></div>`;if(b<g1)html+=`<div class="off" style="top:${(b-g0)*PPM}px;bottom:0"></div>`}
     else html+=`<div class="modelbl">${esc(md==="feiertag"?holidayOf(d):md==="blockiert"?(blockEvent(d)||{}).title||MODE[md]:MODE[md])}</div>`;
     dayAppts(d).forEach(a=>{html+=`<div class="ev ${evClass(a)} ${needsFeedback(a)?"need":""} ${a.lunchMeet?"meal":""}" data-id="${a.id}" tabindex="0" role="button" style="top:${(a.startMin-g0)*PPM}px;height:${Math.max(18,a.dur*PPM-2)}px"><div class="t">${hm(a.startMin)}–${hm(a.startMin+a.dur)}</div><div class="n">${a.notes?'<span class="nt" title="Notiz vorhanden">✎</span> ':""}${evLabel(a)}</div><div class="c">${evSub(a)}</div></div>`});
     html+=`</div>`});
@@ -1222,12 +1242,14 @@ function renderCalendar(m){
   m.innerHTML=sampleBanner()+nh+tools+html+legend+`<p class="hint">Termine und Pausen per Ziehen verschieben (15-Minuten-Raster). Fixierte, verschobene und bearbeitete Termine bleiben beim Neuplanen, alle anderen Vorschläge werden um sie herum neu verteilt. Klick aufs Datum: Tagesart (Reisetag, Büro, Urlaub) und Übernachtung festlegen.</p>`;
   bindDrag();
 }
-function pillFor(a){if(a.type==="lunch")return'<span class="pill p-grey">Pause</span>';if(a.type==="private")return`<span class="pill p-priv">${CAT[a.cat||"privat"]}</span>`;if(needsFeedback(a))return'<span class="pill p-soon">Rückmeldung</span>';if(a.status==="geplant"&&a.manual)return'<span class="pill p-plan">verschoben</span>';return{geplant:'<span class="pill p-plan">Vorschlag</span>',fixiert:'<span class="pill p-plan">fixiert</span>',wahrgenommen:'<span class="pill p-ok">wahrgenommen</span>',nicht:'<span class="pill p-grey">nicht wahrg.</span>'}[a.status]||""}
+function pillFor(a){if(a.type==="lunch")return'<span class="pill p-grey">Pause</span>';if(a.type==="private")return`<span class="pill p-priv">${CAT[a.cat||"privat"]}</span>`;if(needsFeedback(a))return'<span class="pill p-soon">Rückmeldung</span>';if(isFlexV(a))return'<span class="pill p-plan">Flextermin</span>';if(a.status==="geplant"&&a.manual)return'<span class="pill p-plan">verschoben</span>';return{geplant:'<span class="pill p-plan">Vorschlag</span>',fixiert:'<span class="pill p-plan">Fixtermin</span>',wahrgenommen:'<span class="pill p-ok">wahrgenommen</span>',nicht:'<span class="pill p-grey">nicht wahrg.</span>'}[a.status]||""}
 function openDay(d){
   const c=dayCfg(d),o=c.overnight||{},am=autoMode(d),h=holidayOf(d),i=infoOf(d);
   const w=modal(`<div class="hd"><div><h2>${fmtD(d)} ${d.slice(0,4)}</h2><div class="muted">${[h,i&&i+" (Hinweis)"].filter(Boolean).map(esc).join(" · ")||"&nbsp;"}</div></div><button class="x" data-close aria-label="Schließen">×</button></div>
   <label class="fld"><span>Tagesart</span><select id="d-mode"><option value="">automatisch (${MODE[am]})</option><option value="reise">Reisetag</option><option value="buero">Büro / Homeoffice</option><option value="urlaub">Urlaub</option><option value="sonderurlaub">Sonderurlaub</option><option value="krank">Krankenstand</option></select></label>
-  <p class="hint" style="margin:0">Hotelübernachtungen legst du über „+ Termin“ an. Die Tour endet dann im Hotel, der nächste Tag startet dort.</p>
+  <div class="fld2"><label class="fld"><span>Abfahrt frühestens (nur dieser Tag)</span><input type="time" id="d-dep" value="${c.dep||""}" step="900" placeholder="${S.settings.dayStart}"></label><label class="fld"><span>Zurück zuhause spätestens</span><input type="time" id="d-arr" value="${c.arr||""}" step="900" placeholder="${S.settings.dayEnd}"></label></div>
+  <p class="hint" style="margin:0">Leer = Standard (${S.settings.dayStart}–${S.settings.dayEnd}). Beispiel: Vormittag privater Termin → Abfahrt 11:00; Nachmittag Homeoffice → zurück bis 13:00. Die Mindest-Reisezeit wird an diesem Tag entsprechend verkürzt.</p>
+  <p class="hint" style="margin:0">Hotelübernachtungen legst du im Kalender über „+ Termin“ an.</p>
   <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="saveDay">Speichern</button></div>`);
   $("#d-mode",w).value=c.mode||"";w.dataset.dday=d;
 }
@@ -1502,7 +1524,8 @@ function openAppt(id){
     <div class="row"><button class="btn okb" data-act="done">Wahrgenommen</button><button class="btn warn" data-act="missed">Nicht wahrgenommen – neu einplanen</button></div>
     <div class="sep"></div><div class="lbl">Termin bearbeiten</div>
     <div class="fld2"><label class="fld"><span>Datum</span><input type="date" id="a-d" value="${a.date}"></label><label class="fld"><span>Beginn</span><input type="time" id="a-t" value="${hm(a.startMin)}" step="300"></label></div>
-    <div class="fld2"><label class="fld"><span>Besuchsdauer (min)</span><input type="number" id="a-dur" value="${a.dur}" min="5" step="5"></label><div class="fld"><span>Standard für diesen Kunden</span><span style="padding-top:7px">${c?c.duration+" min":"–"}</span></div></div>`
+    <div class="fld2"><label class="fld"><span>Besuchsdauer (min)</span><input type="number" id="a-dur" value="${a.dur}" min="5" step="5"></label><div class="fld"><span>Standard für diesen Kunden</span><span style="padding-top:7px">${c?c.duration+" min":"–"}</span></div></div>
+    <label class="row" style="gap:6px"><input type="checkbox" id="a-flex" ${a.flex?"checked":""}> Flextermin – Tag steht fest, die Uhrzeit wählt der Tourenplaner</label>`
   :`<div class="row"><button class="btn" data-act="reset">Status zurücksetzen</button></div><div class="sep"></div>`}
   ${c?`<label class="row" style="gap:6px"><input type="checkbox" id="a-lunch" ${a.lunchMeet?"checked":""}> Mittagessen mit Kunde – ersetzt meine Mittagspause an diesem Tag</label>`:""}
   <label class="fld"><span>Notiz zu diesem Termin</span><textarea id="a-notes" placeholder="z. B. Gesprächsthemen, Ansprechpartner, Ergebnis">${esc(a.notes||"")}</textarea></label>
@@ -1514,7 +1537,7 @@ function openPrivate(a,pre){
   if(isNew){const cat=pre.cat||"privat",ad=isAbs(cat)||cat==="geburtstag";
     a={id:uid(),type:"private",cat,title:"",date:pre.date||addDays(todayISO(),1),startMin:toMin("10:00"),dur:60,status:"privat",loc:{text:"",lat:null,lng:null},allDay:ad,endDate:null,block:isAbs(cat)}}
   const w=modal(`<div class="hd"><h2>${isNew?"Neuer Termin":"Termin bearbeiten"}</h2><button class="x" data-close aria-label="Schließen">×</button></div>
-  <div class="fld2"><label class="fld"><span>Art</span><select id="p-cat">${isNew?'<option value="kunde">Kundenbesuch (fixiert)</option>':""}<option value="privat">Persönlich</option><option value="meeting">Vertriebsmeeting</option><option value="buero">Büro / Meeting</option><option value="veranstaltung">Kundenveranstaltung</option><option value="hotel">Hotelübernachtung</option><option value="geburtstag">Geburtstag (jährlich)</option><optgroup label="Abwesenheit"><option value="urlaub">Urlaub</option><option value="sonderurlaub">Sonderurlaub</option><option value="krank">Krankenstand</option></optgroup></select></label><label class="fld"><span>Titel</span><input type="text" id="p-title" value="${esc(a.title)}" placeholder="z. B. Zahnarzt, Hausmesse"></label></div>
+  <div class="fld2"><label class="fld"><span>Art</span><select id="p-cat"><option value="privat">Persönlich</option><option value="meeting">Vertriebsmeeting</option><option value="buero">Büro / Meeting</option>${!isNew&&a.cat==="veranstaltung"?'<option value="veranstaltung">Kundenveranstaltung</option>':""}${!isNew&&a.cat==="kurz"?'<option value="kurz">Kurztermin</option>':""}<option value="hotel">Hotelübernachtung</option><option value="geburtstag">Geburtstag (jährlich)</option><optgroup label="Abwesenheit"><option value="urlaub">Urlaub</option><option value="sonderurlaub">Sonderurlaub</option><option value="krank">Krankenstand</option></optgroup></select></label><label class="fld"><span>Titel</span><input type="text" id="p-title" value="${esc(a.title)}" placeholder="z. B. Zahnarzt, Hausmesse"></label></div>
   <label class="fld" id="p-custf"><span id="p-custl">Kunde (optional)</span><input type="text" id="p-cust" list="p-custlist" value="${esc(a.customerId&&custById(a.customerId)?custLabel(custById(a.customerId)):"")}" placeholder="Name oder Ort tippen …" autocomplete="off"><datalist id="p-custlist">${S.customers.map(x=>`<option value="${esc(custLabel(x))}">`).join("")}</datalist></label>
   <label class="row" id="p-allrow" style="gap:6px"><input type="checkbox" id="p-all" ${a.allDay?"checked":""}> Ganztägig</label>
   <div class="fld2"><label class="fld"><span id="p-dl">Datum</span><input type="date" id="p-d" value="${a.date}"></label><label class="fld" id="p-d2f"><span>bis (für mehrere Tage)</span><input type="date" id="p-d2" value="${a.endDate||""}"></label>
@@ -1725,12 +1748,68 @@ async function ttDiag(){
 
 /* Termin-Dialog übernehmen: Datum, Beginn, Dauer, Notiz. Geänderte Vorschläge bleiben beim Neuplanen erhalten. */
 function applyApptForm(a,w){const ds=new Set();const n=$("#a-notes",w);if(n)a.notes=n.value.trim();
+  const fx=$("#a-flex",w);if(fx&&a.type==="visit"&&!!fx.checked!==!!a.flex){if(fx.checked){a.flex=true;a.manual=true;if(a.status==="geplant")a.status="fixiert";a.lunchMeet=false}else{delete a.flex;a.manual=true}ds.add(a.date)}
   const lm=$("#a-lunch",w);if(lm&&!!lm.checked!==!!a.lunchMeet){a.lunchMeet=lm.checked;ds.add(a.date);if(a.type==="visit")a.manual=true}
   const di=$("#a-d",w),ti=$("#a-t",w),du=$("#a-dur",w);
   if(di&&ti&&du){const d=di.value||a.date,m=ti.value?toMin(ti.value):a.startMin,dd=Math.max(5,num(du.value)||a.dur);
     if(d!==a.date||m!==a.startMin||dd!==a.dur){ds.add(a.date);ds.add(d);a.date=d;a.startMin=m;a.dur=dd;if(a.type==="visit")a.manual=true}}
+  if(a.flex&&ds.size)placeFlex(a.date,a);
   if(a.notes&&a.type==="visit"&&a.status==="geplant")a.manual=true;
   return[...ds]}
+
+/* ---------- Termin aus der Tourenplanung: Kundentermin (Fix/Flex), Kundentagesveranstaltung, beruflicher Kurztermin ---------- */
+function placeFlex(d,a){
+  const base=dayEntries(d).filter(x=>!isAutoLunch(x)&&x!==a);let best=null;
+  for(let p=0;p<=base.length;p++){const seq=base.slice();seq.splice(p,0,a);const r=timeline(d,seq,dayStartOf(d));if(!r||!r.ok)continue;
+    const sc=r.drive+(r.lunchLate?500:0)+r.waitEff*0.5;if(!best||sc<best.sc)best={seq,sc}}
+  const seq=best?best.seq:base.concat([a]);const b=bestTimes(d,seq);if(b)applyDay(d,seq,b.r)}
+function openTourAppt(pre){pre=pre||{};const st=S.settings,d0=pre.date||(dayMode(todayISO())==="reise"?todayISO():addDays(todayISO(),1));
+  const w=modal(`<div class="hd"><h2>Termin in der Tourenplanung</h2><button class="x" data-close aria-label="Schließen">×</button></div>
+  <div class="seg" role="radiogroup"><label><input type="radio" name="ta-k" value="kunde" checked><span>Kundentermin</span></label><label><input type="radio" name="ta-k" value="veranst"><span>Tagesveranstaltung</span></label><label><input type="radio" name="ta-k" value="kurz"><span>Kurztermin</span></label></div>
+  <label class="fld" id="ta-custf"><span id="ta-custl">Kunde</span><input type="text" id="ta-cust" list="ta-custlist" placeholder="Name oder Ort tippen …" autocomplete="off"><datalist id="ta-custlist">${S.customers.map(x=>`<option value="${esc(custLabel(x))}">`).join("")}</datalist></label>
+  <label class="fld" id="ta-titlef"><span id="ta-titlel">Titel</span><input type="text" id="ta-title" placeholder="z. B. Reifenwechsel, Postgang"></label>
+  <div class="seg sm" id="ta-modef" role="radiogroup"><label><input type="radio" name="ta-m" value="fix" checked><span>Fixtermin</span></label><label><input type="radio" name="ta-m" value="flex"><span>Flextermin</span></label></div>
+  <div class="fld2"><label class="fld"><span id="ta-dl">Tag</span><input type="date" id="ta-d" value="${d0}"></label><label class="fld" id="ta-d2f"><span>bis (mehrtägig)</span><input type="date" id="ta-d2"></label><label class="fld" id="ta-tf"><span>Beginn</span><input type="time" id="ta-t" value="10:00" step="300"></label></div>
+  <div class="fld2" id="ta-durf"><label class="fld"><span>Dauer (min)</span><input type="number" id="ta-dur" min="5" step="5" value="${st.defDuration}"></label><label class="row" id="ta-lunchf" style="gap:6px;align-self:end;padding-bottom:6px"><input type="checkbox" id="ta-lunch"> Mittagessen mit Kunde</label></div>
+  <label class="fld" id="ta-addrf"><span>Adresse (optional, für Fahrzeiten)</span><input type="text" id="ta-addr" placeholder="z. B. Werkstatt, Post Innsbruck"></label>
+  <label class="fld"><span>Notiz</span><input type="text" id="ta-notes"></label>
+  <p class="hint" id="ta-hint" style="margin:0"></p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="saveTourAppt">Speichern</button></div>`);
+  const show=(id,on)=>{const e=$("#"+id,w);if(e)e.style.display=on?"":"none"};
+  const upd=()=>{const k=$('input[name="ta-k"]:checked',w).value,m=$('input[name="ta-m"]:checked',w).value;
+    show("ta-custf",k!=="kurz");show("ta-titlef",k!=="kunde");show("ta-modef",k==="kunde");show("ta-d2f",k==="veranst");
+    show("ta-tf",(k==="kunde"&&m==="fix")||k==="kurz");show("ta-durf",k!=="veranst");show("ta-lunchf",k==="kunde"&&m==="fix");show("ta-addrf",k==="kurz");
+    $("#ta-custl",w).textContent=k==="veranst"?"Kunde (Veranstaltungsort)":"Kunde";$("#ta-titlel",w).textContent=k==="veranst"?"Titel (z. B. Hausmesse, Schulung)":"Titel";
+    $("#ta-dl",w).textContent=k==="veranst"?"von":"Tag";
+    if(k==="kunde"&&!$("#ta-cust",w).value)$("#ta-dur",w).value=st.defDuration;
+    $("#ta-hint",w).textContent=k==="kunde"?(m==="fix"?"Fixtermin: feste Uhrzeit, wird nicht verschoben. Der Tourenplaner plant die anderen Besuche darum herum."
+        :"Flextermin: fixer Tag, die Uhrzeit wählt der Tourenplaner so, dass die Route am besten passt.")
+      :k==="veranst"?"Ganztägig beim Kunden. An diesen Tagen werden keine weiteren Besuche geplant."
+      :"Beruflicher Kurztermin mit fester Uhrzeit (z. B. Reifenwechsel, Postgang). Mit Adresse rechnet der Planer die Fahrzeit mit ein."};
+  w.addEventListener("change",e=>{if(e.target.name==="ta-k"||e.target.name==="ta-m")upd();if(e.target.id==="ta-cust"){const c=custFromLabel(e.target.value);if(c)$("#ta-dur",w).value=c.duration||st.defDuration}});upd();
+}
+async function saveTourAppt(w,t){
+  const k=$('input[name="ta-k"]:checked',w).value,m=$('input[name="ta-m"]:checked',w).value,st=S.settings;
+  const d=$("#ta-d",w).value;if(!d){toast("Bitte einen Tag wählen.");return}
+  const cu=custFromLabel($("#ta-cust",w).value),notes=$("#ta-notes",w).value.trim(),dur=Math.max(5,num($("#ta-dur",w).value)||st.defDuration);
+  if(k==="kunde"){if(!cu){toast("Bitte einen Kunden aus der Liste wählen.");return}
+    if(dayMode(d)!=="reise"&&!confirm(fmtD(d)+" ist kein Reisetag ("+(MODE[dayMode(d)]||"")+"). Trotzdem eintragen?"))return;
+    const a={id:uid(),type:"visit",customerId:cu.id,date:d,startMin:m==="fix"?toMin($("#ta-t",w).value):0,dur,status:"fixiert",manual:true,notes};
+    if(m==="flex")a.flex=true;else if($("#ta-lunch",w).checked)a.lunchMeet=true;
+    S.appts=S.appts.filter(x=>!(x.customerId===cu.id&&isDropV(x)&&x.date>=todayISO()));
+    S.appts.push(a);if(a.flex)placeFlex(d,a);reflow([d]);save("appts");closeModal();render(true);
+    toast((m==="flex"?"Flextermin":"Fixtermin")+" bei "+cu.name+" eingetragen"+(m==="flex"?" – Uhrzeit "+hm(a.startMin):""));if(TT.key())refineRoutes([d],true);return}
+  if(k==="veranst"){const d2=$("#ta-d2",w).value;if(d2&&d2<d){toast("Das Enddatum liegt vor dem Beginn.");return}
+    const title=$("#ta-title",w).value.trim()||"Kundenveranstaltung";
+    const p={id:uid(),type:"private",cat:"veranstaltung",title,date:d,endDate:d2&&d2!==d?d2:null,allDay:true,block:true,startMin:0,dur:0,status:"privat",notes,loc:{text:"",lat:null,lng:null}};
+    if(cu){p.customerId=cu.id;p.loc={text:[cu.street,[cu.zip,cu.city].filter(Boolean).join(" ")].filter(Boolean).join(", "),lat:hasXY(cu)?cu.lat:null,lng:hasXY(cu)?cu.lng:null}}
+    S.appts.push(p);const n=clearBlockedDays(evDays(p));save("appts");closeModal();render(true);toast(title+" eingetragen"+(n?" – "+n+" Vorschläge an diesen Tagen entfernt":""));return}
+  const title=$("#ta-title",w).value.trim();if(!title){toast("Bitte einen Titel eingeben.");return}
+  const p={id:uid(),type:"private",cat:"kurz",title,date:d,startMin:toMin($("#ta-t",w).value),dur,status:"privat",notes,loc:{text:"",lat:null,lng:null}};
+  const addr=$("#ta-addr",w).value.trim();
+  if(addr){p.loc.text=addr;const xy=parseCoords(addr);if(xy){p.loc.lat=xy.lat;p.loc.lng=xy.lng}else{t.disabled=true;t.textContent="Suche Adresse …";const g=await geoOne(addr);t.disabled=false;t.textContent="Speichern";if(g){p.loc.lat=+g.lat.toFixed(5);p.loc.lng=+g.lng.toFixed(5)}}}
+  S.appts.push(p);reflow([d]);save("appts");closeModal();render(true);toast("Kurztermin eingetragen");if(TT.key())refineRoutes([d],true);
+}
 
 /* ---------- Aktionen ---------- */
 document.addEventListener("click",async e=>{
@@ -1764,6 +1843,8 @@ document.addEventListener("click",async e=>{
     case"sample":loadSample();break;
     case"plan":planTours();break;
     case"addPrivate":openPrivate(null);break;
+    case"addTourAppt":openTourAppt({date:ui.selDay&&mondayOf(ui.selDay)===ui.week?ui.selDay:null});break;
+    case"saveTourAppt":await saveTourAppt(w,t);break;
     case"addCust":openCust(null);break;
     case"geocode":geocode(S.customers.filter(c=>!hasXY(c)));break;
     case"geocodeHome":geocode(null,true);break;
@@ -1787,8 +1868,9 @@ document.addEventListener("click",async e=>{
     case"ttTest":{if(!TT.key()){toast("Bitte zuerst einen Schlüssel eintragen.");break}ttDiag();break}
     case"saveDay":{const d=w.dataset.dday;const mode=$("#d-mode",w).value;const old=dayCfg(d).overnight;
       if(old&&hasXY(old)&&!hotelOf(d)){S.appts.push({id:uid(),type:"private",cat:"hotel",title:old.label||"Hotel",date:d,startMin:toMin("18:00"),dur:60,status:"privat",loc:{text:old.label||"",lat:old.lat,lng:old.lng}});save("appts")}
-      const c={};if(mode)c.mode=mode;
-      if(Object.keys(c).length)S.days[d]=c;else delete S.days[d];save("days");closeModal();render(true);toast(mode==="urlaub"?"Urlaub eingetragen":"Gespeichert – mit „Touren planen“ aktualisieren");break}
+      const c={};if(mode)c.mode=mode;const dep=$("#d-dep",w).value,arr=$("#d-arr",w).value;if(dep)c.dep=dep;if(arr)c.arr=arr;
+      if(dep&&arr&&toMin(arr)<=toMin(dep)){toast("Die Rückkehr liegt vor der Abfahrt.");break}
+      if(Object.keys(c).length)S.days[d]=c;else delete S.days[d];const rm=clearBlockedDays([d]);if(dayMode(d)==="reise")reflow([d]);save("days","appts");closeModal();render(true);toast(mode==="urlaub"?"Urlaub eingetragen":(dep||arr)?"Zeitfenster gespeichert – „Touren planen“ füllt den Tag passend auf":"Gespeichert – mit „Touren planen“ aktualisieren");break}
     case"saveLunch":{const tm=$("#l-t",w).value,du=num($("#l-dur",w).value);if(tm)a.startMin=toMin(tm);if(du)a.dur=du;a.manual=true;save("appts");closeModal();render(true);break}
     case"capCount":S.settings.cap.customers=S.customers.filter(isActive).length||S.settings.cap.customers;save("settings");render(true);break;
     case"capApply":{const c=capacity();if(c.interval){S.settings.defInterval=c.interval;save("settings");render(true);toast("Standard-Intervall: "+c.interval+" Tage")}break}
