@@ -274,6 +274,9 @@ td.num{text-align:right}
 /* Kundenliste und Kundenansicht */
 .ctbl{min-width:0;table-layout:auto}
 .ctbl td{padding:9px 10px}
+.ctbl .cx{width:34px;padding-right:0}.ctbl .cx input{width:18px;height:18px}
+.bulk.sel{position:sticky;bottom:0;background:var(--accent-soft);z-index:3}
+.bulk input{width:80px}
 .ctbl .cn b{display:block}.ctbl .cn .small{display:block}
 .ctbl tr.inact{opacity:.6}
 .ctool select{max-width:100%}
@@ -308,16 +311,17 @@ td.num{text-align:right}
 @media (max-width:640px){
   .ctbl thead{display:none}
   .ctbl,.ctbl tbody{display:block}
-  .ctbl tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .ctbl tr{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:2px 10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .ctbl .cx{grid-column:1;grid-row:1/3;padding-top:2px}
+  .bulk.sel{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
   .ctbl td{display:block;padding:0;border:0}
-  .ctbl .cn{grid-column:1}.ctbl .cs{grid-column:2;grid-row:1;text-align:right}
-  .ctbl .co{grid-column:1;font-size:13px;color:var(--muted)}.ctbl .ct{grid-column:2;grid-row:2;text-align:right}
+  .ctbl .cn{grid-column:2}.ctbl .cs{grid-column:3;grid-row:1;text-align:right}
+  .ctbl .co{grid-column:2;font-size:13px;color:var(--muted)}.ctbl .ct{grid-column:3;grid-row:2;text-align:right}
   .ctool input[type=search]{flex-basis:100%}.ctool select{flex:1 1 45%}
   .poth,.potr{grid-template-columns:minmax(0,1fr) repeat(3,minmax(0,.62fr));}
   .poth span:first-child{display:none}.potr .pg{grid-column:1/-1;font-weight:600}
   .poth span:nth-child(2){grid-column:1}
   .whrow{grid-template-columns:minmax(0,1fr) auto auto}.whrow .w-note{grid-column:1/-1;grid-row:2}
-  .bulk{display:none}
   .modal{padding:0}.dlg{border-radius:0;min-height:100%;width:100%}
 }
 /* Einstellungen */
@@ -389,7 +393,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-01 22:55";
+const APPVER="2026-11-02 00:40";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -426,15 +430,15 @@ function migrate(s){const o=Object.assign(clone(DEF),s||{});o.cap=Object.assign(
   if(s&&Array.isArray(s.custTypes)&&s.custTypes.includes("GH-Außendienst")){o.custTypes=s.custTypes.filter(x=>x!=="GH-Außendienst");if(!o.custTypes.includes("Verarbeiter-Filiale"))o.custTypes.splice(1,0,"Verarbeiter-Filiale");o._migrated=true}
   if(!s||!s.ver||s.ver<5){Object.assign(o,{briefMin:5,notesMin:10,travelPct:10,overhead:0,defDuration:45});o.ver=5;o._migrated=!!s}
   return o}
-const ui={showActive:(()=>{try{return localStorage.getItem("tp.showActive")!=="0"}catch(e){return true}})(),showInactive:(()=>{try{return localStorage.getItem("tp.showInactive")!=="0"}catch(e){return true}})(),tab:"overview",week:mondayOf(todayISO()),filter:"all",search:"",mapDay:"",sel:null,custFilter:"all",sort:"due"};
+const ui={csel:new Set(),showActive:(()=>{try{return localStorage.getItem("tp.showActive")!=="0"}catch(e){return true}})(),showInactive:(()=>{try{return localStorage.getItem("tp.showInactive")!=="0"}catch(e){return true}})(),tab:"overview",week:mondayOf(todayISO()),filter:"all",search:"",mapDay:"",sel:null,custFilter:"all",sort:"due"};
 
 /* ---------- Speicherung: Konto (db) mit lokalem Zwischenspeicher ---------- */
 const store={db:null,uid:null,refs:{},timers:{},busy:{},again:{},pending:{},loaded:{}};
 const KEYS=["settings","customers","appts","days"];
 function lsGet(k){try{const v=localStorage.getItem("tp."+k);return v?JSON.parse(v):null}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem("tp."+k,JSON.stringify(v))}catch(e){}}
-function loadLocal(){const s=lsGet("settings");if(s){S.settings=migrate(s);if(S.settings._migrated){delete S.settings._migrated;lsSet("settings",S.settings)}}const c=lsGet("customers");if(Array.isArray(c))S.customers=c;const a=lsGet("appts");if(Array.isArray(a))S.appts=a;const d=lsGet("days");if(d&&typeof d==="object")S.days=d}
-function applyLoaded(k,v){if(k==="settings"){const m=migrate(v);const mig=m._migrated;delete m._migrated;S.settings=m;if(mig)setTimeout(()=>persist("settings"),50)}else if(k==="days")S.days=v&&typeof v==="object"&&!Array.isArray(v)?clone(v):{};else S[k]=Array.isArray(v)?clone(v):[]}
+function loadLocal(){const s=lsGet("settings");if(s){S.settings=migrate(s);if(!S.settings.ttKey&&lsGet("ttkey"))S.settings.ttKey=lsGet("ttkey");if(S.settings.ttKey)lsSet("ttkey",S.settings.ttKey);if(S.settings._migrated){delete S.settings._migrated;lsSet("settings",S.settings)}}const c=lsGet("customers");if(Array.isArray(c))S.customers=c;const a=lsGet("appts");if(Array.isArray(a))S.appts=a;const d=lsGet("days");if(d&&typeof d==="object")S.days=d}
+function applyLoaded(k,v){if(k==="settings"){const m=migrate(v);if(!m.ttKey&&(S.settings.ttKey||lsGet("ttkey"))){m.ttKey=S.settings.ttKey||lsGet("ttkey");setTimeout(()=>persist("settings"),100)}if(m.ttKey)lsSet("ttkey",m.ttKey);const mig=m._migrated;delete m._migrated;S.settings=m;if(mig)setTimeout(()=>persist("settings"),50)}else if(k==="days")S.days=v&&typeof v==="object"&&!Array.isArray(v)?clone(v):{};else S[k]=Array.isArray(v)?clone(v):[]}
 function setSaveState(){const el=$("#saveState");const busy=KEYS.some(k=>store.pending[k]||store.busy[k]);
   el.className="save"+(store.db?(busy?" busy":" cloud"):"");
   let txt="Gespeichert in diesem Browser";
@@ -488,7 +492,7 @@ const GH={
     else{const r2=await this.api("GET","/contents/data/"+k+".json",null,"application/vnd.github.raw+json");if(!r2.ok)throw new Error(this.errText(r2));txt=await r2.text()}
     let o;try{o=JSON.parse(txt)}catch(e){throw new Error("Datei data/"+k+".json ist beschädigt")}
     return{sha:j.sha,v:o.v,at:o.at||0,dev:o.dev||""}},
-  async put(k,sha){const at=this.dirty()[k]||Date.now();
+  async put(k,sha){const at=this.dirty()[k]||Date.now();if(k==="settings"&&!S.settings.ttKey&&lsGet("ttkey"))S.settings.ttKey=lsGet("ttkey");
     const body={message:"Tourenplaner: "+({settings:"Einstellungen",customers:"Kunden",appts:"Termine",days:"Tage"}[k]||k)+" ("+this.dev()+")",content:this.b64e(JSON.stringify({v:S[k],at,dev:this.dev()}))};if(sha)body.sha=sha;
     const r=await this.api("PUT","/contents/data/"+k+".json",body);
     if(r.status===409||r.status===422){const e=new Error("conflict");e.conflict=true;throw e}
@@ -726,7 +730,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function isoAt(date,min){const d=pISO(date);d.setHours(0,min,0,0);const off=-d.getTimezoneOffset(),sg=off>=0?"+":"-";return date+"T"+hm(min)+":00"+sg+pad(Math.floor(Math.abs(off)/60))+":"+pad(Math.abs(off)%60)}
 function inFuture(date,min){const d=pISO(date);d.setHours(0,min,0,0);return d.getTime()>Date.now()+60e3}
 const TT={
-  key:()=>String(S.settings.ttKey||"").replace(/[^A-Za-z0-9]/g,""),
+  key:()=>String(S.settings.ttKey||lsGet("ttkey")||"").replace(/[^A-Za-z0-9]/g,""),
   async get(url){let r;try{r=await fetch(url)}catch(e){throw new Error("keine Verbindung zu TomTom")}
     if(r.status===403||r.status===401)throw new Error("Schlüssel ungültig oder nicht freigeschaltet");if(r.status===429)throw new Error("Tageslimit von TomTom erreicht");
     if(!r.ok)throw new Error("TomTom antwortet mit Fehler "+r.status);return r.json()},
@@ -1170,7 +1174,7 @@ function weekDays(){const out=[];for(let i=0;i<7;i++){const d=addDays(ui.week,i)
 function evClass(a){if(a.type==="lunch")return"pause";if(a.type==="visit"&&a.status==="geplant"&&a.manual)return"geplant moved";if(a.type==="private")return a.cat==="veranstaltung"?"privat event":a.cat==="hotel"?"privat hotel":"privat";return a.status}
 const CAT={privat:"Persönlich",meeting:"Vertriebsmeeting",veranstaltung:"Kundenveranstaltung",buero:"Büro / Meeting",hotel:"Hotelübernachtung",geburtstag:"Geburtstag",urlaub:"Urlaub",sonderurlaub:"Sonderurlaub",krank:"Krankenstand"};
 function evLabel(a){if(a.type==="lunch")return"Mittagspause";if(a.type==="private")return esc(a.title||CAT[a.cat||"privat"]);const c=custById(a.customerId);return esc(c?c.name:"(Kunde gelöscht)")}
-function evSub(a){if(a.type==="lunch")return"";if(a.lunchMeet&&a.type==="visit"){const c=custById(a.customerId);return esc([c&&c.city,"Mittagessen mit Kunde"].filter(Boolean).join(" · "))}if(a.type==="private")return esc([CAT[a.cat||"privat"],a.loc&&a.loc.text].filter(Boolean).join(" · "));const c=custById(a.customerId);return esc(c?[c.city,a.status==="geplant"?"Vorschlag":a.status==="fixiert"?"fixiert":a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"].filter(Boolean).join(" · "):"")}
+function evSub(a){if(a.type==="lunch")return"";if(a.lunchMeet&&a.type==="visit"){const c=custById(a.customerId);return esc([c&&c.city,"Mittagessen mit Kunde"].filter(Boolean).join(" · "))}if(a.type==="private"){const cu=a.customerId&&custById(a.customerId);return esc([CAT[a.cat||"privat"],cu?cu.name:a.loc&&a.loc.text].filter(Boolean).join(" · "))}const c=custById(a.customerId);return esc(c?[c.city,a.status==="geplant"?"Vorschlag":a.status==="fixiert"?"fixiert":a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"].filter(Boolean).join(" · "):"")}
 function dayLabel(d){const h=holidayOf(d),i=infoOf(d),m=dayMode(d),c=dayCfg(d);const parts=[];
   eventsOn(d).forEach(a=>parts.push(`<button class="pill evp" data-appt="${a.id}" style="--c:${CATCOL[a.cat]||"var(--priv)"}">${esc(a.title||CAT[a.cat])}</button>`));const rg=dayRegion(d);if(rg)parts.push(`<span class="pill p-plan">${esc(rg)}</span>`);
   if(h)parts.push(`<span class="pill p-over">${esc(h)}</span>`);
@@ -1187,7 +1191,7 @@ function renderCalendar(m){
   const kw=(()=>{const d=pISO(ui.week);d.setDate(d.getDate()+3);const j=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-j)/864e5-3+((j.getDay()+6)%7))/7)})();
   let tools=`<div class="caltool"><h2>KW ${kw} · ${fmtDY(ui.week).slice(0,6)}–${fmtDY(addDays(ui.week,6))}</h2>
     <button class="btn" data-wk="-1" aria-label="Vorige Woche">‹</button><button class="btn" data-wk="0">Heute</button><button class="btn" data-wk="1" aria-label="Nächste Woche">›</button>
-    <button class="btn" data-act="refine" ${TT.key()?"":"disabled title=\"TomTom-Schlüssel in den Einstellungen eintragen\""}>Fahrzeiten<span class="lg"> mit Verkehr</span></button><button class="btn pri" data-act="plan">Touren planen<span class="lg"> (${st.horizonWeeks} Wo.)</span></button></div>`;
+    <button class="btn" data-act="addPrivate">+ Termin</button><button class="btn" data-act="refine" ${TT.key()?"":"disabled title=\"TomTom-Schlüssel in den Einstellungen eintragen\""}>Fahrzeiten<span class="lg"> mit Verkehr</span></button><button class="btn pri" data-act="plan">Touren planen<span class="lg"> (${st.horizonWeeks} Wo.)</span></button></div>`;
   const nh=!hasXY(st.home)?`<div class="banner warnb">Zuhause hat noch keine Koordinaten – die Planung startet erst, wenn sie in den Einstellungen eingetragen sind.<button class="btn sm" data-goto="settings">Einstellungen</button></div>`:"";
   if(!S.customers.length){m.innerHTML=tools+emptyState();return}
   const legend=`<div class="legend2"><span><i class="sw" style="border-style:dashed"></i>Vorschlag</span><span><i class="sw" style="border-style:dashed;background:var(--accent-soft)"></i>verschoben (bleibt)</span><span><i class="sw" style="background:var(--accent)"></i>fixiert</span><span><i class="sw" style="border-color:var(--ok);background:var(--ok-soft)"></i>wahrgenommen</span><span><i class="sw" style="border-color:var(--priv);background:var(--priv-soft)"></i>persönlich</span><span><i class="sw" style="border-color:var(--ink);background:var(--priv-soft)"></i>Kundenveranstaltung</span><span><i class="sw" style="border-color:var(--soon);box-shadow:0 0 0 1px var(--soon)"></i>Rückmeldung offen</span></div>`;
@@ -1282,14 +1286,14 @@ function renderCustomers(m){
   <div class="ctool"><span class="muted small" style="margin-right:auto">${list.length} von ${S.customers.length} Kunden</span>
     <button class="btn sm pri" data-act="addCust">+ Kunde</button><button class="btn sm" data-act="import">Kundenliste hochladen</button>
     ${noxy?`<button class="btn sm" data-act="geocode">Koordinaten suchen (${noxy})</button>`:""}<button class="btn sm" data-act="exportCsv">CSV-Export</button></div>
-  <div class="panel"><table class="ctbl"><thead><tr><th>Kunde</th><th>Ort</th><th>Status</th><th>Nächster Termin</th></tr></thead><tbody>
+  <div class="panel"><table class="ctbl"><thead><tr><th class="cx"><input type="checkbox" data-csel="all" aria-label="Alle angezeigten auswählen" ${list.length&&list.every(c=>ui.csel.has(c.id))?"checked":""}></th><th>Kunde</th><th>Ort</th><th>Status</th><th>Nächster Termin</th></tr></thead><tbody>
   ${list.map(c=>{const n=nextAppt(c.id),mc=mainContact(c);return`<tr data-cust="${c.id}" class="${isActive(c)?"":"inact"}">
-    <td class="cn"><b>${esc(c.name)}</b><span class="muted small">${esc([c.type,mc&&mc.name].filter(Boolean).join(" · "))}</span></td>
+    <td class="cx"><input type="checkbox" data-csel="${c.id}" ${ui.csel.has(c.id)?"checked":""} aria-label="${esc(c.name)} auswählen"></td><td class="cn"><b>${esc(c.name)}</b><span class="muted small">${esc([c.type,mc&&mc.name].filter(Boolean).join(" · "))}</span></td>
     <td class="co">${esc([c.zip,c.city].filter(Boolean).join(" "))}${hasXY(c)?"":' <span class="pill p-over" title="Koordinaten fehlen">Lage?</span>'}</td>
     <td class="cs"><span class="pill p-${dueClass(c)}">${isActive(c)?dueText(c):"kein Intervall"}</span></td>
     <td class="ct">${n?`<span class="pill p-plan">${n.status==="fixiert"?"fixiert":"Vorschlag"} ${fmtD(n.date)}</span>`:'<span class="muted">–</span>'}</td></tr>`}).join("")}
   </tbody></table>
-  <div class="bulk"><span class="lbl">Für ${list.length} angezeigte Kunden setzen:</span>Intervall <input type="number" id="bInt" min="1" placeholder="Tage" aria-label="Intervall in Tagen"> Dauer <input type="number" id="bDur" min="5" step="5" placeholder="min" aria-label="Dauer in Minuten"><button class="btn sm" data-act="bulk">Übernehmen</button></div></div>`;
+  <div class="bulk ${ui.csel.size?"sel":""}" id="bulkbar"><span class="lbl" id="bulklbl">${ui.csel.size?ui.csel.size+" ausgewählt – setzen:":"Für "+list.length+" angezeigte Kunden setzen:"}</span>Intervall <input type="number" id="bInt" min="1" placeholder="Tage" aria-label="Intervall in Tagen"> Dauer <input type="number" id="bDur" min="5" step="5" placeholder="min" aria-label="Dauer in Minuten"><button class="btn sm pri" data-act="bulk">Übernehmen</button>${ui.csel.size?'<button class="btn sm" data-act="cselClear">Auswahl aufheben</button>':""}</div></div>`;
   $("#cfilter").value=ui.custFilter;$("#csort").value=ui.sort;$("#ctype").value=ui.typeFilter||"";$("#cdoc").value=ui.docFilter||"";
   ui.bulkIds=list.map(c=>c.id);
 }
@@ -1310,6 +1314,7 @@ function openCust(id){
   const isNew=!id;const st=S.settings;
   const c=isNew?{id:uid(),name:"",street:"",zip:"",city:"",lat:null,lng:null,interval:st.defInterval,duration:st.defDuration,lastVisit:null,phone:"",email:"",notes:"",active:true,type:""}:custById(id);
   const n=!isNew&&nextAppt(c.id);const hist=isNew?[]:S.appts.filter(a=>a.customerId===c.id&&(a.status==="wahrgenommen"||a.status==="nicht")).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const linked=isNew?[]:S.appts.filter(a=>a.type==="private"&&a.customerId===c.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
   const t=todayISO(),y=+t.slice(0,4),years=[y-1,y-2,y-3];
   const types=[...new Set(listOf("custTypes").concat(c.type?[c.type]:[]))];
   const pots=listOf("prodGroups").map(g=>Object.assign({g,pot:"",share:{}},(c.potential||[]).find(p=>p.g===g)||{}));
@@ -1338,6 +1343,7 @@ function openCust(id){
     <div class="fld2"><label class="fld"><span>Besuchsintervall (Tage, leer = kein aktiver Besuch)</span><input type="number" id="c-interval" min="1" value="${isActive(c)?c.interval:""}" placeholder="kein Intervall"></label><label class="fld"><span>Besuchsdauer (min)</span><input type="number" id="c-duration" min="5" step="5" value="${c.duration}"></label></div>
     <div class="fld2"><label class="fld"><span>Letzter Besuch</span><input type="date" id="c-last" value="${c.lastVisit||""}"></label><div></div></div>
     ${isNew?"":`<div class="lbl">Termin vereinbaren</div><div class="row"><input type="date" id="c-ad" value="${addDays(t,1)}" aria-label="Datum"><input type="time" id="c-at" value="${st.dayStart}" step="900" aria-label="Uhrzeit"><label class="row" style="gap:5px"><input type="checkbox" id="c-afix" checked>mit Kunde fixiert</label><button class="btn sm" data-act="custAppt">Termin anlegen</button></div>
+    ${linked.length?`<div class="lbl">Verknüpfte Termine</div><div style="font-size:13.5px">${linked.map(a=>`<button class="lnk" data-appt="${a.id}">${fmtD(a.date)} ${a.date.slice(0,4)} · ${esc(a.title||CAT[a.cat])}</button>`).join("<br>")}</div>`:""}
     ${hist.length?`<div class="lbl">Letzte Termine</div><div style="font-size:13.5px">${hist.map(a=>`${fmtD(a.date)} ${a.date.slice(0,4)} · ${a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"}${a.notes?" · "+esc(a.notes):""}`).join("<br>")}</div>`:""}`}
   </div></details>
   <details class="acc"><summary>Potenzial <span class="muted small">${pt?fmtEUR(pt)+" / Jahr":""}</span></summary><div class="accb">
@@ -1455,7 +1461,7 @@ function renderSettings(m){
 }
 document.addEventListener("change",e=>{
   const t=e.target;const s=S.settings;
-  if(t.dataset.k){const k=t.dataset.k;s[k]=t.type==="number"?(num(t.value)??DEF[k]):t.value.trim();save("settings");if(["vacationDays","ttKey","briefMin","travelPct","overhead","freeDays"].includes(k)){if(k==="ttKey")mapView.fitted=false;render(true)}return}
+  if(t.dataset.k){const k=t.dataset.k;s[k]=t.type==="number"?(num(t.value)??DEF[k]):t.value.trim();if(k==="ttKey")lsSet("ttkey",s[k]);save("settings");if(["vacationDays","ttKey","briefMin","travelPct","overhead","freeDays"].includes(k)){if(k==="ttKey")mapView.fitted=false;render(true)}return}
   if(t.dataset.wd!==undefined){const d=+t.dataset.wd;s.travelDays=t.checked?[...new Set([...s.travelDays,d])]:s.travelDays.filter(x=>x!==d);save("settings");render(true);return}
   if(t.dataset.cap){const k=t.dataset.cap;s.cap[k]=t.type==="checkbox"?t.checked:(num(t.value)??DEF.cap[k]);save("settings");render(true);return}
   if(t.id&&t.id.startsWith("h-")){const h=s.home;
@@ -1508,7 +1514,8 @@ function openPrivate(a,pre){
   if(isNew){const cat=pre.cat||"privat",ad=isAbs(cat)||cat==="geburtstag";
     a={id:uid(),type:"private",cat,title:"",date:pre.date||addDays(todayISO(),1),startMin:toMin("10:00"),dur:60,status:"privat",loc:{text:"",lat:null,lng:null},allDay:ad,endDate:null,block:isAbs(cat)}}
   const w=modal(`<div class="hd"><h2>${isNew?"Neuer Termin":"Termin bearbeiten"}</h2><button class="x" data-close aria-label="Schließen">×</button></div>
-  <div class="fld2"><label class="fld"><span>Art</span><select id="p-cat"><option value="privat">Persönlich</option><option value="meeting">Vertriebsmeeting</option><option value="buero">Büro / Meeting</option><option value="veranstaltung">Kundenveranstaltung</option><option value="hotel">Hotelübernachtung</option><option value="geburtstag">Geburtstag (jährlich)</option><optgroup label="Abwesenheit"><option value="urlaub">Urlaub</option><option value="sonderurlaub">Sonderurlaub</option><option value="krank">Krankenstand</option></optgroup></select></label><label class="fld"><span>Titel</span><input type="text" id="p-title" value="${esc(a.title)}" placeholder="z. B. Zahnarzt, Hausmesse"></label></div>
+  <div class="fld2"><label class="fld"><span>Art</span><select id="p-cat">${isNew?'<option value="kunde">Kundenbesuch (fixiert)</option>':""}<option value="privat">Persönlich</option><option value="meeting">Vertriebsmeeting</option><option value="buero">Büro / Meeting</option><option value="veranstaltung">Kundenveranstaltung</option><option value="hotel">Hotelübernachtung</option><option value="geburtstag">Geburtstag (jährlich)</option><optgroup label="Abwesenheit"><option value="urlaub">Urlaub</option><option value="sonderurlaub">Sonderurlaub</option><option value="krank">Krankenstand</option></optgroup></select></label><label class="fld"><span>Titel</span><input type="text" id="p-title" value="${esc(a.title)}" placeholder="z. B. Zahnarzt, Hausmesse"></label></div>
+  <label class="fld" id="p-custf"><span id="p-custl">Kunde (optional)</span><input type="text" id="p-cust" list="p-custlist" value="${esc(a.customerId&&custById(a.customerId)?custLabel(custById(a.customerId)):"")}" placeholder="Name oder Ort tippen …" autocomplete="off"><datalist id="p-custlist">${S.customers.map(x=>`<option value="${esc(custLabel(x))}">`).join("")}</datalist></label>
   <label class="row" id="p-allrow" style="gap:6px"><input type="checkbox" id="p-all" ${a.allDay?"checked":""}> Ganztägig</label>
   <div class="fld2"><label class="fld"><span id="p-dl">Datum</span><input type="date" id="p-d" value="${a.date}"></label><label class="fld" id="p-d2f"><span>bis (für mehrere Tage)</span><input type="date" id="p-d2" value="${a.endDate||""}"></label>
     <label class="fld" id="p-tf"><span>Beginn</span><input type="time" id="p-t" value="${hm(a.startMin)}" step="900"></label></div>
@@ -1525,22 +1532,31 @@ function openPrivate(a,pre){
     if(isAbs(cat)||cat==="geburtstag"){all.checked=true;all.disabled=true}else if(cat==="hotel"){all.checked=false;all.disabled=true}else all.disabled=false;
     const ad=all.checked;
     show("p-allrow",cat!=="hotel");show("p-d2f",ad&&cat!=="geburtstag");show("p-tf",!ad);show("p-timed",!ad);
-    show("p-blockrow",ad&&!isAbs(cat)&&cat!=="geburtstag");show("p-locbox",!ad||cat==="veranstaltung");
+    show("p-blockrow",ad&&!isAbs(cat)&&cat!=="geburtstag");show("p-locbox",(!ad||cat==="veranstaltung")&&cat!=="kunde");show("p-custf",!isAbs(cat)&&cat!=="geburtstag"&&cat!=="hotel");$("#p-custl",w).textContent=cat==="kunde"?"Kunde":"Kunde (optional)";if(cat==="kunde"){all.checked=false;all.disabled=true;show("p-allrow",false);show("p-tf",true);show("p-timed",true);show("p-d2f",false)}
     $("#p-dl",w).textContent=cat==="geburtstag"?"Datum (Geburtstag)":ad?"von":"Datum";
     $("#p-req0",w).textContent=cat==="hotel"?"(nötig)":"(optional, für Fahrzeiten)";
     $("#p-hint",w).textContent=cat==="hotel"?"Datum = Abend der Übernachtung. Die Tour an diesem Tag endet im Hotel, der Folgetag startet dort. Die Uhrzeit ist nur der Check-in."
       :cat==="urlaub"?"Urlaubstage werden bei der Tourenplanung ausgelassen und beim Urlaubszähler (Mo–Fr ohne Feiertage) mitgezählt."
       :isAbs(cat)?MODE[cat]+" wird bei der Tourenplanung ausgelassen, zählt aber nicht zum Urlaubsanspruch."
       :cat==="geburtstag"?"Wird jedes Jahr am selben Tag im Kalender angezeigt und hat keinen Einfluss auf die Tourenplanung."
+      :cat==="kunde"?"Wird als fixierter Kundenbesuch in die Tour eingeplant. Fahrzeiten und Vorschläge des Tages passen sich daran an."
       :ad?"Ganztägige Termine stehen im Kalender. Mit „Keine Touren …“ plant die Tourenplanung an diesen Tagen keine Besuche."
       :"Ohne Koordinaten blockiert der Termin nur die Zeit, die Fahrstrecke bleibt unverändert.";
     if(cat==="hotel"&&isNew&&!$("#p-title",w).value)$("#p-t",w).value="18:00"};
   $("#p-cat",w).addEventListener("change",upd);$("#p-all",w).addEventListener("change",upd);upd();
 }
+const custLabel=c=>c.name+(c.city?" · "+c.city:"")+(c.kdnr?" · "+c.kdnr:"");
+function custFromLabel(v){v=String(v||"").trim();if(!v)return null;return S.customers.find(c=>custLabel(c)===v)||S.customers.find(c=>c.name===v)||null}
 async function savePrivateForm(w,t){
   const isNew=w.dataset.isnew;const p=isNew?ui.privDraft:S.appts.find(x=>x.id===w.dataset.aid);if(!p)return false;
   const oldDays=isAllDay(p)?evDays(p):[p.date];
   const cat=$("#p-cat",w).value,ad=$("#p-all",w).checked;
+  const custTxt=$("#p-cust",w)?$("#p-cust",w).value:"",cu=custFromLabel(custTxt);
+  if(custTxt.trim()&&!cu){toast("Kunde nicht gefunden – bitte aus der Liste wählen.");return false}
+  if(cat==="kunde"){if(!cu){toast("Bitte einen Kunden wählen.");return false}
+    const v={id:uid(),type:"visit",customerId:cu.id,date:$("#p-d",w).value||p.date,startMin:toMin($("#p-t",w).value),dur:Math.max(5,num($("#p-dur",w).value)||cu.duration||60),status:"fixiert",manual:true,notes:$("#p-notes",w).value.trim()};
+    S.appts.push(v);reflow([v.date]);save("appts");closeModal();render(true);toast("Kundenbesuch bei "+cu.name+" fixiert.");if(TT.key())refineRoutes([v.date],true);return true}
+  if(cu)p.customerId=cu.id;else delete p.customerId;
   const d1=$("#p-d",w).value||p.date;let d2=$("#p-d2",w).value;
   if(ad&&cat!=="geburtstag"&&d2&&d2<d1){toast("Das Enddatum liegt vor dem Beginn.");return false}
   p.cat=cat;p.title=$("#p-title",w).value.trim()||CAT[cat];p.date=d1;p.notes=$("#p-notes",w).value.trim();
@@ -1548,7 +1564,8 @@ async function savePrivateForm(w,t){
     if(cat!=="veranstaltung")p.loc={text:"",lat:null,lng:null}}
   else{delete p.allDay;delete p.endDate;delete p.block;p.startMin=toMin($("#p-t",w).value);p.dur=Math.max(5,num($("#p-dur",w).value)||60)}
   if(!ad||cat==="veranstaltung"){
-    const addr=$("#p-loc",w).value.trim(),xyRaw=$("#p-xy",w).value;let xy=parseCoords(xyRaw);
+    let addr=$("#p-loc",w).value.trim(),xyRaw=$("#p-xy",w).value;let xy=parseCoords(xyRaw);
+    if(cu&&!addr&&!xy&&cat!=="hotel"){addr=[cu.street,[cu.zip,cu.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");if(hasXY(cu))xy={lat:cu.lat,lng:cu.lng}}
     const oldAddr=p.loc&&p.loc.text||"";if(xy&&addr&&addr!==oldAddr&&hasXY(p.loc)&&xyRaw===(p.loc.lat+", "+p.loc.lng))xy=null;
     if(!xy&&addr){t.disabled=true;t.textContent="Suche Adresse …";const g=await geoOne(addr);t.disabled=false;t.textContent="Speichern";if(g)xy={lat:+g.lat.toFixed(5),lng:+g.lng.toFixed(5)};else if(cat==="hotel"){toast(TT.key()?"Adresse nicht gefunden – bitte genauer angeben oder Koordinaten einfügen.":"Ohne TomTom-Schlüssel bitte Koordinaten einfügen.");return false}}
     if(cat==="hotel"&&!xy){toast("Für die Übernachtung bitte die Adresse des Hotels eintragen.");return false}
@@ -1717,10 +1734,11 @@ function applyApptForm(a,w){const ds=new Set();const n=$("#a-notes",w);if(n)a.no
 
 /* ---------- Aktionen ---------- */
 document.addEventListener("click",async e=>{
-  const t=e.target.closest("[data-addrow],[data-rm],[data-sel],[data-act],[data-close],[data-cust],[data-appt],[data-f],[data-wk],[data-goto],[data-day],[data-cf],[data-gocal],[data-gomap],[data-mon],[data-newcat],[data-newev],[data-dayl],[data-mkw],[data-mtog],[data-mall]");if(!t)return;
+  const t=e.target.closest("[data-csel],[data-addrow],[data-rm],[data-sel],[data-act],[data-close],[data-cust],[data-appt],[data-f],[data-wk],[data-goto],[data-day],[data-cf],[data-gocal],[data-gomap],[data-mon],[data-newcat],[data-newev],[data-dayl],[data-mkw],[data-mtog],[data-mall]");if(!t)return;
   const w=$("#modal");
   if(t.hasAttribute("data-close")){closeModal();return}
   if(t.dataset.goto){ui.tab=t.dataset.goto;render(true);return}
+  if(t.dataset.csel){const id=t.dataset.csel;if(id==="all"){const on=t.checked;(ui.bulkIds||[]).forEach(x=>on?ui.csel.add(x):ui.csel.delete(x))}else{t.checked?ui.csel.add(id):ui.csel.delete(id)}render(true);return}
   if(t.dataset.addrow){const w=$("#modal");if(t.dataset.addrow==="contact"){const ph=$("#c-contacts>p",w);if(ph)ph.remove()}if(t.dataset.addrow==="contact")$("#c-contacts",w).insertAdjacentHTML("beforeend",contactRow({id:uid()},true));else{$("#c-whs",w).insertAdjacentHTML("beforeend",whRow({id:"",main:!$$(".whrow",w).length}))}const last=t.previousElementSibling&&t.previousElementSibling.lastElementChild;if(last){const f=$("input,select",last);if(f)f.focus()}return}
   if(t.dataset.rm){const el=t.closest(t.dataset.rm);if(el)el.remove();return}
   if(t.dataset.sel){ui.selDay=t.dataset.sel;render(true);return}
@@ -1754,6 +1772,7 @@ document.addEventListener("click",async e=>{
     case"restore":$("#backupIn").click();break;
     case"doImport":doImport(w);break;
     case"refine":refineRoutes(plannedDates());break;
+    case"cselClear":ui.csel.clear();render(true);break;
     case"ghConnect":{const rp=$("#gh-repo").value,tk=$("#gh-token").value;if(!tk.trim()){toast("Bitte den Zugangsschlüssel einfügen.");break}t.disabled=true;t.textContent="Verbinde …";await GH.connect(rp,tk);t.disabled=false;t.textContent="Verbinden";render(true);break}
     case"ghTakeCloud":{GH.setMeta({});GH.setDirty({});closeModal();await GH.sync(false);toast("Cloud-Daten übernommen.");render(true);break}
     case"ghPushLocal":{GH.setMeta({});const d={};KEYS.forEach(k=>d[k]=Date.now());GH.setDirty(d);closeModal();await GH.sync(false);toast(GH.err?"Hochladen fehlgeschlagen: "+GH.err:"Daten dieses Geräts hochgeladen.");render(true);break}
@@ -1775,7 +1794,7 @@ document.addEventListener("click",async e=>{
     case"capApply":{const c=capacity();if(c.interval){S.settings.defInterval=c.interval;save("settings");render(true);toast("Standard-Intervall: "+c.interval+" Tage")}break}
     case"capAll":{if(t.dataset.sure){const c=capacity();if(c.interval){S.customers.forEach(x=>x.interval=c.interval);S.settings.defInterval=c.interval;save("customers","settings");render(true);toast("Alle Kunden: Intervall "+c.interval+" Tage")}}else{t.dataset.sure="1";t.textContent="Wirklich bei allen Kunden ändern?"}break}
     case"bulk":{const iv=num($("#bInt").value),du=num($("#bDur").value);if(!iv&&!du){toast("Intervall oder Dauer eingeben.");break}
-      const ids=new Set(ui.bulkIds||[]);S.customers.forEach(c=>{if(ids.has(c.id)){if(iv)c.interval=Math.max(1,iv);if(du)c.duration=Math.max(5,du)}});save("customers");toast(ids.size+" Kunden aktualisiert");render(true);break}
+      const ids=new Set(ui.csel.size?[...ui.csel]:(ui.bulkIds||[]));S.customers.forEach(c=>{if(ids.has(c.id)){if(iv)c.interval=Math.max(1,iv);if(du)c.duration=Math.max(5,du)}});save("customers");ui.csel.clear();toast(ids.size+" Kunden aktualisiert");render(true);break}
     case"saveCust":{const c=readCustForm(w);if(w.dataset.isnew)S.customers.push(c);save("customers");closeModal();render(true);
       const manual=c.geo==="manuell";const changed=addrOf(c)&&c.geoAddr!==addrOf(c);
       if(addrOf(c)&&!manual&&(!hasXY(c)||changed)){toast("Gespeichert – suche Koordinaten …");geoCustomer(c)}else toast("Gespeichert");break}
