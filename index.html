@@ -279,6 +279,7 @@ td.num{text-align:right}
 .seg label:last-child span{border-right:0}
 .seg input:checked+span{background:var(--accent);color:var(--accent-ink)}
 .seg.sm span{padding:6px;font-size:13px}
+@media (max-width:640px){.seg:not(.sm){display:grid;grid-template-columns:1fr 1fr}.seg:not(.sm) label:nth-child(2) span{border-right:0}.seg:not(.sm) label:nth-child(-n+2) span{border-bottom:1px solid var(--line)}.seg span{font-size:13.5px}}
 .ev.flex{border-style:solid;background:var(--accent-soft);color:var(--ink)}.ev.flex .t,.ev.flex .c{color:var(--muted);opacity:1}
 /* Kundenliste und Kundenansicht */
 .ctbl{min-width:0;table-layout:auto}
@@ -402,7 +403,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 01:30";
+const APPVER="2026-11-02 02:00";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -611,7 +612,8 @@ const infoOf=d=>holidays(+d.slice(0,4)).info[d]||null;
 
 /* Tagesart: Reisetag, Büro/Homeoffice, Urlaub, Feiertag, Wochenende */
 const dayCfg=d=>S.days[d]||{};
-const dayStartOf=d=>toMin(dayCfg(d).dep||S.settings.dayStart),dayEndOf=d=>toMin(dayCfg(d).arr||S.settings.dayEnd);
+function dayStartOf(d){const c=dayCfg(d);if(c.dep)return toMin(c.dep);const h=hotelOf(addDays(d,-1));if(h&&h.depNext)return toMin(h.depNext);return toMin(S.settings.dayStart)}
+function dayEndOf(d){const c=dayCfg(d);if(c.arr)return toMin(c.arr);const h=hotelOf(d);if(h&&h.startMin)return h.startMin;return toMin(S.settings.dayEnd)}
 function targetOf(d){const st=S.settings,c=dayCfg(d);let t=(dow(d)===5?st.minTravelFriH:st.minTravelH)*60;if(c.dep||c.arr)t=Math.min(t,Math.max(0,dayEndOf(d)-dayStartOf(d)-30));return t}
 const MODE={reise:"Reisetag",buero:"Büro / Homeoffice",urlaub:"Urlaub",sonderurlaub:"Sonderurlaub",krank:"Krankenstand",feiertag:"Feiertag",frei:"Wochenende",blockiert:"Ganztägiger Termin"};
 const ABS=["urlaub","sonderurlaub","krank"];const isAbs=c=>ABS.includes(c);
@@ -666,7 +668,7 @@ function checkDay(d){const st=S.settings;const es=dayEntries(d);if(!es.some(a=>a
     if(tm>-1e9&&arr>a.startMin+2){conflict=true;if(!dropId){const j=es.indexOf(a);for(let i=isAutoV(a)?j:j-1;i>=0;i--)if(isDropV(es[i])){dropId=es[i].id;break}}}
     tm=a.startMin+a.dur+postB(a);if(l){pos=l;last=a}if(isDropV(a))lastAuto=a});
   if(last)tm=last.startMin+last.dur;
-  const back=last?travelOut(last,endLoc(d)):0;const late=!!(last&&isAutoV(last)&&tm+back>dayEndOf(d)+10&&!nightOf(d));
+  const back=last?travelOut(last,endLoc(d)):0;const late=!!(last&&isAutoV(last)&&tm+back>dayEndOf(d)+10);
   if(late&&!dropId&&lastAuto)dropId=lastAuto.id;
   return{conflict,late,dropId}}
 
@@ -1542,6 +1544,7 @@ function openPrivate(a,pre){
   <label class="row" id="p-allrow" style="gap:6px"><input type="checkbox" id="p-all" ${a.allDay?"checked":""}> Ganztägig</label>
   <div class="fld2"><label class="fld"><span id="p-dl">Datum</span><input type="date" id="p-d" value="${a.date}"></label><label class="fld" id="p-d2f"><span>bis (für mehrere Tage)</span><input type="date" id="p-d2" value="${a.endDate||""}"></label>
     <label class="fld" id="p-tf"><span>Beginn</span><input type="time" id="p-t" value="${hm(a.startMin)}" step="900"></label></div>
+  <div class="fld2" id="p-hotf"><label class="fld"><span>Abreise am nächsten Morgen</span><input type="time" id="p-depn" value="${a.depNext||"08:00"}" step="900"></label><div></div></div>
   <div class="fld2" id="p-timed"><label class="fld"><span>Dauer (min)</span><input type="number" id="p-dur" value="${a.dur||60}" min="5" step="5"></label><label class="fld"><span>Wiederholen</span><select id="p-rep" ${isNew?"":"disabled"}><option value="0">einmalig</option><option value="7">wöchentlich, 8×</option><option value="14">alle 2 Wochen, 6×</option></select></label></div>
   <label class="row" id="p-blockrow" style="gap:6px"><input type="checkbox" id="p-block" ${a.block?"checked":""}> Keine Touren an diesen Tagen planen (z. B. Messe, Schulung)</label>
   <div id="p-locbox"><label class="fld"><span>Adresse <span id="p-req0">(optional, für Fahrzeiten)</span></span><input type="text" id="p-loc" value="${esc(a.loc&&a.loc.text||"")}" placeholder="z. B. Bahnhofstraße 1, 6850 Dornbirn"></label>
@@ -1554,11 +1557,11 @@ function openPrivate(a,pre){
   const upd=()=>{const cat=$("#p-cat",w).value,all=$("#p-all",w);
     if(isAbs(cat)||cat==="geburtstag"){all.checked=true;all.disabled=true}else if(cat==="hotel"){all.checked=false;all.disabled=true}else all.disabled=false;
     const ad=all.checked;
-    show("p-allrow",cat!=="hotel");show("p-d2f",ad&&cat!=="geburtstag");show("p-tf",!ad);show("p-timed",!ad);
+    show("p-allrow",cat!=="hotel");show("p-hotf",cat==="hotel");show("p-d2f",ad&&cat!=="geburtstag");show("p-tf",!ad);show("p-timed",!ad);
     show("p-blockrow",ad&&!isAbs(cat)&&cat!=="geburtstag");show("p-locbox",(!ad||cat==="veranstaltung")&&cat!=="kunde");show("p-custf",!isAbs(cat)&&cat!=="geburtstag"&&cat!=="hotel");$("#p-custl",w).textContent=cat==="kunde"?"Kunde":"Kunde (optional)";if(cat==="kunde"){all.checked=false;all.disabled=true;show("p-allrow",false);show("p-tf",true);show("p-timed",true);show("p-d2f",false)}
     $("#p-dl",w).textContent=cat==="geburtstag"?"Datum (Geburtstag)":ad?"von":"Datum";
     $("#p-req0",w).textContent=cat==="hotel"?"(nötig)":"(optional, für Fahrzeiten)";
-    $("#p-hint",w).textContent=cat==="hotel"?"Datum = Abend der Übernachtung. Die Tour an diesem Tag endet im Hotel, der Folgetag startet dort. Die Uhrzeit ist nur der Check-in."
+    $("#p-hint",w).textContent=cat==="hotel"?"Datum = Abend der Übernachtung. Beginn = ab wann du im Hotel bist (Ende der Tour). Der Folgetag startet dort zur Abreisezeit."
       :cat==="urlaub"?"Urlaubstage werden bei der Tourenplanung ausgelassen und beim Urlaubszähler (Mo–Fr ohne Feiertage) mitgezählt."
       :isAbs(cat)?MODE[cat]+" wird bei der Tourenplanung ausgelassen, zählt aber nicht zum Urlaubsanspruch."
       :cat==="geburtstag"?"Wird jedes Jahr am selben Tag im Kalender angezeigt und hat keinen Einfluss auf die Tourenplanung."
@@ -1592,7 +1595,7 @@ async function savePrivateForm(w,t){
     const oldAddr=p.loc&&p.loc.text||"";if(xy&&addr&&addr!==oldAddr&&hasXY(p.loc)&&xyRaw===(p.loc.lat+", "+p.loc.lng))xy=null;
     if(!xy&&addr){t.disabled=true;t.textContent="Suche Adresse …";const g=await geoOne(addr);t.disabled=false;t.textContent="Speichern";if(g)xy={lat:+g.lat.toFixed(5),lng:+g.lng.toFixed(5)};else if(cat==="hotel"){toast(TT.key()?"Adresse nicht gefunden – bitte genauer angeben oder Koordinaten einfügen.":"Ohne TomTom-Schlüssel bitte Koordinaten einfügen.");return false}}
     if(cat==="hotel"&&!xy){toast("Für die Übernachtung bitte die Adresse des Hotels eintragen.");return false}
-    if(cat==="hotel"){const ex=hotelOf(d1);if(ex&&ex!==p){toast("An diesem Tag gibt es schon eine Übernachtung.");return false}}
+    if(cat==="hotel"){const ex=hotelOf(d1);if(ex&&ex!==p){toast("An diesem Tag gibt es schon eine Übernachtung.");return false}p.depNext=$("#p-depn",w).value||"08:00"}
     p.loc={text:addr,lat:xy?xy.lat:null,lng:xy?xy.lng:null}}
   if(isNew){S.appts.push(p);const rep=!ad?+$("#p-rep",w).value:0;if(rep){const n=rep===7?8:6;for(let i=1;i<n;i++)S.appts.push(Object.assign(clone(p),{id:uid(),date:addDays(p.date,rep*i)}))}}
   const days=[...new Set(oldDays.concat(isAllDay(p)?evDays(p):[p.date]))];
@@ -1765,29 +1768,34 @@ function placeFlex(d,a){
   const seq=best?best.seq:base.concat([a]);const b=bestTimes(d,seq);if(b)applyDay(d,seq,b.r)}
 function openTourAppt(pre){pre=pre||{};const st=S.settings,d0=pre.date||(dayMode(todayISO())==="reise"?todayISO():addDays(todayISO(),1));
   const w=modal(`<div class="hd"><h2>Termin in der Tourenplanung</h2><button class="x" data-close aria-label="Schließen">×</button></div>
-  <div class="seg" role="radiogroup"><label><input type="radio" name="ta-k" value="kunde" checked><span>Kundentermin</span></label><label><input type="radio" name="ta-k" value="veranst"><span>Tagesveranstaltung</span></label><label><input type="radio" name="ta-k" value="kurz"><span>Kurztermin</span></label></div>
+  <div class="seg" role="radiogroup"><label><input type="radio" name="ta-k" value="kunde" checked><span>Kundentermin</span></label><label><input type="radio" name="ta-k" value="veranst"><span>Veranstaltung</span></label><label><input type="radio" name="ta-k" value="kurz"><span>Kurztermin</span></label><label><input type="radio" name="ta-k" value="hotel"><span>Hotel</span></label></div>
   <label class="fld" id="ta-custf"><span id="ta-custl">Kunde</span><input type="text" id="ta-cust" list="ta-custlist" placeholder="Name oder Ort tippen …" autocomplete="off"><datalist id="ta-custlist">${S.customers.map(x=>`<option value="${esc(custLabel(x))}">`).join("")}</datalist></label>
   <label class="fld" id="ta-titlef"><span id="ta-titlel">Titel</span><input type="text" id="ta-title" placeholder="z. B. Reifenwechsel, Postgang"></label>
   <div class="seg sm" id="ta-modef" role="radiogroup"><label><input type="radio" name="ta-m" value="fix" checked><span>Fixtermin</span></label><label><input type="radio" name="ta-m" value="flex"><span>Flextermin</span></label></div>
   <div class="fld2"><label class="fld"><span id="ta-dl">Tag</span><input type="date" id="ta-d" value="${d0}"></label><label class="fld" id="ta-d2f"><span>bis (mehrtägig)</span><input type="date" id="ta-d2"></label><label class="fld" id="ta-tf"><span>Beginn</span><input type="time" id="ta-t" value="10:00" step="300"></label></div>
   <div class="fld2" id="ta-durf"><label class="fld"><span>Dauer (min)</span><input type="number" id="ta-dur" min="5" step="5" value="${st.defDuration}"></label><label class="row" id="ta-lunchf" style="gap:6px;align-self:end;padding-bottom:6px"><input type="checkbox" id="ta-lunch"> Mittagessen mit Kunde</label></div>
-  <label class="fld" id="ta-addrf"><span>Adresse (optional, für Fahrzeiten)</span><input type="text" id="ta-addr" placeholder="z. B. Werkstatt, Post Innsbruck"></label>
+  <div class="fld2" id="ta-hotf"><label class="fld"><span>Im Hotel ab (Ende der Tour)</span><input type="time" id="ta-hin" value="17:00" step="900"></label><label class="fld"><span>Abreise am nächsten Morgen</span><input type="time" id="ta-hout" value="08:00" step="900"></label></div>
+  <label class="fld" id="ta-addrf"><span id="ta-addrl">Adresse (optional, für Fahrzeiten)</span><input type="text" id="ta-addr" placeholder="z. B. Werkstatt, Post Innsbruck"></label>
   <label class="fld"><span>Notiz</span><input type="text" id="ta-notes"></label>
   <p class="hint" id="ta-hint" style="margin:0"></p>
-  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="saveTourAppt">Speichern</button></div>`);
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn" data-act="saveTourAppt">Speichern</button><button class="btn pri" data-act="saveTourApptPlan">Speichern und Touren neu planen</button></div>`);
   const show=(id,on)=>{const e=$("#"+id,w);if(e)e.style.display=on?"":"none"};
   const upd=()=>{const k=$('input[name="ta-k"]:checked',w).value,m=$('input[name="ta-m"]:checked',w).value;
-    show("ta-custf",k!=="kurz");show("ta-titlef",k!=="kunde");show("ta-modef",k==="kunde");show("ta-d2f",k==="veranst");
-    show("ta-tf",(k==="kunde"&&m==="fix")||k==="kurz");show("ta-durf",k!=="veranst");show("ta-lunchf",k==="kunde"&&m==="fix");show("ta-addrf",k==="kurz");
+    show("ta-custf",k==="kunde"||k==="veranst");show("ta-titlef",k!=="kunde");show("ta-modef",k==="kunde");show("ta-d2f",k==="veranst");
+    show("ta-tf",(k==="kunde"&&m==="fix")||k==="kurz");show("ta-durf",k==="kunde"||k==="kurz");show("ta-lunchf",k==="kunde"&&m==="fix");show("ta-addrf",k!=="kunde");show("ta-hotf",k==="hotel");
+    $("#ta-addrl",w).textContent=k==="hotel"?"Adresse des Hotels":k==="veranst"?"Adresse (falls nicht beim Kunden, z. B. Messegelände)":"Adresse (optional, für Fahrzeiten)";
+    if(k==="hotel"){$("#ta-title",w).placeholder="Name des Hotels"}else if(k==="veranst"){$("#ta-title",w).placeholder="z. B. Hausmesse, Schulung"}else $("#ta-title",w).placeholder="z. B. Reifenwechsel, Postgang";
     $("#ta-custl",w).textContent=k==="veranst"?"Kunde (Veranstaltungsort)":"Kunde";$("#ta-titlel",w).textContent=k==="veranst"?"Titel (z. B. Hausmesse, Schulung)":"Titel";
-    $("#ta-dl",w).textContent=k==="veranst"?"von":"Tag";
+    $("#ta-dl",w).textContent=k==="veranst"?"von":k==="hotel"?"Übernachtung am (Abend)":"Tag";
     if(k==="kunde"&&!$("#ta-cust",w).value)$("#ta-dur",w).value=st.defDuration;
     $("#ta-hint",w).textContent=k==="kunde"?(m==="fix"?"Fixtermin: feste Uhrzeit, wird nicht verschoben. Der Tourenplaner plant die anderen Besuche darum herum."
         :"Flextermin: fixer Tag, die Uhrzeit wählt der Tourenplaner so, dass die Route am besten passt.")
       :k==="veranst"?"Ganztägig beim Kunden. An diesen Tagen werden keine weiteren Besuche geplant."
+      :k==="hotel"?"Die Tour dieses Tages endet zur angegebenen Zeit im Hotel, der nächste Tag startet dort zur Abreisezeit. Danach „Speichern und Touren neu planen“, damit beide Tage passend aufgebaut werden."
       :"Beruflicher Kurztermin mit fester Uhrzeit (z. B. Reifenwechsel, Postgang). Mit Adresse rechnet der Planer die Fahrzeit mit ein."};
   w.addEventListener("change",e=>{if(e.target.name==="ta-k"||e.target.name==="ta-m")upd();if(e.target.id==="ta-cust"){const c=custFromLabel(e.target.value);if(c)$("#ta-dur",w).value=c.duration||st.defDuration}});upd();
 }
+async function geoAddr(addr,t){const xy=parseCoords(addr);if(xy)return xy;if(!TT.key())return null;const lbl=t.textContent;t.disabled=true;t.textContent="Suche Adresse …";const g=await geoOne(addr);t.disabled=false;t.textContent=lbl;return g?{lat:+g.lat.toFixed(5),lng:+g.lng.toFixed(5)}:null}
 async function saveTourAppt(w,t){
   const k=$('input[name="ta-k"]:checked',w).value,m=$('input[name="ta-m"]:checked',w).value,st=S.settings;
   const d=$("#ta-d",w).value;if(!d){toast("Bitte einen Tag wählen.");return}
@@ -1798,16 +1806,23 @@ async function saveTourAppt(w,t){
     if(m==="flex")a.flex=true;else if($("#ta-lunch",w).checked)a.lunchMeet=true;
     S.appts=S.appts.filter(x=>!(x.customerId===cu.id&&isDropV(x)&&x.date>=todayISO()));
     S.appts.push(a);if(a.flex)placeFlex(d,a);reflow([d]);save("appts");closeModal();render(true);
-    toast((m==="flex"?"Flextermin":"Fixtermin")+" bei "+cu.name+" eingetragen"+(m==="flex"?" – Uhrzeit "+hm(a.startMin):""));if(TT.key())refineRoutes([d],true);return}
+    toast((m==="flex"?"Flextermin":"Fixtermin")+" bei "+cu.name+" eingetragen"+(m==="flex"?" – Uhrzeit "+hm(a.startMin):""));if(TT.key())refineRoutes([d],true);return true}
   if(k==="veranst"){const d2=$("#ta-d2",w).value;if(d2&&d2<d){toast("Das Enddatum liegt vor dem Beginn.");return}
     const title=$("#ta-title",w).value.trim()||"Kundenveranstaltung";
     const p={id:uid(),type:"private",cat:"veranstaltung",title,date:d,endDate:d2&&d2!==d?d2:null,allDay:true,block:true,startMin:0,dur:0,status:"privat",notes,loc:{text:"",lat:null,lng:null}};
     if(cu){p.customerId=cu.id;p.loc={text:[cu.street,[cu.zip,cu.city].filter(Boolean).join(" ")].filter(Boolean).join(", "),lat:hasXY(cu)?cu.lat:null,lng:hasXY(cu)?cu.lng:null}}
-    S.appts.push(p);const n=clearBlockedDays(evDays(p));save("appts");closeModal();render(true);toast(title+" eingetragen"+(n?" – "+n+" Vorschläge an diesen Tagen entfernt":""));return}
+    const va=$("#ta-addr",w).value.trim();if(va){const xy=await geoAddr(va,t);p.loc={text:va,lat:xy?xy.lat:null,lng:xy?xy.lng:null}}
+    S.appts.push(p);const n=clearBlockedDays(evDays(p));save("appts");closeModal();render(true);toast(title+" eingetragen"+(n?" – "+n+" Vorschläge an diesen Tagen entfernt":""));return true}
+  if(k==="hotel"){const addr=$("#ta-addr",w).value.trim();if(!addr){toast("Bitte die Adresse des Hotels eingeben.");return false}
+    const ex=hotelOf(d);if(ex){toast("Für "+fmtD(d)+" gibt es schon eine Übernachtung ("+ex.title+").");return false}
+    const xy=await geoAddr(addr,t);if(!xy){toast(TT.key()?"Adresse nicht gefunden – bitte genauer angeben (Straße, PLZ, Ort) oder Koordinaten einfügen.":"Ohne TomTom-Schlüssel bitte Koordinaten statt Adresse einfügen.");return false}
+    const title=$("#ta-title",w).value.trim()||"Hotel";
+    const p={id:uid(),type:"private",cat:"hotel",title,date:d,startMin:toMin($("#ta-hin",w).value||"17:00"),dur:60,status:"privat",notes,loc:{text:addr,lat:xy.lat,lng:xy.lng},depNext:$("#ta-hout",w).value||"08:00"};
+    S.appts.push(p);reflow([d,addDays(d,1)]);save("appts");closeModal();render(true);toast(title+": Tour endet am "+fmtD(d)+" um "+hm(p.startMin)+" im Hotel, Abreise "+fmtD(addDays(d,1))+" um "+p.depNext+".");return true}
   const title=$("#ta-title",w).value.trim();if(!title){toast("Bitte einen Titel eingeben.");return}
   const p={id:uid(),type:"private",cat:"kurz",title,date:d,startMin:toMin($("#ta-t",w).value),dur,status:"privat",notes,loc:{text:"",lat:null,lng:null}};
   const addr=$("#ta-addr",w).value.trim();
-  if(addr){p.loc.text=addr;const xy=parseCoords(addr);if(xy){p.loc.lat=xy.lat;p.loc.lng=xy.lng}else{t.disabled=true;t.textContent="Suche Adresse …";const g=await geoOne(addr);t.disabled=false;t.textContent="Speichern";if(g){p.loc.lat=+g.lat.toFixed(5);p.loc.lng=+g.lng.toFixed(5)}}}
+  if(addr){p.loc.text=addr;const xy=await geoAddr(addr,t);if(xy){p.loc.lat=xy.lat;p.loc.lng=xy.lng}else toast("Adresse nicht gefunden – der Termin blockiert nur die Zeit.")}
   S.appts.push(p);reflow([d]);save("appts");closeModal();render(true);toast("Kurztermin eingetragen");if(TT.key())refineRoutes([d],true);
 }
 
@@ -1845,6 +1860,7 @@ document.addEventListener("click",async e=>{
     case"addPrivate":openPrivate(null);break;
     case"addTourAppt":openTourAppt({date:ui.selDay&&mondayOf(ui.selDay)===ui.week?ui.selDay:null});break;
     case"saveTourAppt":await saveTourAppt(w,t);break;
+    case"saveTourApptPlan":{const before=S.appts.length;const okk=await saveTourAppt(w,t);if(okk!==false&&!$("#modal"))planTours();break}
     case"addCust":openCust(null);break;
     case"geocode":geocode(S.customers.filter(c=>!hasXY(c)));break;
     case"geocodeHome":geocode(null,true);break;
