@@ -354,7 +354,8 @@ td.num{text-align:right}
 .mapbox #lmap{position:absolute;inset:0;z-index:0}
 .legend{z-index:500}
 .rlegend{position:absolute;right:10px;bottom:24px;z-index:500;display:flex;flex-direction:column;gap:3px;font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 9px;max-width:calc(100% - 20px)}
-.rlegend span{display:flex;align-items:center;gap:6px}.rlegend i{width:16px;height:4px;border-radius:2px;display:inline-block}
+.rlegend span{display:flex;align-items:center;gap:6px}
+.rlegend .geonote{color:var(--muted);font-style:italic;max-width:300px}.rlegend i{width:16px;height:4px;border-radius:2px;display:inline-block}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--ink)}
 .leaflet-popup-content{margin:10px 12px}.leaflet-popup-content .pop{position:static;border:0;box-shadow:none;padding:0;width:auto}
 .leaflet-container{font:inherit;background:var(--surface-2)}
@@ -388,6 +389,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
+const APPVER="2026-11-01 22:55";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1089,7 +1091,7 @@ const mapView={
     const h=S.settings.home;if(hasXY(h))L.marker([h.lat,h.lng],{icon:L.divIcon({className:"homeic",html:"<span></span>",iconSize:[18,18]}),zIndexOffset:1000}).bindTooltip(esc(h.label||"Zuhause")).addTo(this.layer);
     S.appts.filter(a=>isHotel(a)&&a.date>=todayISO()).forEach(a=>L.marker([a.loc.lat,a.loc.lng],{icon:L.divIcon({className:"hotelic",html:"H",iconSize:[18,18]})}).bindTooltip(esc(a.title)+" · "+fmtD(a.date)).addTo(this.layer))},
   drawRoutes(){if(!this.map)return;this.routes.clearLayers();const leg=$("#rlegend");const rd=routeDays();
-    const sl=$("#mapbox .legend");if(sl)sl.hidden=!!rd.length;if(leg){leg.hidden=!rd.length;leg.innerHTML=rd.map(d=>{const s=daySummary(d);return`<span><i style="background:${DAYCOL[dow(d)]}"></i>${fmtD(d)} · ${s.n} Besuche · ${s.km} km · ${hm(s.min)} h${s.real?"":" (geschätzt)"}</span>`}).join("")}
+    const sl=$("#mapbox .legend");if(sl)sl.hidden=!!rd.length;if(leg){leg.hidden=!rd.length;leg.innerHTML=rd.map(d=>{const s=daySummary(d);return`<span><i style="background:${DAYCOL[dow(d)]}"></i>${fmtD(d)} · ${s.n} Besuche · ${s.km} km · ${hm(s.min)} h${s.real?"":" (geschätzt)"}</span>`}).join("")+`<span id="geonote" class="geonote" ${this.geoState?"":"hidden"}>${esc(this.geoState)}</span>`+(TT.key()?"":`<span class="geonote">Ohne TomTom-Schlüssel nur Luftlinien</span>`)}
     const missing=[];
     rd.forEach(d=>{const color=DAYCOL[dow(d)];const seq=[startLoc(d),...dayEntries(d).map(apptLoc).filter(Boolean),endLoc(d)].filter(hasXY);
       for(let i=0;i<seq.length-1;i++){if(km(seq[i],seq[i+1])>=0.3&&!GEO.get(seq[i],seq[i+1]))missing.push([seq[i],seq[i+1]])}
@@ -1100,9 +1102,17 @@ const mapView={
     if(missing.length)this.fetchGeo(missing)},
   draw(){if(this.map){this.drawMarkers();this.drawRoutes()}},
   /* Streckenverlauf nach Straßen nachladen, wenn er auf diesem Gerät noch fehlt (z. B. am iPhone nach dem Abgleich) */
-  async fetchGeo(legs){if(this.geoBusy||!TT.key()||!legs.length)return;this.geoBusy=true;let n=0;
-    try{for(const [a,b] of legs.slice(0,60)){if(GEO.get(a,b))continue;await TT.route(a,b,null,0);n++;await sleep(150)}}catch(e){}
-    this.geoBusy=false;if(n&&this.map)this.drawRoutes()},
+  async fetchGeo(legs){if(this.geoBusy||!TT.key()||!legs.length)return;this.geoBusy=true;let n=0,fail=0;this.geoErr=null;
+    const todo=legs.slice(0,60).filter(([a,b])=>!GEO.get(a,b)&&!this.geoFailed[GEO.k(a,b)]);
+    for(let i=0;i<todo.length;i++){const [a,b]=todo[i];this.geoState=`Straßenverlauf wird geladen … ${i+1}/${todo.length}`;this.legendNote();
+      try{await TT.route(a,b,null,0);n++}
+      catch(e){if(/Tageslimit|429/.test(e.message)){await sleep(1500);try{await TT.route(a,b,null,0);n++;continue}catch(e2){e=e2}}
+        fail++;this.geoErr=e.message;this.geoFailed[GEO.k(a,b)]=1;if(/Schlüssel|Verbindung/.test(e.message))break}
+      await sleep(250)}
+    this.geoBusy=false;this.geoState=fail?`Straßenverlauf für ${fail} Abschnitt${fail>1?"e":""} nicht verfügbar: ${this.geoErr}`:"";
+    if(this.map)this.drawRoutes()},
+  geoFailed:{},geoState:"",
+  legendNote(){const el=$("#geonote");if(el){el.textContent=this.geoState;el.hidden=!this.geoState}},
   popup(c){if(!this.map||!hasXY(c))return;this.map.setView([c.lat,c.lng],Math.max(this.map.getZoom(),11));const m=this.markers[c.id];if(m)m.openPopup()},
   close(){if(this.map)this.map.closePopup()}
 };
@@ -1437,7 +1447,7 @@ function renderSettings(m){
     <p class="hint">Österreichische Feiertage und die Firmen-freien Tage werden automatisch blockiert. Hl. Josef, Faschingsdienstag und Karfreitag stehen nur als Hinweis im Kalender. Urlaub, Sonderurlaub und Krankenstand trägst du im Kalender über „+ Termin“ (Art: Abwesenheit) ein; nur Urlaub zählt zum Urlaubsanspruch.</p>
   </div>
   ${GH.on()?ghPanel():""}
-  <div class="panel"><h3>Daten</h3>
+  <div class="panel"><h3>Daten <span class="muted small" style="font-weight:400">· Version ${APPVER}</span></h3>
     <div class="row"><button class="btn" data-act="backup">Sicherung speichern (JSON)</button><button class="btn" data-act="restore">Sicherung laden</button></div>
     <div class="row"><button class="btn warn" data-act="clearAll">Alle Daten löschen</button></div>
     <p class="hint">${GH.on()?"Die Daten werden über GitHub zwischen deinen Geräten abgeglichen. Eine Sicherungsdatei ist trotzdem sinnvoll, z. B. einmal im Monat.":"Die Daten liegen nur in diesem Browser auf diesem Gerät. Speichere regelmäßig eine Sicherung oder richte den Abgleich über GitHub ein."}</p>
