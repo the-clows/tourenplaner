@@ -50,7 +50,7 @@ a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:2500;background:var(--surface);border-bottom:1px solid var(--line)}
 .topin{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-block:10px 0;max-width:1400px;margin:0 auto}
 .brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.01em}
 .sign{width:30px;height:30px;border-radius:6px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:13px;font-weight:700;letter-spacing:.04em}
@@ -60,6 +60,24 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 nav.tabs{display:flex;gap:4px;overflow-x:auto;width:100%;scrollbar-width:none}
 nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px 9px;font-family:var(--f-display);font-weight:600;font-size:16px;color:var(--muted);cursor:pointer;white-space:nowrap}
 nav.tabs .gear{margin-left:auto;display:inline-flex;align-items:center;padding:6px 10px 7px}
+nav.tabs .ti{display:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+html{-webkit-text-size-adjust:100%}
+main{overflow-x:clip}
+@media (max-width:640px){
+  input,select,textarea{font-size:16px!important}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:2000;background:var(--surface);border-top:1px solid var(--line);gap:0;padding:0 max(4px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(4px,env(safe-area-inset-left,0px));overflow:visible;box-shadow:0 -2px 10px rgba(16,30,48,.06)}
+  nav.tabs button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 6px;border-bottom:0;border-top:3px solid transparent;font-size:11px;font-family:var(--f-body)}
+  nav.tabs button[aria-selected="true"]{border-top-color:var(--accent);color:var(--accent)}
+  nav.tabs .ti{display:block}
+  nav.tabs .tl{font-size:0;position:relative;white-space:nowrap}
+  nav.tabs .tl::before{content:attr(data-s);font-size:11px;font-weight:600}
+  nav.tabs .tl .cnt{position:absolute;top:-30px;left:50%;margin-left:4px;font-size:10px;min-width:16px;padding:0 4px}
+  nav.tabs .gear{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));flex:none;border-top:0;padding:6px;background:var(--surface);color:var(--muted)}
+  nav.tabs .gear[aria-selected="true"]{color:var(--accent)}
+  .topin{padding-bottom:10px;padding-right:56px}
+  main{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+}
 nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 nav.tabs .cnt{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:10px;font-size:12px;font-family:var(--f-body);font-weight:600;background:var(--over-soft);color:var(--over)}
 
@@ -76,7 +94,7 @@ h3{font-family:var(--f-display);font-weight:600;font-size:17px;margin:0}
 .btn.okb{background:var(--ok);border-color:var(--ok);color:var(--surface)}
 .btn.sm{padding:4px 9px;font-size:13.5px}
 .btn:disabled{opacity:.5;cursor:default}
-input[type=text],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 9px;min-width:0}
+input[type=text],input[type=tel],input[type=email],input[type=password],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 9px;min-width:0}
 textarea{width:100%;min-height:60px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px}
 .pill{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
@@ -120,6 +138,8 @@ textarea{width:100%;min-height:60px}
 .xin{width:62px}
 .maptool{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .maptool h2{margin-right:auto}
+.mchk{gap:12px}
+@media (max-width:640px){.maptool h2{width:100%}.kwbar{gap:8px}}
 .maptool select{max-width:100%}
 .mapbox{position:relative;overflow:hidden}
 .mapfull{height:calc(100vh - 190px);min-height:420px}
@@ -178,6 +198,13 @@ textarea{width:100%;min-height:60px}
 .legend2{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:10px}
 .sw{display:inline-block;width:18px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px;border:1.5px solid var(--accent)}
 .agenda{display:flex;flex-direction:column;gap:12px}
+.drow{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.dbt{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 2px 5px;cursor:pointer;color:var(--ink);min-width:0}
+.dbt b{font-family:var(--f-display);font-size:16px}.dbt small{font-size:11px;color:var(--muted)}
+.dbt i{width:5px;height:5px;border-radius:50%;background:transparent;margin-top:2px}.dbt i.has{background:var(--accent)}
+.dbt.cur b{color:var(--accent)}.dbt.off{background:var(--surface-2)}
+.dbt.on{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}.dbt.on small{color:var(--accent-ink);opacity:.85}.dbt.on b{color:var(--accent-ink)}.dbt.on i.has{background:var(--accent-ink)}
+@media (max-width:760px){.caltool .lg{display:none}.caltool h2{width:100%;font-size:19px}.caltool .btn.pri,.caltool [data-act="refine"]{flex:1}}
 .aday .ah{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
 .arow{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0}
 .arow:last-child{border-bottom:0}
@@ -220,11 +247,12 @@ textarea{width:100%;min-height:60px}
 /* Karte: Wochenleiste */
 .kwbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;margin-bottom:12px}
 .kwnav{display:flex;align-items:center;gap:8px}
-.dtogs{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
-.dtg{display:inline-flex;gap:7px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:5px 10px 5px 8px;cursor:pointer;color:var(--ink);min-width:0}
-.dtg .sw2{width:12px;height:12px;border-radius:3px;border:2px solid var(--c);background:transparent}
+.dtogs{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;flex:1;min-width:0}
+.dtg{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px 5px!important;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:5px 10px 5px 8px;cursor:pointer;color:var(--ink);min-width:0}
+.dtg .sw2{width:22px;height:4px!important;border-radius:2px!important;border:0!important;margin-bottom:3px;background:var(--line)!important;height:12px;border-radius:3px;border:2px solid var(--c);background:transparent}
 .dtg.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--surface))}
-.dtg.on .sw2{background:var(--c)}
+.dtg.on .sw2{background:var(--c)!important}
+.dtg b{font-family:var(--f-display);font-size:15px}.dtg small{font-size:11px;color:var(--muted)}
 .dtg .dt{font-weight:600;font-size:13.5px}
 .dtg .ds{font-size:11.5px;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dtg:disabled{opacity:.5;cursor:default}
@@ -241,6 +269,45 @@ td.num{text-align:right}
 .bulk{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-top:1px solid var(--line);font-size:14px}
 .bulk input{width:70px}
 
+/* Kundenliste und Kundenansicht */
+.ctbl{min-width:0;table-layout:auto}
+.ctbl td{padding:9px 10px}
+.ctbl .cn b{display:block}.ctbl .cn .small{display:block}
+.ctbl tr.inact{opacity:.6}
+.ctool select{max-width:100%}
+.acc{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.acc>summary{cursor:pointer;padding:11px 14px;font-family:var(--f-display);font-weight:600;font-size:16px;list-style:none;display:flex;align-items:center;gap:8px}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+.acc[open]>summary::after{transform:rotate(-135deg)}
+.accb{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.accb>.btn,.accb>.row{align-self:flex-start}
+.pcard{border:1px solid var(--line);border-radius:9px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--surface-2)}
+.pott{display:flex;flex-direction:column;gap:6px}
+.poth,.potr{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) repeat(3,minmax(0,.7fr));gap:6px;align-items:center}
+.poth{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.potr .pg{font-size:14px;overflow:hidden;text-overflow:ellipsis}
+.potr input{width:100%;min-width:0;padding:5px 6px}
+.whrow{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,.8fr) auto;gap:6px;align-items:center}
+.whrow select,.whrow input[type=text]{width:100%;min-width:0}
+.docr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--line)}
+.docr:last-of-type{border-bottom:0}
+.dlgfoot{position:sticky;bottom:-16px;background:var(--surface);padding:10px 0 2px;margin-top:2px}
+@media (max-width:640px){
+  .ctbl thead{display:none}
+  .ctbl,.ctbl tbody{display:block}
+  .ctbl tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .ctbl td{display:block;padding:0;border:0}
+  .ctbl .cn{grid-column:1}.ctbl .cs{grid-column:2;grid-row:1;text-align:right}
+  .ctbl .co{grid-column:1;font-size:13px;color:var(--muted)}.ctbl .ct{grid-column:2;grid-row:2;text-align:right}
+  .ctool input[type=search]{flex-basis:100%}.ctool select{flex:1 1 45%}
+  .poth,.potr{grid-template-columns:minmax(0,1fr) repeat(3,minmax(0,.62fr));}
+  .poth span:first-child{display:none}.potr .pg{grid-column:1/-1;font-weight:600}
+  .poth span:nth-child(2){grid-column:1}
+  .whrow{grid-template-columns:minmax(0,1fr) auto auto}.whrow .w-note{grid-column:1/-1;grid-row:2}
+  .bulk{display:none}
+  .modal{padding:0}.dlg{border-radius:0;min-height:100%;width:100%}
+}
 /* Einstellungen */
 .sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px}
 .sgrid .panel{padding:16px;display:flex;flex-direction:column;gap:12px}
@@ -255,7 +322,7 @@ td.num{text-align:right}
 .hint{font-size:13px;color:var(--muted)}
 
 /* Dialog */
-.modal{position:fixed;inset:0;z-index:20;background:rgba(10,18,28,.45);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(24px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 24px max(12px,env(safe-area-inset-left,0px))}
+.modal{position:fixed;inset:0;z-index:3000;background:rgba(10,18,28,.45);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(24px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 24px max(12px,env(safe-area-inset-left,0px))}
 .dlg{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);width:min(560px,100%);padding:18px 18px 16px;display:flex;flex-direction:column;gap:12px}
 .dlg.wide{width:min(860px,100%)}
 .dlg .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -266,7 +333,7 @@ td.num{text-align:right}
 .sep{border-top:1px solid var(--line);margin:2px 0}
 .maptbl{min-width:0}
 .maptbl td,.maptbl th{padding:5px 8px}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:9px;z-index:30;font-size:14px;max-width:calc(100% - 32px)}
+.toast{z-index:3100!important;position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:9px;z-index:30;font-size:14px;max-width:calc(100% - 32px)}
 .empty{padding:40px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
 .empty p{max-width:52ch;margin:0;color:var(--muted)}
 
@@ -295,11 +362,11 @@ td.num{text-align:right}
   <div class="brand"><div class="sign" aria-hidden="true">TP</div>Tourenplaner</div>
   <div class="save" id="saveState" title="Speicherort"><i></i><span>Lokal</span></div>
   <nav class="tabs" role="tablist" id="tabs">
-    <button role="tab" data-tab="overview">Übersicht</button>
-    <button role="tab" data-tab="calendar">Tourenplaner</button>
-    <button role="tab" data-tab="map">Karte</button>
-    <button role="tab" data-tab="customers">Kunden</button>
-    <button role="tab" data-tab="kalender">Kalender</button>
+    <button role="tab" data-tab="overview"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg><span class="tl" data-s="Übersicht">Übersicht</span></button>
+    <button role="tab" data-tab="calendar"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/></svg><span class="tl" data-s="Touren">Tourenplaner</span></button>
+    <button role="tab" data-tab="map"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14M15 6v14"/></svg><span class="tl" data-s="Karte">Karte</span></button>
+    <button role="tab" data-tab="customers"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.2 6-5.2s5.4 1.8 6 5.2"/><path d="M16 4.9a3.2 3.2 0 0 1 0 6.2M18 14.9c1.6.7 2.6 2.4 3 5.1"/></svg><span class="tl" data-s="Kunden">Kunden</span></button>
+    <button role="tab" data-tab="kalender"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg><span class="tl" data-s="Kalender">Kalender</span></button>
     <button role="tab" data-tab="settings" class="gear" aria-label="Einstellungen" title="Einstellungen"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9c.26.6.86 1 1.51 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg></button>
   </nav>
 </div></header>
@@ -335,7 +402,7 @@ function toast(msg){$$(".toast").forEach(x=>x.remove());const t=document.createE
 /* ---------- Zustand ---------- */
 const DEF={ver:5,ttKey:"",briefMin:5,notesMin:10,travelPct:10,earliestVisit:"07:30",maxVisitsNear:6,home:{label:"Zuhause",address:"",lat:null,lng:null},speed:60,roadFactor:1.3,overhead:0,clusterMin:20,
   travelDays:[1,2,3,4],dayStart:"06:00",dayEnd:"17:00",lunchFrom:"11:45",lunchTo:"13:30",lunchMin:60,minTravelH:8,minTravelFriH:4,maxVisits:5,
-  horizonWeeks:4,pullForward:7,defInterval:60,defDuration:45,dueX:14,freeDays:"24.12., 31.12.",vacationDays:25,sample:false,
+  horizonWeeks:4,pullForward:7,defInterval:60,defDuration:45,dueX:14,freeDays:"24.12., 31.12.",custTypes:["Verarbeiter","Großhandel","GH-Außendienst","Abholmarkt","Planungsbüro","Bauträger","Fachberufsschule"],prodGroups:["Hausabfluss (POLO-KAL)","Kanal","Wohnraumlüftung (POLO-KWL)","Installationselemente (POLO-BOX)"],docTypes:["PL 2026","KWL Folder","POLO-KAL Folder","Weihnachtskampagne 2026"],vacationDays:25,sample:false,
   cap:{perWeek:4,perDay:4.5,customers:250,withVacation:false}};
 const S={settings:clone(DEF),customers:[],appts:[],days:{}};
 function migrate(s){const o=Object.assign(clone(DEF),s||{});o.cap=Object.assign(clone(DEF.cap),o.cap||{});
@@ -344,7 +411,7 @@ function migrate(s){const o=Object.assign(clone(DEF),s||{});o.cap=Object.assign(
   if(!s||!s.ver||s.ver<4){o.dayStart="06:00";o.maxVisits=5}
   if(!s||!s.ver||s.ver<5){Object.assign(o,{briefMin:5,notesMin:10,travelPct:10,overhead:0,defDuration:45});o.ver=5;o._migrated=!!s}
   return o}
-const ui={showInactive:(()=>{try{return localStorage.getItem("tp.showInactive")!=="0"}catch(e){return true}})(),tab:"overview",week:mondayOf(todayISO()),filter:"all",search:"",mapDay:"",sel:null,custFilter:"all",sort:"due"};
+const ui={showActive:(()=>{try{return localStorage.getItem("tp.showActive")!=="0"}catch(e){return true}})(),showInactive:(()=>{try{return localStorage.getItem("tp.showInactive")!=="0"}catch(e){return true}})(),tab:"overview",week:mondayOf(todayISO()),filter:"all",search:"",mapDay:"",sel:null,custFilter:"all",sort:"due"};
 
 /* ---------- Speicherung: Konto (db) mit lokalem Zwischenspeicher ---------- */
 const store={db:null,uid:null,refs:{},timers:{},busy:{},again:{},pending:{},loaded:{}};
@@ -855,7 +922,7 @@ function render(force){
   ui.deferred=false;
   $$("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===ui.tab));
   const over=S.customers.filter(c=>isActive(c)&&dueClass(c)==="over"&&!nextAppt(c.id)).length;
-  const ob=$('#tabs [data-tab="customers"]');ob.innerHTML="Kunden"+(over?'<span class="cnt" title="überfällig ohne Termin">'+over+"</span>":"");
+  const ob=$('#tabs [data-tab="customers"] .tl');ob.innerHTML="Kunden"+(over?'<span class="cnt" title="überfällig ohne Termin">'+over+"</span>":"");
   const m=$("#main");
   if(ui.tab==="overview")renderOverview(m);
   else if(ui.tab==="calendar")renderCalendar(m);
@@ -910,13 +977,13 @@ function briefingCard(){
       <div class="lbl">Erster Termin · ${hm(first.startMin)}–${hm(first.startMin+first.dur)}</div>
       <h3>${esc(fc.name)}</h3>
       <div class="muted">${esc([fc.street,[fc.zip,fc.city].filter(Boolean).join(" ")].filter(Boolean).join(", "))}</div>
-      <dl class="kv">${fc.contact?`<dt>Ansprechpartner</dt><dd>${esc(fc.contact)}</dd>`:""}${fc.phone?`<dt>Telefon</dt><dd><a href="tel:${esc(fc.phone.replace(/\s/g,""))}">${esc(fc.phone)}</a></dd>`:""}
+      <dl class="kv">${contactsOf(fc).slice(0,2).map(p=>`<dt>${esc(p.role||"Ansprechpartner")}</dt><dd>${esc(p.name)}${p.phone?` · <a href="tel:${esc(p.phone.replace(/[^\d+]/g,""))}">${esc(p.phone)}</a>`:""}</dd>`).join("")}${fc.phone?`<dt>Telefon</dt><dd><a href="tel:${esc(fc.phone.replace(/[^\d+]/g,""))}">${esc(fc.phone)}</a></dd>`:""}
         ${first.notes?`<dt>Notiz zum Termin</dt><dd>${esc(first.notes)}</dd>`:""}${fc.notes?`<dt>Kundennotiz</dt><dd>${esc(fc.notes)}</dd>`:""}
         <dt>Letzter Besuch</dt><dd>${fc.lastVisit?fmtDY(fc.lastVisit):"noch nie"}</dd></dl>
       <div class="row"><button class="btn sm" data-appt="${first.id}">Termin öffnen</button><a class="btn sm" href="${gmapsPlace(fc)}" target="_blank" rel="noopener">Google Maps</a></div>
     </div>`:""}
     <div class="stops"><div class="lbl">Ablauf${lunch&&lunch.type==="lunch"?` · Mittagspause ${hm(lunch.startMin)}`:lunch?" · Mittagessen mit Kunde":""}</div>${es.map(stopRow).join("")}</div>
-    <div class="row">${route?`<a class="btn sm" href="${route}" target="_blank" rel="noopener">Route in Google Maps</a>`:""}<button class="btn sm" data-gocal="${d}">Im Kalender</button><button class="btn sm" data-gomap="${d}">Auf der Karte</button></div>
+    <div class="row">${route?`<a class="btn sm" href="${route}" target="_blank" rel="noopener">Route in Google Maps</a>`:""}</div>
   </section>`}
 function tileFeedback(){const fb=S.appts.filter(needsFeedback).sort((a,b)=>a.date.localeCompare(b.date)||a.startMin-b.startMin);
   return`<section class="panel tile"><div class="thead"><h3>Rückmeldung offen</h3>${fb.length?`<span class="pill p-soon">${fb.length}</span>`:""}</div>
@@ -935,7 +1002,7 @@ function tileWeek(){const t=todayISO();let m=mondayOf(t);if(dow(t)===0||dow(t)==
   const rows=[];for(let i=0;i<7;i++){const d=addDays(m,i),md=dayMode(d),s=daySummary(d);if(!s&&(dow(d)===0||dow(d)===6))continue;
     rows.push(`<button class="wrow ${d===t?"cur":""}" data-gocal="${d}"><span class="tm">${fmtD(d)}</span><span class="nm">${s?esc(dayRegion(d)||"Tour"):`<span class="muted">${esc(md==="feiertag"?holidayOf(d):md==="blockiert"?(blockEvent(d)||{}).title||MODE[md]:MODE[md])}</span>`}</span><span class="muted small">${s?`${s.n} Besuche · ${hm(s.dep)}–${hm(s.ret)}`:""}</span></button>`)}
   return`<section class="panel tile"><div class="thead"><h3>${m===mondayOf(t)?"Diese Woche":"Nächste Woche"}</h3><button class="btn sm" data-gomap="w:${m}">Woche auf Karte</button></div>${rows.join("")}</section>`}
-const DASH_TILES=[tileFeedback,tileDue,tileWeek];
+const DASH_TILES=[tileFeedback,tileDue];
 function renderOverview(m){
   if(!S.customers.length){m.innerHTML=emptyState();return}
   const t=todayISO(),h=holidayOf(t),md=dayMode(t);
@@ -951,14 +1018,14 @@ function routeDays(){if(!ui.mapWeek)return[];return mapWeekDays().filter(d=>ui.m
 function mapToggles(){
   return mapWeekDays().map(d=>{const s=daySummary(d),on=!!(s&&ui.mapDays.has(d)),col=DAYCOL[dow(d)];
     const md=dayMode(d),title=s?(dayRegion(d)?dayRegion(d)+" · ":"")+s.n+" Besuche":"",off=md==="feiertag"?holidayOf(d):isAbs(md)?MODE[md]:md==="blockiert"?((blockEvent(d)||{}).title||"ganztägig"):md==="buero"?"Büro":"keine Tour";
-    return`<button class="dtg ${on?"on":""}" ${s?`data-mtog="${d}"`:"disabled"} aria-pressed="${on}" title="${esc(s?title:off)}" style="--c:${col}"><span class="sw2"></span><span class="dt">${fmtD(d)}</span></button>`}).join("")}
+    return`<button class="dtg ${on?"on":""}" ${s?`data-mtog="${d}"`:"disabled"} aria-pressed="${on}" title="${esc(s?title:off)}" style="--c:${col}"><span class="sw2"></span><b>${DOW[dow(d)]}</b><small>${d.slice(8,10)}.${d.slice(5,7)}.</small></button>`}).join("")}
 function renderMap(m){
   if(!S.customers.length){m.innerHTML=emptyState();return}
   const X=S.settings.dueX;
   if(!ui.mapWeek){let w=mondayOf(todayISO());if(dow(todayISO())===0||dow(todayISO())===6)w=addDays(w,7);setMapWeek(w)}
   m.innerHTML=`<div class="maptool"><h2>Kundenkarte</h2>
-    <label class="row small" style="gap:5px"><input type="checkbox" id="showInactive" ${ui.showInactive?"checked":""}> Kunden ohne Intervall zeigen</label>
-    <button class="btn sm" data-act="mapFit">Alles zeigen</button></div>
+    <div class="row small mchk"><label class="row" style="gap:5px"><input type="checkbox" id="showActive" ${ui.showActive?"checked":""}> Alle Kunden</label><label class="row" style="gap:5px"><input type="checkbox" id="showInactive" ${ui.showInactive?"checked":""}> Kunden ohne Intervall</label></div>
+    <button class="btn sm" data-act="mapFit">Ausschnitt anpassen</button></div>
   <div class="kwbar panel"><div class="kwnav"><button class="btn sm" data-mkw="-1" aria-label="Vorige Kalenderwoche">‹</button><b>KW ${kwOf(ui.mapWeek)}</b><span class="muted small">${fmtDY(ui.mapWeek).slice(0,6)}–${fmtDY(addDays(ui.mapWeek,6)).slice(0,6)}</span><button class="btn sm" data-mkw="1" aria-label="Nächste Kalenderwoche">›</button></div>
     <div class="dtogs" id="dtogs">${mapToggles()}</div>
     <div class="row"><button class="btn sm" data-mall="1">Alle</button><button class="btn sm" data-mall="0">Keine</button></div></div>
@@ -986,18 +1053,18 @@ const mapView={
     if(this.fitted&&this.view)this.map.setView(this.view.c,this.view.z);else this.fit();
     this.map.on("moveend",()=>{this.view={c:this.map.getCenter(),z:this.map.getZoom()}});
     setTimeout(()=>this.map&&this.map.invalidateSize(),60)},
-  fit(){if(!this.map)return;const p=S.customers.filter(c=>(isActive(c)||ui.showInactive)&&hasXY(c)).map(c=>[c.lat,c.lng]);if(hasXY(S.settings.home))p.push([S.settings.home.lat,S.settings.home.lng]);
+  fit(){if(!this.map)return;const p=S.customers.filter(c=>(isActive(c)?ui.showActive:ui.showInactive)&&hasXY(c)).map(c=>[c.lat,c.lng]);if(hasXY(S.settings.home))p.push([S.settings.home.lat,S.settings.home.lng]);
     const rd=routeDays();if(rd.length){const q=[];rd.forEach(d=>{[startLoc(d),...dayEntries(d).map(apptLoc).filter(Boolean),endLoc(d)].filter(hasXY).forEach(x=>q.push([x.lat,x.lng]))});if(q.length){this.map.fitBounds(q,{padding:[40,40]});this.fitted=true;return}}
     if(p.length)this.map.fitBounds(p,{padding:[30,30]});else this.map.setView([47.25,11.4],8);this.fitted=true},
   col(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()},
   popHtml(c){const n=nextAppt(c.id);return`<div class="pop"><h3>${esc(c.name)}</h3><div class="muted">${esc([c.street,[c.zip,c.city].filter(Boolean).join(" ")].filter(Boolean).join(", "))}</div>
     <div class="row" style="gap:6px"><span class="pill p-${dueClass(c)}">${dueText(c)}</span>${n?`<span class="pill p-plan">${n.status==="fixiert"?"fixiert":"geplant"} ${fmtD(n.date)} ${hm(n.startMin)}</span>`:""}</div>
-    ${c.contact?`<div class="small" style="margin-top:4px">Ansprechpartner: ${esc(c.contact)}</div>`:""}
+    ${mainContact(c)?`<div class="small" style="margin-top:4px">${esc(mainContact(c).role||"Ansprechpartner")}: ${esc(mainContact(c).name)}</div>`:""}
     <div class="muted" style="font-size:12.5px;margin-top:4px">${isActive(c)?"alle "+c.interval+" Tage · "+c.duration+" min":"kein Besuchsintervall"}${hasXY(S.settings.home)?" · ca. "+travel(S.settings.home,c)+" min ab Zuhause":""}</div>
     <div class="row"><button class="btn sm pri" data-cust="${c.id}">Details</button><a class="btn sm" href="${gmapsPlace(c)}" target="_blank" rel="noopener">Google Maps</a></div></div>`},
   drawMarkers(){if(!this.map)return;this.layer.clearLayers();this.markers={};
     const colOf={over:this.col("--over"),soon:this.col("--soon"),ok:this.col("--ok"),none:this.col("--inact")},ring=this.col("--accent"),srf=this.col("--surface");
-    const list=S.customers.filter(c=>hasXY(c)&&(isActive(c)||ui.showInactive)).sort((a,b)=>(isActive(a)?1:0)-(isActive(b)?1:0));
+    const list=S.customers.filter(c=>hasXY(c)&&(isActive(c)?ui.showActive:ui.showInactive)).sort((a,b)=>(isActive(a)?1:0)-(isActive(b)?1:0));
     list.forEach(c=>{const planned=!!nextAppt(c.id),act=isActive(c);
       const m=L.circleMarker([c.lat,c.lng],{radius:c.id===ui.sel?9:act?6.5:5,color:planned?ring:srf,weight:planned?3:1.5,fillColor:colOf[dueClass(c)],fillOpacity:act?1:.85});
       m.bindPopup(this.popHtml(c),{maxWidth:260,minWidth:220});m.bindTooltip(esc(c.name),{direction:"top",offset:[0,-6]});
@@ -1085,15 +1152,16 @@ function renderCalendar(m){
   const narrow=window.innerWidth<760;const y=ui.week.slice(0,4);
   const kw=(()=>{const d=pISO(ui.week);d.setDate(d.getDate()+3);const j=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-j)/864e5-3+((j.getDay()+6)%7))/7)})();
   let tools=`<div class="caltool"><h2>KW ${kw} · ${fmtDY(ui.week).slice(0,6)}–${fmtDY(addDays(ui.week,6))}</h2>
-    <span class="muted" style="font-size:13px">Urlaub ${y}: ${vacationUsed(y)} von ${st.vacationDays} Tagen</span>
     <button class="btn" data-wk="-1" aria-label="Vorige Woche">‹</button><button class="btn" data-wk="0">Heute</button><button class="btn" data-wk="1" aria-label="Nächste Woche">›</button>
-    <button class="btn" data-act="addPrivate">+ Termin</button><button class="btn" data-act="refine" ${TT.key()?"":"disabled title=\"TomTom-Schlüssel in den Einstellungen eintragen\""}>Fahrzeiten mit Verkehr</button><button class="btn pri" data-act="plan">Touren planen (${st.horizonWeeks} Wo.)</button></div>`;
+    <button class="btn" data-act="refine" ${TT.key()?"":"disabled title=\"TomTom-Schlüssel in den Einstellungen eintragen\""}>Fahrzeiten<span class="lg"> mit Verkehr</span></button><button class="btn pri" data-act="plan">Touren planen<span class="lg"> (${st.horizonWeeks} Wo.)</span></button></div>`;
   const nh=!hasXY(st.home)?`<div class="banner warnb">Zuhause hat noch keine Koordinaten – die Planung startet erst, wenn sie in den Einstellungen eingetragen sind.<button class="btn sm" data-goto="settings">Einstellungen</button></div>`:"";
   if(!S.customers.length){m.innerHTML=tools+emptyState();return}
   const legend=`<div class="legend2"><span><i class="sw" style="border-style:dashed"></i>Vorschlag</span><span><i class="sw" style="border-style:dashed;background:var(--accent-soft)"></i>verschoben (bleibt)</span><span><i class="sw" style="background:var(--accent)"></i>fixiert</span><span><i class="sw" style="border-color:var(--ok);background:var(--ok-soft)"></i>wahrgenommen</span><span><i class="sw" style="border-color:var(--priv);background:var(--priv-soft)"></i>persönlich</span><span><i class="sw" style="border-color:var(--ink);background:var(--priv-soft)"></i>Kundenveranstaltung</span><span><i class="sw" style="border-color:var(--soon);box-shadow:0 0 0 1px var(--soon)"></i>Rückmeldung offen</span></div>`;
   const dayBtn=d=>`<button class="daybtn" data-day="${d}" aria-label="Tagesart für ${fmtD(d)} ändern">${fmtD(d)}</button>`;
   if(narrow){
-    m.innerHTML=sampleBanner()+nh+tools+`<div class="agenda">${days.map(d=>{const as=dayAppts(d);const r=gmapsRoute(d);const md=dayMode(d);
+    if(!ui.selDay||!days.includes(ui.selDay))ui.selDay=days.includes(t)?t:(days.find(d=>daySummary(d))||days[0]);
+    const row=`<div class="drow">${days.map(d=>{const s0=daySummary(d),md=dayMode(d);return`<button class="dbt ${d===ui.selDay?"on":""} ${d===t?"cur":""} ${md!=="reise"?"off":""}" data-sel="${d}"><b>${DOW[dow(d)]}</b><small>${d.slice(8,10)}.${d.slice(5,7)}.</small><i class="${s0?"has":""}"></i></button>`}).join("")}</div>`;
+    m.innerHTML=sampleBanner()+nh+tools+row+`<div class="agenda">${[ui.selDay].map(d=>{const as=dayAppts(d);const r=gmapsRoute(d);const md=dayMode(d);
       let prev=startLoc(d);
       return`<div class="panel aday"><div class="ah"><h3 style="${d===t?"color:var(--accent)":""}">${dayBtn(d)}</h3><span>${dayLabel(d)}</span><span class="muted" style="font-size:13px;width:100%">${spanTxt(d)}${r?` · <a href="${r}" target="_blank" rel="noopener">Route</a>`:""}</span></div>
       ${as.length?as.map(a=>{const l=apptLoc(a);const tr=l&&hasXY(prev)?travel(prev,l):0;if(l)prev=l;return(tr?`<div class="trav">↓ ${tr} min Fahrt</div>`:"")+`<button class="arow" data-appt="${a.id}"><span class="tm">${hm(a.startMin)}</span><span style="min-width:0"><span class="nm" style="display:block">${evLabel(a)}</span><span class="muted" style="font-size:13px">${[evSub(a),a.dur+" min",a.notes?"✎ "+esc(a.notes.slice(0,60)):""].filter(Boolean).join(" · ")}</span></span>${pillFor(a)}</button>`}).join(""):`<p class="muted" style="padding:10px 14px;margin:0">${md==="reise"?"Keine Termine":MODE[md]}</p>`}</div>`}).join("")}</div>`+legend;
@@ -1153,29 +1221,124 @@ window.addEventListener("pointerup",()=>{
 });
 
 /* --- Kunden --- */
+const listOf=k=>(S.settings[k]||DEF[k]||[]).filter(Boolean);
+function contactsOf(c){if(Array.isArray(c.contacts))return c.contacts;return c.contact?[{id:uid(),name:c.contact,role:"",phone:"",email:"",note:""}]:[]}
+const mainContact=c=>contactsOf(c)[0]||null;
+const isWholesale=c=>/gro(ß|ss)handel|abholmarkt/i.test(c.type||"");
+const fmtEUR=n=>n==null||n===""?"–":Number(n).toLocaleString("de-AT",{maximumFractionDigits:0})+" €";
+function potTotal(c){return(c.potential||[]).reduce((s,p)=>s+(+p.pot||0),0)}
 function renderCustomers(m){
   if(!S.customers.length){m.innerHTML=`<div class="ctool"><button class="btn pri" data-act="import">Kundenliste hochladen</button><button class="btn" data-act="addCust">+ Kunde anlegen</button></div>`+emptyState();return}
   const q=ui.search.toLowerCase();
-  let list=S.customers.filter(c=>!q||[c.name,c.street,c.zip,c.city,c.kdnr].join(" ").toLowerCase().includes(q));
+  let list=S.customers.filter(c=>!q||[c.name,c.street,c.zip,c.city,c.kdnr,c.type,...contactsOf(c).map(p=>p.name)].join(" ").toLowerCase().includes(q));
   if(ui.custFilter==="noxy")list=list.filter(c=>!hasXY(c));else if(ui.custFilter==="nodate")list=list.filter(c=>isActive(c)&&dueClass(c)==="over"&&!nextAppt(c.id));else if(ui.custFilter!=="all")list=list.filter(c=>dueClass(c)===ui.custFilter);
-  const dk=c=>isActive(c)?dueInfo(c).days:1e6;const sorters={due:(a,b)=>dk(a)-dk(b),name:(a,b)=>a.name.localeCompare(b.name,"de"),city:(a,b)=>(a.city||"").localeCompare(b.city||"","de")};
-  list.sort(sorters[ui.sort]);
+  if(ui.typeFilter)list=list.filter(c=>ui.typeFilter==="—"?!c.type:c.type===ui.typeFilter);
+  if(ui.docFilter)list=list.filter(c=>isActive(c)&&!(c.docs||[]).some(x=>x.d===ui.docFilter));
+  const dk=c=>isActive(c)?dueInfo(c).days:1e6;const sorters={due:(a,b)=>dk(a)-dk(b),name:(a,b)=>a.name.localeCompare(b.name,"de"),city:(a,b)=>(a.city||"").localeCompare(b.city||"","de"),pot:(a,b)=>potTotal(b)-potTotal(a)};
+  list.sort(sorters[ui.sort]||sorters.due);
   const noxy=S.customers.filter(c=>!hasXY(c)).length;
+  const types=[...new Set(listOf("custTypes").concat(S.customers.map(c=>c.type).filter(Boolean)))];
   m.innerHTML=sampleBanner()+`<div class="ctool">
-    <button class="btn pri" data-act="import">Kundenliste hochladen</button><button class="btn" data-act="addCust">+ Kunde</button>
-    ${noxy?`<button class="btn" data-act="geocode">Koordinaten suchen (${noxy})</button>`:""}
-    <button class="btn" data-act="exportCsv">Als CSV exportieren</button>
-    <input type="search" id="csearch" placeholder="Suchen: Name, Ort, PLZ …" value="${esc(ui.search)}" aria-label="Kunden suchen">
-    <select id="cfilter" aria-label="Filter"><option value="all">Alle (${S.customers.length})</option><option value="over">Überfällig</option><option value="soon">Fällig ≤ ${S.settings.dueX} Tage</option><option value="ok">Später</option><option value="nodate">Überfällig ohne Termin</option><option value="none">Kein Besuchsintervall (${S.customers.filter(c=>!isActive(c)).length})</option><option value="noxy">Ohne Koordinaten (${noxy})</option></select>
-    <select id="csort" aria-label="Sortierung"><option value="due">nach Fälligkeit</option><option value="name">nach Name</option><option value="city">nach Ort</option></select>
+    <input type="search" id="csearch" placeholder="Suchen: Name, Ort, Ansprechpartner …" value="${esc(ui.search)}" aria-label="Kunden suchen">
+    <select id="cfilter" aria-label="Status"><option value="all">Alle Status</option><option value="over">Überfällig</option><option value="nodate">Überfällig ohne Termin</option><option value="soon">Fällig ≤ ${S.settings.dueX} Tage</option><option value="ok">Später</option><option value="none">Kein Besuchsintervall</option><option value="noxy">Ohne Koordinaten (${noxy})</option></select>
+    <select id="ctype" aria-label="Kundentyp"><option value="">Alle Kundentypen</option>${types.map(x=>`<option>${esc(x)}</option>`).join("")}<option value="—">ohne Kundentyp</option></select>
+    <select id="cdoc" aria-label="Unterlagen"><option value="">Unterlagen: alle</option>${listOf("docTypes").map(x=>`<option value="${esc(x)}">noch nicht erhalten: ${esc(x)}</option>`).join("")}</select>
+    <select id="csort" aria-label="Sortierung"><option value="due">nach Fälligkeit</option><option value="name">nach Name</option><option value="city">nach Ort</option><option value="pot">nach Potenzial</option></select>
   </div>
-  <div class="panel"><div class="tblw"><table><thead><tr><th>Kunde</th><th>Ort</th><th class="num">Intervall</th><th class="num">Dauer</th><th>Letzter Besuch</th><th>Status</th><th>Nächster Termin</th><th>Lage</th></tr></thead><tbody>
-  ${list.map(c=>{const n=nextAppt(c.id);return`<tr data-cust="${c.id}" ${!isActive(c)?'style="opacity:.6"':""}><td><b>${esc(c.name)}</b>${c.kdnr?`<div class="muted" style="font-size:12.5px">Nr. ${esc(c.kdnr)}</div>`:""}</td><td>${esc([c.zip,c.city].filter(Boolean).join(" "))}<div class="muted" style="font-size:12.5px">${esc(c.street||"")}</div></td><td class="num">${isActive(c)?c.interval+" T":"–"}</td><td class="num">${c.duration} min</td><td>${fmtDY(c.lastVisit)}</td><td><span class="pill p-${dueClass(c)}">${isActive(c)?dueText(c):"kein Intervall"}</span></td><td>${n?`<span class="pill p-plan">${n.status==="fixiert"?"fixiert":"Vorschlag"} ${fmtD(n.date)}</span>`:'<span class="muted">–</span>'}</td><td>${hasXY(c)?(c.geo==="geschätzt"||c.geo==="ort"?'<span class="pill p-soon" title="nur Ortsmitte">≈ Ort</span>':'<span class="pill p-ok">✓</span>'):'<span class="pill p-over">fehlt</span>'}</td></tr>`}).join("")}
-  </tbody></table></div>
+  <div class="ctool"><span class="muted small" style="margin-right:auto">${list.length} von ${S.customers.length} Kunden</span>
+    <button class="btn sm pri" data-act="addCust">+ Kunde</button><button class="btn sm" data-act="import">Kundenliste hochladen</button>
+    ${noxy?`<button class="btn sm" data-act="geocode">Koordinaten suchen (${noxy})</button>`:""}<button class="btn sm" data-act="exportCsv">CSV-Export</button></div>
+  <div class="panel"><table class="ctbl"><thead><tr><th>Kunde</th><th>Ort</th><th>Status</th><th>Nächster Termin</th></tr></thead><tbody>
+  ${list.map(c=>{const n=nextAppt(c.id),mc=mainContact(c);return`<tr data-cust="${c.id}" class="${isActive(c)?"":"inact"}">
+    <td class="cn"><b>${esc(c.name)}</b><span class="muted small">${esc([c.type,mc&&mc.name].filter(Boolean).join(" · "))}</span></td>
+    <td class="co">${esc([c.zip,c.city].filter(Boolean).join(" "))}${hasXY(c)?"":' <span class="pill p-over" title="Koordinaten fehlen">Lage?</span>'}</td>
+    <td class="cs"><span class="pill p-${dueClass(c)}">${isActive(c)?dueText(c):"kein Intervall"}</span></td>
+    <td class="ct">${n?`<span class="pill p-plan">${n.status==="fixiert"?"fixiert":"Vorschlag"} ${fmtD(n.date)}</span>`:'<span class="muted">–</span>'}</td></tr>`}).join("")}
+  </tbody></table>
   <div class="bulk"><span class="lbl">Für ${list.length} angezeigte Kunden setzen:</span>Intervall <input type="number" id="bInt" min="1" placeholder="Tage" aria-label="Intervall in Tagen"> Dauer <input type="number" id="bDur" min="5" step="5" placeholder="min" aria-label="Dauer in Minuten"><button class="btn sm" data-act="bulk">Übernehmen</button></div></div>`;
-  $("#cfilter").value=ui.custFilter;$("#csort").value=ui.sort;
+  $("#cfilter").value=ui.custFilter;$("#csort").value=ui.sort;$("#ctype").value=ui.typeFilter||"";$("#cdoc").value=ui.docFilter||"";
   ui.bulkIds=list.map(c=>c.id);
 }
+
+/* --- Einzelkunde: Akkordeons, nur das Wichtige offen --- */
+const contactRow=p=>`<div class="pcard" data-pid="${esc(p.id||uid())}">
+  <div class="fld2"><label class="fld"><span>Name</span><input type="text" class="p-name" value="${esc(p.name||"")}"></label><label class="fld"><span>Funktion</span><input type="text" class="p-role" value="${esc(p.role||"")}" placeholder="z. B. Inhaber, Einkauf, Bauleiter" list="roles"></label></div>
+  <div class="fld2"><label class="fld"><span>Telefon</span><input type="tel" class="p-phone" value="${esc(p.phone||"")}"></label><label class="fld"><span>E-Mail</span><input type="email" class="p-email" value="${esc(p.email||"")}"></label></div>
+  <label class="fld"><span>Notiz</span><input type="text" class="p-note" value="${esc(p.note||"")}"></label>
+  <div class="row"><button class="btn sm warn" data-rm=".pcard">Ansprechpartner entfernen</button>${p.phone?`<a class="btn sm" href="tel:${esc(p.phone.replace(/[^\d+]/g,""))}">Anrufen</a>`:""}${p.email?`<a class="btn sm" href="mailto:${esc(p.email)}">E-Mail</a>`:""}</div></div>`;
+function whOptions(sel){const ws=S.customers.filter(isWholesale),src=ws.length?ws:S.customers;return src.map(x=>`<option value="${x.id}" ${x.id===sel?"selected":""}>${esc(x.name)}${x.city?" · "+esc(x.city):""}</option>`).join("")}
+const whRow=w=>`<div class="whrow"><select class="w-id">${whOptions(w.id)}</select><label class="row small" style="gap:4px"><input type="radio" name="w-main" class="w-main" ${w.main?"checked":""}> Haupt</label><input type="text" class="w-note" value="${esc(w.note||"")}" placeholder="Anteil / Notiz"><button class="btn sm warn" data-rm=".whrow" aria-label="Entfernen">×</button></div>`;
+function openCust(id){
+  const isNew=!id;const st=S.settings;
+  const c=isNew?{id:uid(),name:"",street:"",zip:"",city:"",lat:null,lng:null,interval:st.defInterval,duration:st.defDuration,lastVisit:null,phone:"",email:"",notes:"",active:true,type:""}:custById(id);
+  const n=!isNew&&nextAppt(c.id);const hist=isNew?[]:S.appts.filter(a=>a.customerId===c.id&&(a.status==="wahrgenommen"||a.status==="nicht")).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const t=todayISO(),y=+t.slice(0,4),years=[y-1,y-2,y-3];
+  const types=[...new Set(listOf("custTypes").concat(c.type?[c.type]:[]))];
+  const pots=listOf("prodGroups").map(g=>Object.assign({g,pot:"",share:{}},(c.potential||[]).find(p=>p.g===g)||{}));
+  (c.potential||[]).forEach(p=>{if(!pots.some(x=>x.g===p.g))pots.push(Object.assign({share:{}},p))});
+  const docs=listOf("docTypes").map(d=>({d,date:((c.docs||[]).find(x=>x.d===d)||{}).date||""}));
+  (c.docs||[]).forEach(x=>{if(!docs.some(d=>d.d===x.d))docs.push(x)});
+  const contacts=contactsOf(c),pt=potTotal(c),whs=c.wholesalers||[];
+  const mainTel=c.phone||((contacts.find(p=>p.phone)||{}).phone)||"",mainMail=c.email||((contacts.find(p=>p.email)||{}).email)||"";
+  const w=modal(`<div class="hd"><div style="min-width:0"><h2>${isNew?"Neuer Kunde":esc(c.name)}</h2>${isNew?"":`<div class="row" style="margin-top:6px;gap:6px">${c.type?`<span class="pill p-grey">${esc(c.type)}</span>`:""}<span class="pill p-${dueClass(c)}">${dueText(c)}</span>${n?`<span class="pill p-plan">${n.status==="fixiert"?"fixiert":"Vorschlag"} ${fmtD(n.date)} ${hm(n.startMin)}</span>`:""}</div>
+    <div class="row" style="margin-top:8px">${mainTel?`<a class="btn sm" href="tel:${esc(mainTel.replace(/[^\d+]/g,""))}">Anrufen</a>`:""}${mainMail?`<a class="btn sm" href="mailto:${esc(mainMail)}">E-Mail</a>`:""}<a class="btn sm" href="${gmapsPlace(c)}" target="_blank" rel="noopener">Google Maps</a></div>`}</div><button class="x" data-close aria-label="Schließen">×</button></div>
+  <datalist id="roles"><option>Inhaber</option><option>Geschäftsführer</option><option>Einkauf</option><option>Bauleiter</option><option>Techniker</option><option>Büro</option><option>Außendienst</option><option>Filialleiter</option></datalist>
+  <details class="acc" open><summary>Kontakt</summary><div class="accb">
+    <div class="fld2"><label class="fld"><span>Name / Firma</span><input type="text" id="c-name" value="${esc(c.name)}"></label><label class="fld"><span>Kundentyp</span><select id="c-type"><option value="">–</option>${types.map(x=>`<option ${x===c.type?"selected":""}>${esc(x)}</option>`).join("")}</select></label></div>
+    <div class="fld2"><label class="fld"><span>Haupttelefon</span><input type="tel" id="c-phone" value="${esc(c.phone||"")}"></label><label class="fld"><span>Haupt-E-Mail</span><input type="email" id="c-email" value="${esc(c.email||"")}"></label></div>
+    <label class="fld"><span>Straße</span><input type="text" id="c-street" value="${esc(c.street)}"></label>
+    <div class="fld2"><label class="fld"><span>PLZ</span><input type="text" id="c-zip" value="${esc(c.zip)}"></label><label class="fld"><span>Ort</span><input type="text" id="c-city" value="${esc(c.city)}"></label></div>
+    <label class="fld"><span>Hauptnotiz</span><textarea id="c-notes">${esc(c.notes||"")}</textarea></label>
+  </div></details>
+  <details class="acc" ${contacts.length?"open":""}><summary>Ansprechpartner <span class="muted small">${contacts.length||""}</span></summary><div class="accb"><div id="c-contacts">${contacts.map(contactRow).join("")}</div>
+    <button class="btn sm" data-addrow="contact">+ Ansprechpartner</button></div></details>
+  <details class="acc" ${isNew?"open":""}><summary>Besuche <span class="muted small">${isActive(c)?"alle "+c.interval+" Tage · "+c.duration+" min":"kein Intervall"}</span></summary><div class="accb">
+    <div class="fld2"><label class="fld"><span>Besuchsintervall (Tage, leer = kein aktiver Besuch)</span><input type="number" id="c-interval" min="1" value="${isActive(c)?c.interval:""}" placeholder="kein Intervall"></label><label class="fld"><span>Besuchsdauer (min)</span><input type="number" id="c-duration" min="5" step="5" value="${c.duration}"></label></div>
+    <div class="fld2"><label class="fld"><span>Letzter Besuch</span><input type="date" id="c-last" value="${c.lastVisit||""}"></label><div></div></div>
+    ${isNew?"":`<div class="lbl">Termin vereinbaren</div><div class="row"><input type="date" id="c-ad" value="${addDays(t,1)}" aria-label="Datum"><input type="time" id="c-at" value="${st.dayStart}" step="900" aria-label="Uhrzeit"><label class="row" style="gap:5px"><input type="checkbox" id="c-afix" checked>mit Kunde fixiert</label><button class="btn sm" data-act="custAppt">Termin anlegen</button></div>
+    ${hist.length?`<div class="lbl">Letzte Termine</div><div style="font-size:13.5px">${hist.map(a=>`${fmtD(a.date)} ${a.date.slice(0,4)} · ${a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"}${a.notes?" · "+esc(a.notes):""}`).join("<br>")}</div>`:""}`}
+  </div></details>
+  <details class="acc"><summary>Potenzial <span class="muted small">${pt?fmtEUR(pt)+" / Jahr":""}</span></summary><div class="accb">
+    <div class="pott"><div class="poth"><span>Produktgruppe</span><span>Potenzial €/Jahr</span>${years.map(x=>`<span>${x} %</span>`).join("")}</div>
+    ${pots.map(p=>`<div class="potr" data-g="${esc(p.g)}"><span class="pg">${esc(p.g)}</span><input type="number" class="pot-v" min="0" step="500" value="${p.pot??""}" placeholder="€" aria-label="Potenzial ${esc(p.g)}">${years.map(x=>`<input type="number" class="pot-s" data-y="${x}" min="0" max="100" value="${p.share&&p.share[x]!=null?p.share[x]:""}" placeholder="%" aria-label="${esc(p.g)} ${x} Prozent">`).join("")}</div>`).join("")}</div>
+    <p class="hint" style="margin:0">% = wie viel des Potenzials im jeweiligen Jahr über uns gelaufen ist. Produktgruppen pflegst du in den Einstellungen.</p>
+  </div></details>
+  <details class="acc"><summary>Großhändler <span class="muted small">${whs.length?esc((custById((whs.find(x=>x.main)||whs[0]).id)||{}).name||""):""}</span></summary><div class="accb">
+    <div id="c-whs">${whs.map(whRow).join("")}</div><button class="btn sm" data-addrow="wh">+ Großhändler</button>
+    <p class="hint" style="margin:0">Auswahl aus deinen Kunden mit Kundentyp „Großhandel“ oder „Abholmarkt“.</p>
+  </div></details>
+  <details class="acc"><summary>Unterlagen <span class="muted small">${(c.docs||[]).filter(x=>x.date).length||""}</span></summary><div class="accb">
+    ${docs.map(x=>`<div class="docr" data-d="${esc(x.d)}"><label class="row" style="gap:6px;min-width:0"><input type="checkbox" class="doc-on" ${x.date?"checked":""}><span>${esc(x.d)}</span></label><input type="date" class="doc-date" value="${x.date||""}" aria-label="Erhalten am"></div>`).join("")}
+    <p class="hint" style="margin:0">Häkchen = erhalten, Datum = wann. Die Liste der Unterlagen pflegst du in den Einstellungen.</p>
+  </div></details>
+  <details class="acc"><summary>Stammdaten und Lage</summary><div class="accb">
+    <label class="fld"><span>Kundennummer</span><input type="text" id="c-kdnr" value="${esc(c.kdnr||"")}"></label>
+    <div class="fld2"><label class="fld"><span>Breitengrad</span><input type="text" id="c-lat" value="${c.lat??""}"></label><label class="fld"><span>Längengrad</span><input type="text" id="c-lng" value="${c.lng??""}"></label></div>
+    <label class="fld"><span>Koordinaten oder Google-Maps-Link einfügen (nur nötig, wenn die Adresse nicht gefunden wird)</span><input type="text" id="c-paste" placeholder="47.2692, 11.4041"></label>
+  </div></details>
+  <div class="row dlgfoot" style="justify-content:space-between"><div>${isNew?"":`<button class="btn sm warn" data-act="delCust">Löschen</button>`}</div><div class="row"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="saveCust">Speichern</button></div></div>`,true);
+  w.dataset.cid=c.id;w.dataset.isnew=isNew?"1":"";
+  ["c-street","c-zip","c-city"].forEach(id=>$("#"+id,w).addEventListener("input",()=>w.dataset.addrChanged="1"));
+  ["c-lat","c-lng"].forEach(id=>$("#"+id,w).addEventListener("input",()=>w.dataset.xyChanged="1"));
+  $("#c-paste",w).addEventListener("change",e=>{const p=parseCoords(e.target.value);if(p){$("#c-lat",w).value=p.lat;$("#c-lng",w).value=p.lng;w.dataset.xyChanged="1";e.target.value="";toast("Koordinaten übernommen")}else toast("Keine Koordinaten erkannt")});
+  w.addEventListener("change",e=>{const r=e.target.closest(".docr");if(!r)return;const on=$(".doc-on",r),dt=$(".doc-date",r);
+    if(e.target===on&&on.checked&&!dt.value)dt.value=todayISO();if(e.target===on&&!on.checked)dt.value="";if(e.target===dt)on.checked=!!dt.value});
+}
+function readCustForm(w){const c=w.dataset.isnew?{id:w.dataset.cid}:custById(w.dataset.cid);const v=id=>$("#"+id,w).value.trim();
+  c.name=v("c-name")||"Ohne Namen";c.kdnr=v("c-kdnr");c.type=v("c-type");c.street=v("c-street");c.zip=v("c-zip");c.city=v("c-city");
+  const la=num(v("c-lat")),ln=num(v("c-lng"));if(w.dataset.xyChanged&&(la!==c.lat||ln!==c.lng)){c.geo=la!=null?"manuell":null;c.geoAddr=null}c.lat=la;c.lng=ln;
+  if(w.dataset.addrChanged&&!w.dataset.xyChanged){c.lat=null;c.lng=null;c.geo=null;c.geoAddr=null}
+  const iv=num(v("c-interval"));c.interval=iv&&iv>0?Math.round(iv):null;c.active=true;
+  c.duration=Math.max(5,num(v("c-duration"))||S.settings.defDuration);
+  c.lastVisit=v("c-last")||null;c.phone=v("c-phone");c.email=v("c-email");c.notes=$("#c-notes",w).value;
+  c.contacts=$$(".pcard",w).map(r=>({id:r.dataset.pid,name:$(".p-name",r).value.trim(),role:$(".p-role",r).value.trim(),phone:$(".p-phone",r).value.trim(),email:$(".p-email",r).value.trim(),note:$(".p-note",r).value.trim()})).filter(p=>p.name||p.phone||p.email);
+  delete c.contact;
+  c.potential=$$(".potr",w).map(r=>{const share={};$$(".pot-s",r).forEach(i=>{const x=num(i.value);if(x!=null)share[i.dataset.y]=Math.max(0,Math.min(100,x))});
+    return{g:r.dataset.g,pot:num($(".pot-v",r).value),share}}).filter(p=>p.pot!=null||Object.keys(p.share).length);
+  const wr=$$(".whrow",w);c.wholesalers=wr.map(r=>({id:$(".w-id",r).value,main:$(".w-main",r).checked,note:$(".w-note",r).value.trim()})).filter(x=>x.id&&x.id!==c.id);
+  if(c.wholesalers.length&&!c.wholesalers.some(x=>x.main))c.wholesalers[0].main=true;
+  c.docs=$$(".docr",w).map(r=>({d:r.dataset.d,date:$(".doc-date",r).value})).filter(x=>x.date);
+  return c}
 
 /* --- Einstellungen --- */
 function renderSettings(m){
@@ -1229,6 +1392,12 @@ function renderSettings(m){
     ${(()=>{const c=capacity();return`<dl class="kv" style="grid-template-columns:auto 1fr"><dt>Reisetage / Jahr</dt><dd>${c.days} <span class="muted">(abzüglich ${c.hol} Feiertage${c.vac?", "+c.vac+" Urlaubstage":""})</span></dd><dt>Besuche / Jahr</dt><dd>${c.visits}</dd><dt>Besuche je Kunde</dt><dd>${c.per.toFixed(1).replace(".",",")} pro Jahr</dd><dt>Ø Intervall möglich</dt><dd><b>${c.interval} Tage</b> <span class="muted">(≈ ${(c.interval/7).toFixed(1).replace(".",",")} Wochen)</span></dd>${c.need?`<dt>Bedarf deiner Kunden</dt><dd>${c.need} Besuche/Jahr = <b class="${c.need>c.visits?"warnt":""}">${Math.round(c.need/Math.max(1,c.visits)*100)} % der Kapazität</b> <span class="muted">(≈ ${(c.need/Math.max(1,c.days)).toFixed(1).replace(".",",")} Besuche je Reisetag nötig)</span></dd>`:""}</dl>
     <div class="row"><button class="btn sm" data-act="capApply">${c.interval} Tage als Standard übernehmen</button><button class="btn sm" data-act="capAll">Auf alle Kunden anwenden</button></div>`})()}
   </div>
+  <div class="panel"><h3>Listen</h3>
+    <label class="fld"><span>Kundentypen (eine Zeile je Typ)</span><textarea data-list="custTypes" rows="5">${esc(listOf("custTypes").join("\n"))}</textarea></label>
+    <label class="fld"><span>Produktgruppen für das Potenzial</span><textarea data-list="prodGroups" rows="4">${esc(listOf("prodGroups").join("\n"))}</textarea></label>
+    <label class="fld"><span>Unterlagen (z. B. Preisliste, Folder, Kampagnen)</span><textarea data-list="docTypes" rows="4">${esc(listOf("docTypes").join("\n"))}</textarea></label>
+    <p class="hint">Änderungen gelten sofort für alle Kunden. Bereits erfasste Werte bleiben erhalten, auch wenn du einen Eintrag umbenennst.</p>
+  </div>
   <div class="panel"><h3>Abwesenheiten und Feiertage</h3>
     ${(()=>{const y=todayISO().slice(0,4);return`<div class="fld2">${f("vacationDays","Urlaubstage pro Jahr","number",'min="0" max="60"')}<div class="fld"><span>Urlaub ${y}</span><b style="padding-top:6px">${vacationUsed(y)} von ${s.vacationDays} Tagen</b></div></div>
     <dl class="kv" style="grid-template-columns:auto 1fr"><dt>Sonderurlaub ${y}</dt><dd>${absenceDays(y,"sonderurlaub")} Tage</dd><dt>Krankenstand ${y}</dt><dd>${absenceDays(y,"krank")} Tage</dd></dl>`})()}
@@ -1253,9 +1422,13 @@ document.addEventListener("change",e=>{
     if(t.id==="h-address"&&t.value.trim()&&TT.key()){save("settings");geocode(null,true);return}
     save("settings");const a=$("#h-search");if(a)a.href=gmapsPlace({street:h.address});return}
   if(t.id==="dueX"){s.dueX=Math.max(1,num(t.value)||14);save("settings");render(true);return}
+  if(t.id==="showActive"){ui.showActive=t.checked;try{localStorage.setItem("tp.showActive",t.checked?"1":"0")}catch(x){}mapView.drawMarkers();return}
   if(t.id==="showInactive"){ui.showInactive=t.checked;try{localStorage.setItem("tp.showInactive",t.checked?"1":"0")}catch(x){}mapView.drawMarkers();return}
   if(t.id==="cfilter"){ui.custFilter=t.value;render(true);return}
   if(t.id==="csort"){ui.sort=t.value;render(true);return}
+  if(t.id==="ctype"){ui.typeFilter=t.value;render(true);return}
+  if(t.id==="cdoc"){ui.docFilter=t.value;render(true);return}
+  if(t.dataset.list){S.settings[t.dataset.list]=t.value.split("\n").map(x=>x.trim()).filter(Boolean);save("settings");return}
 });
 document.addEventListener("input",e=>{if(e.target.id==="csearch"){ui.search=e.target.value;clearTimeout(ui.st);ui.st=setTimeout(()=>{const p=e.target.selectionStart;render(true);const i=$("#csearch");if(i){i.focus();i.setSelectionRange(p,p)}},180)}});
 function parseCoords(s){if(!s)return null;s=String(s);
@@ -1267,36 +1440,6 @@ function modal(html,wide){closeModal();const w=document.createElement("div");w.c
   w.addEventListener("pointerdown",e=>{if(e.target===w)closeModal()});document.body.appendChild(w);const f=$("input,select,button",w);if(f)f.focus();return w}
 function closeModal(){const m=$("#modal");if(m)m.remove()}
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
-
-function openCust(id){
-  const isNew=!id;const st=S.settings;
-  const c=isNew?{id:uid(),name:"",street:"",zip:"",city:"",lat:null,lng:null,interval:st.defInterval,duration:st.defDuration,lastVisit:null,phone:"",notes:"",active:true}:custById(id);
-  const n=!isNew&&nextAppt(c.id);const hist=isNew?[]:S.appts.filter(a=>a.customerId===c.id&&(a.status==="wahrgenommen"||a.status==="nicht")).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
-  const t=todayISO();
-  const w=modal(`<div class="hd"><div><h2>${isNew?"Neuer Kunde":esc(c.name)}</h2>${isNew?"":`<div class="row" style="margin-top:6px;gap:6px"><span class="pill p-${dueClass(c)}">${dueText(c)}</span>${n?`<span class="pill p-plan">${n.status==="fixiert"?"fixiert":"Vorschlag"} ${fmtD(n.date)} ${hm(n.startMin)}</span>`:""}</div>`}</div><button class="x" data-close aria-label="Schließen">×</button></div>
-  <div class="fld2"><label class="fld"><span>Name</span><input type="text" id="c-name" value="${esc(c.name)}"></label><label class="fld"><span>Kundennummer</span><input type="text" id="c-kdnr" value="${esc(c.kdnr||"")}"></label></div>
-  <label class="fld"><span>Straße</span><input type="text" id="c-street" value="${esc(c.street)}"></label>
-  <div class="fld2"><label class="fld"><span>PLZ</span><input type="text" id="c-zip" value="${esc(c.zip)}"></label><label class="fld"><span>Ort</span><input type="text" id="c-city" value="${esc(c.city)}"></label></div>
-  <div class="fld2"><label class="fld"><span>Breitengrad</span><input type="text" id="c-lat" value="${c.lat??""}"></label><label class="fld"><span>Längengrad</span><input type="text" id="c-lng" value="${c.lng??""}"></label></div>
-  <label class="fld"><span>Koordinaten oder Google-Maps-Link einfügen (nur nötig, wenn die Adresse nicht gefunden wird)</span><input type="text" id="c-paste" placeholder="47.2692, 11.4041"></label>
-  <div class="fld2"><label class="fld"><span>Besuchsintervall (Tage, leer = kein aktiver Besuch)</span><input type="number" id="c-interval" min="1" value="${isActive(c)?c.interval:""}" placeholder="kein Intervall"></label><label class="fld"><span>Besuchsdauer (min)</span><input type="number" id="c-duration" min="5" step="5" value="${c.duration}"></label></div>
-  <div class="fld2"><label class="fld"><span>Ansprechpartner</span><input type="text" id="c-contact" value="${esc(c.contact||"")}"></label><label class="fld"><span>Telefon</span><input type="text" id="c-phone" value="${esc(c.phone||"")}"></label></div>
-  <div class="fld2"><label class="fld"><span>Letzter Besuch</span><input type="date" id="c-last" value="${c.lastVisit||""}"></label><div></div></div>
-  <label class="fld"><span>Notizen</span><textarea id="c-notes">${esc(c.notes||"")}</textarea></label>
-  ${isNew?"":`<div class="sep"></div><div class="lbl">Termin vereinbaren</div><div class="row"><input type="date" id="c-ad" value="${addDays(t,1)}" aria-label="Datum"><input type="time" id="c-at" value="${st.dayStart}" step="900" aria-label="Uhrzeit"><label class="row" style="gap:5px"><input type="checkbox" id="c-afix" checked>mit Kunde fixiert</label><button class="btn sm" data-act="custAppt">Termin anlegen</button></div>
-  ${hist.length?`<div class="lbl">Letzte Termine</div><div style="font-size:13.5px">${hist.map(a=>`${fmtD(a.date)} ${a.date.slice(0,4)} · ${a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"}`).join("<br>")}</div>`:""}`}
-  <div class="row" style="justify-content:space-between"><div class="row">${isNew?"":`<a class="btn sm" href="${gmapsPlace(c)}" target="_blank" rel="noopener">Google Maps</a><button class="btn sm warn" data-act="delCust">Löschen</button>`}</div><div class="row"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="saveCust">Speichern</button></div></div>`);
-  w.dataset.cid=c.id;w.dataset.isnew=isNew?"1":"";
-  ["c-street","c-zip","c-city"].forEach(id=>$("#"+id,w).addEventListener("input",()=>w.dataset.addrChanged="1"));
-  ["c-lat","c-lng"].forEach(id=>$("#"+id,w).addEventListener("input",()=>w.dataset.xyChanged="1"));
-  $("#c-paste",w).addEventListener("change",e=>{const p=parseCoords(e.target.value);if(p){$("#c-lat",w).value=p.lat;$("#c-lng",w).value=p.lng;w.dataset.xyChanged="1";e.target.value="";toast("Koordinaten übernommen")}else toast("Keine Koordinaten erkannt")});
-}
-function readCustForm(w){const c=w.dataset.isnew?{id:w.dataset.cid}:custById(w.dataset.cid);const v=id=>$("#"+id,w).value.trim();
-  c.name=v("c-name")||"Ohne Namen";c.kdnr=v("c-kdnr");c.street=v("c-street");c.zip=v("c-zip");c.city=v("c-city");
-  const la=num(v("c-lat")),ln=num(v("c-lng"));if(w.dataset.xyChanged&&(la!==c.lat||ln!==c.lng)){c.geo=la!=null?"manuell":null;c.geoAddr=null}c.lat=la;c.lng=ln;
-  if(w.dataset.addrChanged&&!w.dataset.xyChanged){c.lat=null;c.lng=null;c.geo=null;c.geoAddr=null}
-  const iv=num(v("c-interval"));c.interval=iv&&iv>0?Math.round(iv):null;c.active=true;c.contact=v("c-contact");c.duration=Math.max(5,num(v("c-duration"))||S.settings.defDuration);
-  c.lastVisit=v("c-last")||null;c.phone=v("c-phone");c.notes=$("#c-notes",w).value;return c}
 
 function openAppt(id){
   const a=S.appts.find(x=>x.id===id);if(!a)return;
@@ -1377,7 +1520,7 @@ async function savePrivateForm(w,t){
   return true}
 
 /* ---------- Import ---------- */
-const FIELDS=[["kdnr","Kundennummer",/kunden.?n(r|ummer)|^kd.?nr|^nr\.?$|^id$|kundenid/],["name","Name / Firma",/name|firma|^kunde$|bezeichnung/],["street","Straße",/stra(ss|ß)e|adresse|anschrift|street/],["zip","PLZ",/^plz|postleitzahl|zip/],["city","Ort",/^ort|stadt|city|gemeinde|^wohnort/],["lat","Breitengrad",/^lat|breite/],["lng","Längengrad",/^(lng|lon)|l(ä|ae)nge/],["interval","Intervall (Tage)",/intervall|rhythmus|frequenz/],["duration","Dauer (min)",/dauer|duration|minuten/],["lastVisit","Letzter Besuch",/letzt|last|zuletzt/],["contact","Ansprechpartner",/ansprech|kontaktperson|^kontakt$|contact/],["phone","Telefon",/tel|phone|mobil|handy/],["notes","Notizen",/notiz|bemerk|info|note|kommentar/]];
+const FIELDS=[["kdnr","Kundennummer",/kunden.?n(r|ummer)|^kd.?nr|^nr\.?$|^id$|kundenid/],["name","Name / Firma",/name|firma|^kunde$|bezeichnung/],["street","Straße",/stra(ss|ß)e|adresse|anschrift|street/],["zip","PLZ",/^plz|postleitzahl|zip/],["city","Ort",/^ort|stadt|city|gemeinde|^wohnort/],["lat","Breitengrad",/^lat|breite/],["lng","Längengrad",/^(lng|lon)|l(ä|ae)nge/],["interval","Intervall (Tage)",/intervall|rhythmus|frequenz/],["duration","Dauer (min)",/dauer|duration|minuten/],["lastVisit","Letzter Besuch",/letzt|last|zuletzt/],["type","Kundentyp",/kundentyp|^typ|kategorie|kundenart|branche/],["contact","Ansprechpartner",/ansprech|kontaktperson|^kontakt$|contact/],["email","E-Mail",/mail/],["phone","Telefon",/tel|phone|mobil|handy/],["notes","Notizen",/notiz|bemerk|info|note|kommentar/]];
 function parseCSV(text){text=text.replace(/^﻿/,"");const first=text.split(/\r?\n/)[0]||"";const dl=[";",",","\t"].sort((a,b)=>first.split(b).length-first.split(a).length)[0];
   const rows=[];let row=[],f="",q=false;for(let i=0;i<text.length;i++){const ch=text[i];
     if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
@@ -1422,8 +1565,8 @@ function doImport(w){
     const rec={kdnr:s("kdnr"),name,street:s("street"),zip:s("zip"),city:s("city")};
     const lat=num(g("lat")),lng=num(g("lng"));const iv=num(g("interval")),du=num(g("duration"));const lv=toDate(g("lastVisit"));
     const ex=idx.get(key(rec));
-    if(ex){Object.keys(rec).forEach(k=>{if(rec[k])ex[k]=rec[k]});if(lat!=null&&lng!=null){ex.lat=lat;ex.lng=lng;ex.geo="datei"}if(map.interval>=0)ex.interval=iv&&iv>0?Math.round(iv):null;const ct=s("contact");if(ct)ex.contact=ct;if(du)ex.duration=du;if(lv&&(!ex.lastVisit||lv>ex.lastVisit))ex.lastVisit=lv;const p=s("phone");if(p)ex.phone=p;const n=s("notes");if(n)ex.notes=n;upd++}
-    else{const c=Object.assign(rec,{id:uid(),lat:lat!=null&&lng!=null?lat:null,lng:lat!=null&&lng!=null?lng:null,geo:lat!=null&&lng!=null?"datei":null,interval:map.interval>=0?(iv&&iv>0?Math.round(iv):null):st.defInterval,contact:s("contact"),duration:du||st.defDuration,lastVisit:lv,phone:s("phone"),notes:s("notes"),active:true});S.customers.push(c);idx.set(key(c),c);added++}
+    if(ex){Object.keys(rec).forEach(k=>{if(rec[k])ex[k]=rec[k]});if(lat!=null&&lng!=null){ex.lat=lat;ex.lng=lng;ex.geo="datei"}if(map.interval>=0)ex.interval=iv&&iv>0?Math.round(iv):null;const ct=s("contact");if(ct&&!contactsOf(ex).some(p=>p.name===ct)){ex.contacts=contactsOf(ex).concat([{id:uid(),name:ct,role:"",phone:"",email:"",note:""}]);delete ex.contact}const ty=s("type");if(ty)ex.type=ty;const em=s("email");if(em)ex.email=em;if(du)ex.duration=du;if(lv&&(!ex.lastVisit||lv>ex.lastVisit))ex.lastVisit=lv;const p=s("phone");if(p)ex.phone=p;const n=s("notes");if(n)ex.notes=n;upd++}
+    else{const c=Object.assign(rec,{id:uid(),lat:lat!=null&&lng!=null?lat:null,lng:lat!=null&&lng!=null?lng:null,geo:lat!=null&&lng!=null?"datei":null,interval:map.interval>=0?(iv&&iv>0?Math.round(iv):null):st.defInterval,contacts:s("contact")?[{id:uid(),name:s("contact"),role:"",phone:"",email:"",note:""}]:[],type:s("type"),email:s("email"),duration:du||st.defDuration,lastVisit:lv,phone:s("phone"),notes:s("notes"),active:true});S.customers.push(c);idx.set(key(c),c);added++}
   });
   save("customers","appts","settings");closeModal();mapView.fitted=false;
   const noxy=S.customers.filter(c=>!hasXY(c)).length;
@@ -1455,7 +1598,7 @@ async function geocode(list,onlyHome){
 async function download(filename,data){try{const b=new Blob([data],{type:filename.endsWith(".csv")?"text/csv;charset=utf-8":"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}catch(e){toast("Datei konnte nicht gespeichert werden.")}}
 function exportCsv(){const h=["Kundennummer","Name","Straße","PLZ","Ort","Breitengrad","Längengrad","Intervall (Tage)","Dauer (min)","Letzter Besuch","Nächster Termin","Status","Ansprechpartner","Telefon","Notizen"];
   const q=v=>{v=String(v??"");return/[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
-  const rows=S.customers.map(c=>{const n=nextAppt(c.id);return[c.kdnr,c.name,c.street,c.zip,c.city,c.lat!=null?String(c.lat).replace(".",","):"",c.lng!=null?String(c.lng).replace(".",","):"",isActive(c)?c.interval:"",c.duration,c.lastVisit?fmtDY(c.lastVisit):"",n?fmtDY(n.date)+" "+hm(n.startMin):"",dueText(c),c.contact||"",c.phone,c.notes].map(q).join(";")});
+  const rows=S.customers.map(c=>{const n=nextAppt(c.id);return[c.kdnr,c.name,c.street,c.zip,c.city,c.lat!=null?String(c.lat).replace(".",","):"",c.lng!=null?String(c.lng).replace(".",","):"",isActive(c)?c.interval:"",c.duration,c.lastVisit?fmtDY(c.lastVisit):"",n?fmtDY(n.date)+" "+hm(n.startMin):"",dueText(c),(mainContact(c)||{}).name||"",c.phone,c.notes].map(q).join(";")});
   download("Kunden_"+todayISO()+".csv","﻿"+[h.join(";"),...rows].join("\r\n"))}
 
 /* ---------- Beispieldaten ---------- */
@@ -1478,8 +1621,17 @@ function loadSample(){
   const fn=["Andreas","Christine","Florian","Johanna","Markus","Sabine","Thomas","Verena","Stefan","Martina","Lukas","Petra"];
   const topics=["Interesse an POLO-KWL für Neubau","POLO-KAL Auslegung für Wohnanlage angefragt","Angebot POLO-BOX nachfassen","Reklamation Formteile geklärt","Muster POLO-KAL NG mitbringen"];
   S.customers.forEach(c=>{c.contact=fn[Math.floor(rnd2()*fn.length)]+" "+(c.name.split(" ").find(w=>sur.includes(w))||sur[Math.floor(rnd2()*sur.length)]);if(rnd2()<0.25)c.notes=topics[Math.floor(rnd2()*topics.length)]});
+  const roles=["Inhaber","Einkauf","Bauleiter","Büro"],pg=DEF.prodGroups;
+  S.customers.forEach(c=>{c.type=/^Planungsbüro/.test(c.name)?"Planungsbüro":/^Wohnbau/.test(c.name)?"Bauträger":/^Großhandel/.test(c.name)?"Großhandel":"Verarbeiter";
+    const sn=c.contact.split(" ").pop();c.contacts=[{id:uid(),name:c.contact,role:c.type==="Großhandel"?"Filialleiter":"Inhaber",phone:c.phone,email:sn.toLowerCase()+"@beispiel.at",note:""}];
+    if(rnd2()<0.4)c.contacts.push({id:uid(),name:fn[Math.floor(rnd2()*fn.length)]+" "+sn,role:roles[1+Math.floor(rnd2()*3)],phone:"",email:"",note:""});delete c.contact;
+    c.email="office@"+sn.toLowerCase()+"-beispiel.at";
+    if(c.type==="Verarbeiter"&&rnd2()<0.5){c.potential=pg.slice(0,1+Math.floor(rnd2()*3)).map(g=>({g,pot:Math.round(5+rnd2()*45)*1000,share:{2025:Math.round(20+rnd2()*60),2024:Math.round(15+rnd2()*60)}}))}
+    if(rnd2()<0.5)c.docs=[{d:"PL 2026",date:addDays(t,-Math.round(rnd2()*60))}]});
+  const ghs=S.customers.filter(c=>c.type==="Großhandel");
+  S.customers.forEach(c=>{if(c.type==="Verarbeiter"&&ghs.length){const near=ghs.slice().sort((a,b)=>km(a,c)-km(b,c));c.wholesalers=[{id:near[0].id,main:true,note:""}]}});
   towns.forEach(([city,zip,lat,lng,w])=>{if(rnd2()<0.75){const s=sur[Math.floor(rnd2()*sur.length)];
-    S.customers.push({id:"x"+n,kdnr:String(20100+n),name:(rnd2()<0.5?"Planungsbüro ":"Installationen ")+s,street:"",zip,city,lat:+(lat+(rnd2()-.5)*0.03).toFixed(4),lng:+(lng+(rnd2()-.5)*0.045).toFixed(4),geo:"datei",interval:null,duration:45,lastVisit:null,contact:fn[Math.floor(rnd2()*fn.length)]+" "+s,phone:"",notes:"Kein aktiver Besuch – nur bei Bedarf",active:true});n++}});
+    S.customers.push({id:"x"+n,kdnr:String(20100+n),name:(rnd2()<0.5?"Planungsbüro ":"Installationen ")+s,street:"",zip,city,lat:+(lat+(rnd2()-.5)*0.03).toFixed(4),lng:+(lng+(rnd2()-.5)*0.045).toFixed(4),geo:"datei",interval:null,duration:45,lastVisit:null,type:/^Planungsbüro/.test("x")?"":"",contacts:[{id:uid(),name:fn[Math.floor(rnd2()*fn.length)]+" "+s,role:"",phone:"",email:"",note:""}],phone:"",notes:"Kein aktiver Besuch – nur bei Bedarf",active:true});S.customers[S.customers.length-1].type=S.customers[S.customers.length-1].name.startsWith("Planungsbüro")?"Planungsbüro":"Verarbeiter";n++}});
   S.settings=Object.assign(clone(DEF),{home:{label:"Zuhause (Beispiel)",address:"Innsbruck",lat:47.2692,lng:11.4041},sample:true});
   S.appts=[];S.days={};
   const nm=mondayOf(addDays(t,7));
@@ -1523,12 +1675,15 @@ function applyApptForm(a,w){const ds=new Set();const n=$("#a-notes",w);if(n)a.no
 
 /* ---------- Aktionen ---------- */
 document.addEventListener("click",async e=>{
-  const t=e.target.closest("[data-act],[data-close],[data-cust],[data-appt],[data-f],[data-wk],[data-goto],[data-day],[data-cf],[data-gocal],[data-gomap],[data-mon],[data-newcat],[data-newev],[data-dayl],[data-mkw],[data-mtog],[data-mall]");if(!t)return;
+  const t=e.target.closest("[data-addrow],[data-rm],[data-sel],[data-act],[data-close],[data-cust],[data-appt],[data-f],[data-wk],[data-goto],[data-day],[data-cf],[data-gocal],[data-gomap],[data-mon],[data-newcat],[data-newev],[data-dayl],[data-mkw],[data-mtog],[data-mall]");if(!t)return;
   const w=$("#modal");
   if(t.hasAttribute("data-close")){closeModal();return}
   if(t.dataset.goto){ui.tab=t.dataset.goto;render(true);return}
+  if(t.dataset.addrow){const w=$("#modal");if(t.dataset.addrow==="contact")$("#c-contacts",w).insertAdjacentHTML("beforeend",contactRow({id:uid()}));else{$("#c-whs",w).insertAdjacentHTML("beforeend",whRow({id:"",main:!$$(".whrow",w).length}))}const last=t.previousElementSibling&&t.previousElementSibling.lastElementChild;if(last){const f=$("input,select",last);if(f)f.focus()}return}
+  if(t.dataset.rm){const el=t.closest(t.dataset.rm);if(el)el.remove();return}
+  if(t.dataset.sel){ui.selDay=t.dataset.sel;render(true);return}
   if(t.dataset.cf){closeModal();ui.custFilter=t.dataset.cf;ui.search="";ui.tab="customers";render(true);window.scrollTo(0,0);return}
-  if(t.dataset.gocal){closeModal();ui.week=mondayOf(t.dataset.gocal);ui.tab="calendar";render(true);window.scrollTo(0,0);return}
+  if(t.dataset.gocal){closeModal();ui.week=mondayOf(t.dataset.gocal);ui.selDay=t.dataset.gocal;ui.tab="calendar";render(true);window.scrollTo(0,0);return}
   if(t.dataset.gomap){closeModal();const g=t.dataset.gomap;if(g.startsWith("w:"))setMapWeek(g.slice(2));else setMapWeek(mondayOf(g),[g]);mapView.fitted=false;ui.tab="map";render(true);window.scrollTo(0,0);return}
   if(t.dataset.mkw){setMapWeek(addDays(ui.mapWeek,7*+t.dataset.mkw));const sv=$("#mapbox");render(true);mapView.fit();return}
   if(t.dataset.mtog){const d=t.dataset.mtog;if(ui.mapDays.has(d))ui.mapDays.delete(d);else ui.mapDays.add(d);refreshMapRoutes(false);return}
@@ -1540,7 +1695,7 @@ document.addEventListener("click",async e=>{
   if(t.dataset.newev){if(window.innerWidth<=640&&t.classList.contains("mc")){const d=t.dataset.newev;if(calItems(d).length||holidayOf(d)){openDayList(d);return}}openPrivate(null,{date:t.dataset.newev});return}
   if(t.dataset.day){openDay(t.dataset.day);return}
   if(t.dataset.f){ui.filter=t.dataset.f;render(true);return}
-  if(t.dataset.wk!==undefined){const k=+t.dataset.wk;ui.week=k===0?mondayOf(todayISO()):addDays(ui.week,7*k);render(true);return}
+  if(t.dataset.wk!==undefined){const k=+t.dataset.wk;ui.week=k===0?mondayOf(todayISO()):addDays(ui.week,7*k);ui.selDay=k===0?todayISO():null;render(true);return}
   if(t.dataset.cust&&!t.dataset.act){if(t.classList.contains("item")&&ui.tab==="overview"){ui.sel=t.dataset.cust;const c=custById(ui.sel);if(c&&hasXY(c)&&ui.tab==="map"){mapView.popup(c);return}}openCust(t.dataset.cust);return}
   if(t.dataset.appt){openAppt(t.dataset.appt);return}
   const act=t.dataset.act;const a=w&&S.appts.find(x=>x.id===w.dataset.aid);
