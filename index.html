@@ -407,7 +407,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 02:50";
+const APPVER="2026-11-02 03:00";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -985,6 +985,7 @@ function emptyState(){return `<div class="panel empty">
   <h2>Noch keine Kunden</h2>
   <p>Lade deine Kundenliste als Excel- oder CSV-Datei hoch. Spalten wie Name, Straße, PLZ, Ort, Breitengrad/Längengrad, letzter Besuch, Intervall und Dauer werden automatisch erkannt.</p>
   <div class="row" style="justify-content:center"><button class="btn pri" data-act="import">Kundenliste hochladen</button><button class="btn" data-act="sample">Mit Beispieldaten ausprobieren</button></div>
+  ${GH.on()?"":`<div class="row" style="justify-content:center"><button class="btn" data-act="goCloud">Daten aus der Cloud holen (anderes Gerät schon verbunden)</button></div>`}
 </div>`}
 
 /* --- Übersicht (Dashboard) ---
@@ -1869,6 +1870,7 @@ document.addEventListener("click",async e=>{
   switch(act){
     case"import":$("#fileIn").click();break;
     case"sample":loadSample();break;
+    case"goCloud":ui.tab="settings";render(true);window.scrollTo(0,0);setTimeout(()=>{const e=$("#gh-token");if(e)e.focus()},50);break;
     case"plan":planTours();break;
     case"addPrivate":openPrivate(null);break;
     case"addTourAppt":openTourAppt({date:ui.selDay&&mondayOf(ui.selDay)===ui.week?ui.selDay:null});break;
