@@ -404,6 +404,7 @@ button.brand{background:none;border:0;padding:4px 6px 4px 0;margin:0;cursor:poin
 @media (max-width:420px){.tact .ibtn{padding:5px}.tact{gap:2px}}
 .scanbox{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:1/1;max-height:60vh}.scanbox video{width:100%;height:100%;object-fit:cover;display:block}.scanframe{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
 .qrbox{display:grid;place-items:center;background:#fff;border-radius:10px;padding:10px;min-height:200px}.qrbox svg{width:min(260px,70vw);height:auto}
+.sugg{position:absolute;left:0;right:0;top:100%;z-index:50;background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 24px rgba(0,0,0,.3);margin-top:3px;max-height:280px;overflow:auto;padding:4px}.sugg button{display:flex;flex-direction:column;align-items:flex-start;width:100%;background:none;border:0;border-radius:6px;padding:7px 9px;color:var(--ink);cursor:pointer;text-align:left}.sugg button:hover{background:var(--surface-2)}.sugg span{font-size:12px;color:var(--muted)}.sugg .sn{padding:8px 9px;font-size:13px;color:var(--muted)}
 .evlist{display:flex;flex-direction:column;gap:8px}.evc{display:grid;grid-template-columns:1fr auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;color:var(--ink);overflow:hidden}
 .evmain{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;text-align:left;background:none;border:0;padding:12px;cursor:pointer;color:inherit;min-width:0}
 .evib{align-self:start;margin:10px 10px 0 0;display:inline-flex;align-items:center;gap:3px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:5px 8px;font-size:13px;color:var(--muted);cursor:pointer}.evib svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;transition:transform .15s}.evc.open .evib svg{transform:rotate(180deg)}
@@ -445,7 +446,7 @@ button.brand{background:none;border:0;padding:4px 6px 4px 0;margin:0;cursor:poin
 
 <script>
 "use strict";
-const APPVER="2026-11-02 14:15";
+const APPVER="2026-11-02 14:45";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1123,12 +1124,24 @@ function evNextId(from){const y=(from||todayISO()).slice(0,4);const n=(S.events|
 function evRange(e){return fmtD(e.from)+(e.to&&e.to!==e.from?" – "+fmtD(e.to):"")+" "+e.from.slice(0,4)}
 function followUps(){const out=[];(S.events||[]).forEach(e=>(e.leads||[]).forEach(l=>{if(l.fuDate||l.fuTopic||l.fuWho)out.push({e,l})}));return out.sort((a,b)=>(a.l.fuDate||"9").localeCompare(b.l.fuDate||"9"))}
 function leadName(l){const c=l.customerId?custById(l.customerId):null;return c?c.name:(l.custName||"(Kunde gelöscht)")}
-function evInfoHtml(e){const exp=(e.expected||[]).map(id=>custById(id)).filter(Boolean);const met=new Set((e.leads||[]).map(l=>l.customerId));
+/* Erwartete Kunden: Kunden-ID (verknüpft) oder {txt} (Freitext, noch kein Kunde) */
+function expList(e){return(e.expected||[]).map((x,i)=>typeof x==="string"?{i,c:custById(x)}:{i,txt:x&&x.txt||""}).filter(x=>x.c||x.txt)}
+const expName=x=>x.c?x.c.name:x.txt;
+/* Kundensuche mit Vorschlagsliste (für iPhone besser als datalist) */
+function custSearch(inp,onPick){const box=document.createElement("div");box.className="sugg";box.hidden=true;inp.parentNode.style.position="relative";inp.insertAdjacentElement("afterend",box);inp.setAttribute("autocomplete","off");inp.removeAttribute("list");
+  const show=()=>{const q=normOrt(inp.value).replace(/[·]/g," ").trim();if(q.length<2){box.hidden=true;return}const ws=q.split(" ");
+    const hits=S.customers.filter(c=>{const h=normOrt([c.name,c.city,c.zip,c.kdnr,c.street].join(" "));return ws.every(w=>h.includes(w))}).slice(0,8);
+    box.innerHTML=hits.map(c=>`<button type="button" data-sid="${c.id}"><b>${esc(c.name)}</b><span>${esc([c.zip,c.city].filter(Boolean).join(" "))}${c.kdnr?" · "+esc(c.kdnr):""}</span></button>`).join("")||`<div class="sn">Kein Kunde gefunden – wird als Freitext übernommen</div>`;box.hidden=false};
+  inp.addEventListener("input",show);inp.addEventListener("focus",show);inp.addEventListener("blur",()=>setTimeout(()=>{box.hidden=true},180));
+  box.addEventListener("pointerdown",ev=>ev.preventDefault());
+  box.addEventListener("click",ev=>{const b=ev.target.closest("[data-sid]");if(!b)return;const c=custById(b.dataset.sid);box.hidden=true;inp.value=custLabel(c);onPick&&onPick(c)});
+  inp.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();const f=box.querySelector("[data-sid]");if(f&&!box.hidden){f.click()}else{box.hidden=true;onPick&&onPick(null)}}})}
+function evInfoHtml(e){const exp=expList(e);const met=new Set((e.leads||[]).map(l=>l.customerId));
   const pres=(e.presence||[]).map(p=>fmtD(p.date)+(p.fromT&&p.toT?" "+p.fromT+"–"+p.toT:" ganztags")).join(", ");
   return`<div class="evinfo"><dl class="kv">${e.organizer?`<dt>Veranstalter</dt><dd>${esc(e.organizer)}</dd>`:""}${e.addr?`<dt>Adresse</dt><dd>${esc(e.addr)}${hasXY(e)?` · <a href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lng}" target="_blank" rel="noopener">Karte</a>`:""}</dd>`:""}
     <dt>Dauer</dt><dd>${evRange(e)}</dd><dt>Teilnahme</dt><dd>${e.stand==="stand"?"eigener Stand":"nur Besuch"}</dd><dt>Ich bin dort</dt><dd>${pres||"–"}</dd>
     ${(e.focus||[]).length||e.focusTxt?`<dt>Schwerpunkt</dt><dd>${esc((e.focus||[]).map(x=>x.split(" (")[0]).concat(e.focusTxt?[e.focusTxt]:[]).join(", "))}</dd>`:""}
-    ${exp.length?`<dt>Erwartet</dt><dd>${exp.map(c=>esc(c.name)+(met.has(c.id)?" ✓":"")).join(", ")}</dd>`:""}${e.info?`<dt>Infos</dt><dd style="white-space:pre-wrap">${esc(e.info)}</dd>`:""}</dl>
+    ${exp.length?`<dt>Erwartet</dt><dd>${exp.map(x=>esc(expName(x))+(x.c&&met.has(x.c.id)?" ✓":"")).join(", ")}</dd>`:""}${e.info?`<dt>Infos</dt><dd style="white-space:pre-wrap">${esc(e.info)}</dd>`:""}</dl>
     <div class="row" style="justify-content:flex-end"><button class="btn sm" data-evedit="${e.id}">Bearbeiten</button></div></div>`}
 function renderEvents(m){const e0=ui.evSel&&(S.events||[]).find(e=>e.id===ui.evSel);
   if(e0)return ui.evMode==="edit"?renderEvent(m,e0):renderCapture(m,e0);
@@ -1144,27 +1157,30 @@ function renderEvents(m){const e0=ui.evSel&&(S.events||[]).find(e=>e.id===ui.evS
   <div class="evlist">${up.map(card).join("")||'<p class="muted">Keine kommenden Events. Mit „+ Event anlegen“ eine Messe oder Großhandelsveranstaltung anlegen.</p>'}</div>
   ${past.length?`<details class="acc" style="margin-top:12px"><summary>Vergangene Events <span class="muted small">${past.length}</span></summary><div class="accb evlist">${past.map(card).join("")}</div></details>`:""}`}
 /* Kunden auf dem Event erfassen */
-function renderCapture(m,e){const exp=(e.expected||[]).map(id=>custById(id)).filter(Boolean);const met=new Set((e.leads||[]).map(l=>l.customerId));
+function renderCapture(m,e){const exp=expList(e);const met=new Set((e.leads||[]).map(l=>l.customerId));
   m.innerHTML=`<div class="ctool"><button class="btn sm" data-act="evBack">‹ Alle Events</button><span class="muted small" style="margin-left:auto">${esc(e.no)}</span></div>
   <div class="dhead"><h2>${esc(e.title||"Event")}</h2><span class="muted">${evRange(e)}</span></div>
   <div class="evgrid">
   <button class="btn okb big" data-act="leadAdd">+ Kunde erfassen</button>
-  ${exp.length?`<section class="panel tile"><div class="thead"><h3>Erwartete Kunden</h3><span class="muted small">${exp.filter(c=>met.has(c.id)).length} von ${exp.length} getroffen</span></div>
-    <div class="chips">${exp.map(c=>met.has(c.id)?`<span class="chip done"><span>✓ ${esc(c.name)}</span></span>`:`<button class="chip" data-act="leadAdd" data-cid="${c.id}"><span>${esc(c.name)}${c.city?" · "+esc(c.city):""}</span></button>`).join("")}</div><p class="hint" style="margin:0">Antippen, um den Kunden als getroffen zu erfassen.</p></section>`:""}
+  ${exp.length?`<section class="panel tile"><div class="thead"><h3>Erwartete Kunden</h3><span class="muted small">${exp.filter(x=>x.c&&met.has(x.c.id)).length} von ${exp.length} getroffen</span></div>
+    <div class="chips">${exp.map(x=>x.c?(met.has(x.c.id)?`<span class="chip done"><span>✓ ${esc(x.c.name)}</span></span>`:`<button class="chip" data-act="leadAdd" data-cid="${x.c.id}"><span>${esc(x.c.name)}${x.c.city?" · "+esc(x.c.city):""}</span></button>`):`<button class="chip" data-act="leadAdd" data-exptxt="${x.i}"><span><i>${esc(x.txt)}</i> · neu</span></button>`).join("")}</div><p class="hint" style="margin:0">Antippen, um den Kunden als getroffen zu erfassen.</p></section>`:""}
   <section class="panel tile"><div class="thead"><h3>Erfasste Kunden</h3><span class="pill p-ok">${(e.leads||[]).length}</span></div>
     ${(e.leads||[]).slice().sort((a,b)=>((b.date||"")+(b.time||"")).localeCompare((a.date||"")+(a.time||""))).map(l=>`<button class="lrow2" data-lead="${e.id}|${l.id}"><span><b>${esc(leadName(l))}</b>${l.isNew?' <span class="pill p-plan">neu</span>':""}<br><span class="muted small">${fmtD(l.date)} ${esc(l.time||"")}${l.person?" · "+esc(l.person):""}${l.topics&&l.topics.length?" · "+esc(l.topics.map(x=>x.split(" (")[0]).join(", ")):""}</span></span>${l.fuDate?`<span class="pill ${l.fuDone?"p-ok":"p-soon"}">${l.fuDone?"erledigt":"nachfassen "+fmtD(l.fuDate)}</span>`:""}</button>`).join("")||'<p class="muted small" style="margin:0">Noch niemand erfasst.</p>'}
   </section></div>`}
-function newEvent(){const t=todayISO();const e={id:uid(),no:evNextId(t),type:"Messe",title:"",organizer:"",addr:"",city:"",lat:null,lng:null,info:"",from:t,to:t,stand:"besuch",presence:[],block:true,focus:[],focusTxt:"",expected:[],leads:[]};
+function expAdd(c){const e=S.events.find(x=>x.id===ui.evSel),inp=$("#ev-expc");if(!e||!inp)return;const v=inp.value.trim();c=c||custFromLabel(v);if(!c&&!v)return;
+  e.expected=e.expected||[];if(c){if(!e.expected.includes(c.id))e.expected.push(c.id)}else if(!e.expected.some(x=>x&&x.txt===v))e.expected.push({txt:v});
+  ui.evFocusExp=true;save("events");render(true)}
+function newEvent(){const t=todayISO();const e={id:uid(),no:evNextId(t),type:"Messe",title:"",organizer:"",addr:"",city:"",lat:null,lng:null,info:"",from:t,to:t,stand:"besuch",presence:[],block:true,focus:[],focusTxt:"",expected:[],leads:[],isNew:true};
   S.events=S.events||[];S.events.push(e);save("events");ui.evSel=e.id;ui.evMode="edit";ui.tab="events";render(true);window.scrollTo(0,0)}
 function renderEvent(m,e){const prev={};if(ui.evPrev===e.id)$$("details[data-k]",m).forEach(d=>prev[d.dataset.k]=d.open);ui.evPrev=e.id;const op=(k,def)=>(k in prev?prev[k]:def)?"open":"";const tops=[...new Set(listOf("visitTopics").concat(e.focus||[]))];
   const chip=(name,val,on)=>`<label class="chip"><input type="checkbox" data-evchip="${name}" value="${esc(val)}" ${on?"checked":""}><span>${esc(val)}</span></label>`;
   const days=[];for(let d=e.from;d<=(e.to||e.from)&&days.length<14;d=addDays(d,1))days.push(d);
   const pres=d=>(e.presence||[]).find(p=>p.date===d);
-  const exp=(e.expected||[]).map(id=>custById(id)).filter(Boolean);const met=new Set((e.leads||[]).map(l=>l.customerId));
+  const exp=expList(e);const met=new Set((e.leads||[]).map(l=>l.customerId));
   m.innerHTML=`<div class="ctool"><button class="btn sm pri" data-act="evBack">Fertig</button><span class="muted small" style="margin-left:auto">${esc(e.no)} · wird automatisch gespeichert</span></div>
   <div class="dhead"><h2>${esc(e.title||"Neues Event")}</h2><span class="muted">${evRange(e)}</span></div>
   <div class="evgrid">
-  <details class="acc" data-k="eck" ${op("eck",true)}><summary>Eckdaten</summary><div class="accb">
+  <details class="acc" data-k="eck" ${op("eck",!!e.isNew)}><summary>Eckdaten <span class="muted small">${esc([e.type,e.stand==="stand"?"eigener Stand":"Besuch"].join(" · "))}</span></summary><div class="accb">
     <div class="fld2"><label class="fld"><span>Art</span><select data-ev="type">${EVTYPES.map(x=>`<option ${x===e.type?"selected":""}>${x}</option>`).join("")}</select></label><label class="fld"><span>Teilnahme</span><select data-ev="stand"><option value="stand" ${e.stand==="stand"?"selected":""}>eigener Stand</option><option value="besuch" ${e.stand!=="stand"?"selected":""}>nur Besuch</option></select></label></div>
     <label class="fld"><span>Titel</span><input type="text" data-ev="title" value="${esc(e.title)}" placeholder="z. B. Hausmesse Holter Innsbruck"></label>
     <label class="fld"><span>Veranstalter</span><input type="text" data-ev="organizer" value="${esc(e.organizer)}"></label>
@@ -1173,17 +1189,17 @@ function renderEvent(m,e){const prev={};if(ui.evPrev===e.id)$$("details[data-k]"
     <label class="fld"><span>Zusatzinfos zur Messe</span><textarea data-ev="info" rows="3" placeholder="Öffnungszeiten, Halle/Stand, Parken, Aufbau, Ansprechpartner Veranstalter …">${esc(e.info||"")}</textarea></label>
     <div class="row" style="justify-content:flex-end"><button class="btn sm warn" data-act="evDel">Event löschen</button></div>
   </div></details>
-  <details class="acc" data-k="pres" ${op("pres",true)}><summary>Präsenzzeit <span class="muted small">wann bin ich dort</span></summary><div class="accb">
+  <details class="acc" data-k="pres" ${op("pres",false)}><summary>Präsenzzeit <span class="muted small">${(e.presence||[]).length?(e.presence||[]).map(p=>fmtD(p.date).slice(3)).join(", "):"wann bin ich dort"}</span></summary><div class="accb">
     ${days.map(d=>{const p=pres(d);return`<div class="prow"><label class="row" style="gap:6px;min-width:120px"><input type="checkbox" data-pres="${d}" ${p?"checked":""}> ${fmtD(d)}</label><input type="time" data-pfrom="${d}" value="${p&&p.fromT||""}" step="900" ${p?"":"disabled"} aria-label="von"><span class="muted">–</span><input type="time" data-pto="${d}" value="${p&&p.toT||""}" step="900" ${p?"":"disabled"} aria-label="bis"></div>`}).join("")}
     <label class="row" style="gap:8px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" data-ev="block" style="margin-top:3px" ${e.block!==false?"checked":""}> In Kalender und Tourenplanung eintragen (ohne Uhrzeit = ganzer Tag gesperrt)</label>
   </div></details>
-  <details class="acc" data-k="focus" ${op("focus",true)}><summary>Unser Messeschwerpunkt</summary><div class="accb"><div class="chips">${tops.map(x=>chip("focus",x,(e.focus||[]).includes(x))).join("")}</div>
+  <details class="acc" data-k="focus" ${op("focus",false)}><summary>Unser Messeschwerpunkt <span class="muted small">${(e.focus||[]).length||""}</span></summary><div class="accb"><div class="chips">${tops.map(x=>chip("focus",x,(e.focus||[]).includes(x))).join("")}</div>
     <input type="text" data-ev="focusTxt" value="${esc(e.focusTxt||"")}" placeholder="weitere Schwerpunkte, Aktionen, Neuheiten"></div></details>
-  <details class="acc" data-k="exp" ${op("exp",true)}><summary>Erwartete Kunden <span class="muted small">${exp.length?met.size&&exp.filter(c=>met.has(c.id)).length+" von "+exp.length+" getroffen":""}</span></summary><div class="accb">
-    <div class="row"><input type="text" id="ev-expc" list="ev-custlist" placeholder="Kunde hinzufügen …" autocomplete="off" style="flex:1;min-width:0"><datalist id="ev-custlist">${S.customers.map(x=>`<option value="${esc(custLabel(x))}">`).join("")}</datalist><button class="btn sm" data-act="evExpAdd">Hinzufügen</button></div>
-    ${exp.map(c=>`<div class="erow"><button class="lnk" data-cust="${c.id}">${esc(c.name)}</button><span class="muted small">${esc(c.city||"")}</span>${met.has(c.id)?'<span class="pill p-ok">getroffen</span>':""}<button class="btn sm warn" data-evexprm="${c.id}" aria-label="Entfernen">×</button></div>`).join("")}
+  <details class="acc" data-k="exp" ${op("exp",false)}><summary>Erwartete Kunden <span class="muted small">${exp.length||""}</span></summary><div class="accb">
+    <div class="row" style="flex-wrap:nowrap"><div style="flex:1;min-width:0"><input type="text" id="ev-expc" placeholder="Kunde suchen oder Name eingeben …" style="width:100%"></div><button class="btn sm" data-act="evExpAdd">Hinzufügen</button></div>
+    ${exp.map(x=>`<div class="erow">${x.c?`<button class="lnk" data-cust="${x.c.id}">${esc(x.c.name)}</button><span class="muted small">${esc(x.c.city||"")}</span>${met.has(x.c.id)?'<span class="pill p-ok">getroffen</span>':""}`:`<span style="flex:1">${esc(x.txt)}</span><span class="pill p-grey" title="Nicht in der Kundenliste – wird beim Erfassen als neuer Kunde angelegt">Freitext</span>`}<button class="btn sm warn" data-evexprm="${x.i}" aria-label="Entfernen">×</button></div>`).join("")}
   </div></details>
-  </div>`}
+  </div>`;const ip=$("#ev-expc",m);if(ip){custSearch(ip,c=>expAdd(c));if(ui.evFocusExp){ui.evFocusExp=false;ip.focus()}}}
 function evApply(e){/* Präsenz → Kalender/Tourenplanung */const old=S.appts.filter(a=>a.eventId===e.id).map(a=>a.date);S.appts=S.appts.filter(a=>a.eventId!==e.id);const ds=new Set(old);
   if(e.block!==false)(e.presence||[]).forEach(p=>{const timed=p.fromT&&p.toT&&toMin(p.toT)>toMin(p.fromT);
     const a={id:uid(),type:"private",cat:"veranstaltung",eventId:e.id,title:(e.type==="Messe"?"Messe: ":"")+(e.title||"Event"),date:p.date,status:"privat",notes:e.no,loc:{text:e.addr||"",lat:hasXY(e)?e.lat:null,lng:hasXY(e)?e.lng:null}};
@@ -1200,15 +1216,15 @@ async function evField(t){const e=S.events.find(x=>x.id===ui.evSel);if(!e)return
   if(t.dataset.pfrom||t.dataset.pto){const d=t.dataset.pfrom||t.dataset.pto,p=(e.presence||[]).find(x=>x.date===d);if(p){if(t.dataset.pfrom)p.fromT=t.value;else p.toT=t.value;evApply(e)}return}
   if(t.dataset.evchip==="focus"){e.focus=$$('[data-evchip="focus"]:checked').map(x=>x.value);save("events");return}}
 /* Kundenkontakt auf dem Event erfassen */
-function openLead(evId,leadId,cid){const e=S.events.find(x=>x.id===evId);if(!e)return;const l=leadId?(e.leads||[]).find(x=>x.id===leadId):null;const t=todayISO();
+function openLead(evId,leadId,cid,preName){const e=S.events.find(x=>x.id===evId);if(!e)return;const l=leadId?(e.leads||[]).find(x=>x.id===leadId):null;const t=todayISO();
   const inEv=t>=e.from&&t<=(e.to||e.from);const c0=l&&l.customerId?custById(l.customerId):cid?custById(cid):null;
   const tops=[...new Set(listOf("visitTopics").concat((l&&l.topics)||[]))];
   const chip=(val,on)=>`<label class="chip"><input type="checkbox" name="lt" value="${esc(val)}" ${on?"checked":""}><span>${esc(val)}</span></label>`;
   const types=listOf("custTypes");
   const w=modal(`<div class="hd"><div><h2>${l?"Kontakt bearbeiten":"Kontakt erfassen"}</h2><div class="muted">${esc(e.title||e.no)}</div></div><button class="x" data-close aria-label="Schließen">×</button></div>
-  <div class="seg sm" role="radiogroup"><label><input type="radio" name="lk" value="best" ${!l||!l.isNew?"checked":""}><span>Bestandskunde</span></label><label><input type="radio" name="lk" value="neu" ${l&&l.isNew&&!l.customerId?"checked":""}><span>Neuer Kunde</span></label></div>
+  <div class="seg sm" role="radiogroup"><label><input type="radio" name="lk" value="best" ${preName||(l&&l.isNew&&!l.customerId)?"":"checked"}><span>Bestandskunde</span></label><label><input type="radio" name="lk" value="neu" ${preName?"checked":""}><span>Neuer Kunde</span></label></div>
   <div id="lb-best"><label class="fld"><span>Kunde</span><input type="text" id="l-cust" list="l-custlist" value="${c0?esc(custLabel(c0)):""}" placeholder="Name oder Ort tippen …" autocomplete="off"><datalist id="l-custlist">${S.customers.map(x=>`<option value="${esc(custLabel(x))}">`).join("")}</datalist></label></div>
-  <div id="lb-neu" hidden><div class="fld2"><label class="fld"><span>Firma / Name</span><input type="text" id="n-name"></label><label class="fld"><span>Kundentyp</span><select id="n-type"><option value="">–</option>${types.map(x=>`<option>${esc(x)}</option>`).join("")}</select></label></div>
+  <div id="lb-neu" hidden><div class="fld2"><label class="fld"><span>Firma / Name</span><input type="text" id="n-name" value="${esc(preName||"")}"></label><label class="fld"><span>Kundentyp</span><select id="n-type"><option value="">–</option>${types.map(x=>`<option>${esc(x)}</option>`).join("")}</select></label></div>
     <label class="fld"><span>Straße</span><input type="text" id="n-street"></label><div class="fld2"><label class="fld"><span>PLZ</span><input type="text" id="n-zip"></label><label class="fld"><span>Ort</span><input type="text" id="n-city"></label></div>
     <div class="fld2"><label class="fld"><span>Telefon</span><input type="tel" id="n-phone"></label><label class="fld"><span>E-Mail</span><input type="email" id="n-email"></label></div></div>
   <div class="fld2"><label class="fld"><span>Wann auf der Messe</span><input type="date" id="l-d" value="${l?l.date:inEv?t:e.from}"></label><label class="fld"><span>Uhrzeit</span><input type="time" id="l-t" value="${l?l.time:inEv?hm(Math.floor(nowMin()/5)*5):""}" step="300"></label></div>
@@ -1219,7 +1235,8 @@ function openLead(evId,leadId,cid){const e=S.events.find(x=>x.id===evId);if(!e)r
   ${l&&l.fuDate?`<label class="row" style="gap:6px"><input type="checkbox" id="l-fdone" ${l.fuDone?"checked":""}> Kontaktaufnahme erledigt</label>`:""}
   <label class="fld"><span>Weitere Notizen</span><textarea id="l-n" rows="3">${esc(l&&l.notes||"")}</textarea></label>
   <div class="row" style="justify-content:space-between">${l?'<button class="btn warn" data-act="leadDel">Löschen</button>':"<span></span>"}<span class="row"><button class="btn" data-close>Abbrechen</button><button class="btn okb" data-act="leadSave">Speichern</button></span></div>`,true);
-  w.dataset.ev=evId;w.dataset.lead=l?l.id:"";
+  w.dataset.ev=evId;w.dataset.lead=l?l.id:"";if(preName!=null)w.dataset.exptxt=preName;
+  custSearch($("#l-cust",w),c=>{if(c)$("#l-plist",w).innerHTML=contactsOf(c).map(p=>`<option value="${esc(p.name)}">`).join("")});
   const upd=()=>{const k=$('input[name="lk"]:checked',w).value;$("#lb-best",w).hidden=k!=="best";$("#lb-neu",w).hidden=k!=="neu"};
   w.addEventListener("change",ev=>{if(ev.target.name==="lk")upd();if(ev.target.id==="l-cust"){const c=custFromLabel(ev.target.value);$("#l-plist",w).innerHTML=c?contactsOf(c).map(p=>`<option value="${esc(p.name)}">`).join(""):""}});upd()}
 async function saveLead(w){const e=S.events.find(x=>x.id===w.dataset.ev);if(!e)return;e.leads=e.leads||[];let l=e.leads.find(x=>x.id===w.dataset.lead);
@@ -1234,6 +1251,8 @@ async function saveLead(w){const e=S.events.find(x=>x.id===w.dataset.ev);if(!e)r
   const data={customerId:c.id,custName:c.name,isNew:l?l.isNew:isNew,date:$("#l-d",w).value||e.from,time:$("#l-t",w).value,person,topics:$$('input[name="lt"]:checked',w).map(x=>x.value),
     fuDate:$("#l-fd",w).value,fuWho:$("#l-fw",w).value.trim(),fuTopic:$("#l-ft",w).value.trim(),fuDone:$("#l-fdone",w)?$("#l-fdone",w).checked:false,notes:$("#l-n",w).value.trim()};
   if(l)Object.assign(l,data);else{l=Object.assign({id:uid()},data);e.leads.push(l)}
+  /* Freitext aus „Erwartete Kunden“ mit dem Kunden verknüpfen */
+  if(w.dataset.exptxt){const k=(e.expected||[]).findIndex(x=>x&&x.txt===w.dataset.exptxt);if(k>=0)e.expected[k]=c.id}
   save("events","customers");closeModal();render(true);toast(isNew?"Neuer Kunde „"+c.name+"“ angelegt und Kontakt erfasst":"Kontakt erfasst")}
 /* Messekontakte eines Kunden (für die Kundenansicht) */
 function leadsOf(cid){const out=[];(S.events||[]).forEach(e=>(e.leads||[]).forEach(l=>{if(l.customerId===cid)out.push({e,l})}));return out.sort((a,b)=>b.l.date.localeCompare(a.l.date))}
@@ -2224,7 +2243,7 @@ document.addEventListener("click",async e=>{
   if(t.dataset.evedit){ui.evSel=t.dataset.evedit;ui.evMode="edit";ui.evPrev=null;render(true);window.scrollTo(0,0);return}
   if(t.dataset.evopen){ui.evMode="capture";ui.evSel=t.dataset.evopen;ui.tab="events";render(true);window.scrollTo(0,0);return}
   if(t.dataset.lead){const[ev,ld]=t.dataset.lead.split("|");openLead(ev,ld);return}
-  if(t.dataset.evexprm){const e=S.events.find(x=>x.id===ui.evSel);if(e){e.expected=(e.expected||[]).filter(x=>x!==t.dataset.evexprm);save("events");render(true)}return}
+  if(t.dataset.evexprm){const e=S.events.find(x=>x.id===ui.evSel);if(e){e.expected=(e.expected||[]).filter((x,i)=>i!==+t.dataset.evexprm);save("events");render(true)}return}
   if(t.dataset.goto){ui.tab=t.dataset.goto;render(true);return}
   if(t.dataset.csel){const id=t.dataset.csel;if(id==="all"){const on=t.checked;(ui.bulkIds||[]).forEach(x=>on?ui.csel.add(x):ui.csel.delete(x))}else{t.checked?ui.csel.add(id):ui.csel.delete(id)}render(true);return}
   if(t.dataset.addrow){const w=$("#modal");if(t.dataset.addrow==="contact"){const ph=$("#c-contacts>p",w);if(ph)ph.remove()}if(t.dataset.addrow==="contact")$("#c-contacts",w).insertAdjacentHTML("beforeend",contactRow({id:uid()},true));else{$("#c-whs",w).insertAdjacentHTML("beforeend",whRow({id:"",main:!$$(".whrow",w).length}))}const last=t.previousElementSibling&&t.previousElementSibling.lastElementChild;if(last){const f=$("input,select",last);if(f)f.focus()}return}
@@ -2311,10 +2330,10 @@ document.addEventListener("click",async e=>{
     case"teamPick":pickContacts();break;
     case"teamImport":{closeModal();const i=document.createElement("input");i.type="file";i.accept=".vcf,text/vcard,text/x-vcard";i.multiple=true;i.onchange=async()=>{let n=0;for(const f of i.files){parseVcf(await f.text()).forEach(p=>{if(!S.team.some(x=>x.name===p.name)){S.team.push(p);n++}})}save("team");render(true);toast(n+" Kontakte importiert")};i.click();break}
     case"evAdd":newEvent();break;
-    case"evBack":ui.evSel=null;ui.evPrev=null;ui.evMode=null;render(true);window.scrollTo(0,0);break;
+    case"evBack":{const e=S.events.find(x=>x.id===ui.evSel);if(e&&e.isNew){delete e.isNew;save("events")}}ui.evSel=null;ui.evPrev=null;ui.evMode=null;render(true);window.scrollTo(0,0);break;
     case"evDel":{if(t.dataset.sure){const id=ui.evSel;S.events=S.events.filter(x=>x.id!==id);const ds=S.appts.filter(a=>a.eventId===id).map(a=>a.date);S.appts=S.appts.filter(a=>a.eventId!==id);reflow(ds);ui.evSel=null;save("events","appts");render(true);toast("Event gelöscht")}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
-    case"evExpAdd":{const e=S.events.find(x=>x.id===ui.evSel),c=custFromLabel($("#ev-expc").value);if(!e)break;if(!c){toast("Bitte einen Kunden aus der Liste wählen.");break}e.expected=e.expected||[];if(!e.expected.includes(c.id))e.expected.push(c.id);save("events");render(true);break}
-    case"leadAdd":openLead(ui.evSel,null,t.dataset.cid);break;
+    case"evExpAdd":expAdd();break;
+    case"leadAdd":{if(t.dataset.exptxt!=null){const e=S.events.find(x=>x.id===ui.evSel),x=e&&e.expected[+t.dataset.exptxt];openLead(ui.evSel,null,null,x&&x.txt||"")}else openLead(ui.evSel,null,t.dataset.cid);break}
     case"leadSave":await saveLead(w);break;
     case"leadDel":{if(t.dataset.sure){const e=S.events.find(x=>x.id===w.dataset.ev);if(e)e.leads=(e.leads||[]).filter(x=>x.id!==w.dataset.lead);save("events");closeModal();render(true)}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
     case"custVisit":{const c=custById(t.dataset.cid);if(c)openReport(null,c);break}
