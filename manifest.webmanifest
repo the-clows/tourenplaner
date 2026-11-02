@@ -1,6 +1,6 @@
 {
-  "name": "Poloplast Tourenplaner",
-  "short_name": "Tourenplaner",
+  "name": "Poloplast Cockpit",
+  "short_name": "Cockpit",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
