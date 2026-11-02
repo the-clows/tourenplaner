@@ -69,7 +69,7 @@ nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;pad
 nav.tabs .gear{margin-left:auto;display:inline-flex;align-items:center;padding:6px 10px 7px}
 nav.tabs .ring{display:block;width:26px;height:26px;fill:none;stroke:var(--brand);stroke-width:4}
 nav.tabs button.home{display:flex;align-items:center;justify-content:center}
-@media (max-width:640px){nav.tabs .ring{width:30px;height:30px;margin:2px 0}}
+@media (max-width:640px){nav.tabs button.home{padding:0 2px;border-top:0;justify-content:flex-start;overflow:visible}nav.tabs .ring{width:66px;height:66px;margin-top:-24px;padding:5px;background:var(--surface);border-radius:50%;border:1px solid var(--line);box-shadow:0 -3px 10px rgba(0,0,0,.18);flex:none}nav.tabs button.home[aria-selected="true"] .ring{border-color:var(--brand)}}
 nav.tabs .ti{display:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 html{-webkit-text-size-adjust:100%}
 main{overflow-x:clip}
@@ -417,7 +417,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 04:00";
+const APPVER="2026-11-02 04:10";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
