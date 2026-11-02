@@ -391,6 +391,8 @@ td.num{text-align:right}
 .leaflet-container{font:inherit;background:var(--surface-2)}
 .homeic span{display:block;width:18px;height:18px;background:var(--ink);border:3px solid var(--surface);border-radius:3px;box-shadow:0 0 0 1px var(--ink)}
 .hotelic{background:var(--soon);color:#fff;border-radius:4px;font-weight:700;font-size:12px;text-align:center;line-height:18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.chip{position:relative;cursor:pointer}.chip input{position:absolute;opacity:0;pointer-events:none}.chip span{display:inline-block;border:1px solid var(--line);border-radius:16px;padding:5px 11px;font-size:13.5px;background:var(--surface-2);color:var(--ink)}.chip input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.chip input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.fld2.f3{grid-template-columns:1.4fr 1fr 1fr}@media (max-width:520px){.fld2.f3{grid-template-columns:1fr 1fr}.fld2.f3>:first-child{grid-column:1/-1}}.hrow{display:block;text-align:left;padding:3px 0}
 .numic{cursor:pointer}.numpop .leaflet-popup-content-wrapper{border-radius:8px;padding:0;background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}.numpop .leaflet-popup-content{margin:6px 9px;font-size:12px;line-height:1.35}.numpop .leaflet-popup-tip{background:var(--surface)}
 .numic span{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-weight:700;font-size:11.5px;border:2px solid #fff}
 .panel.today{display:grid;grid-template-columns:minmax(0,1.4fr) auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:14px 16px;margin-bottom:16px;border-color:var(--accent)}
@@ -420,7 +422,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 10:15";
+const APPVER="2026-11-02 10:50";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -447,7 +449,7 @@ function toast(msg){$$(".toast").forEach(x=>x.remove());const t=document.createE
 /* ---------- Zustand ---------- */
 const DEF={ver:5,ttKey:"",briefMin:5,notesMin:10,travelPct:10,earliestVisit:"07:30",maxVisitsNear:6,home:{label:"Zuhause",address:"",lat:null,lng:null},speed:60,roadFactor:1.3,overhead:0,clusterMin:20,
   travelDays:[1,2,3,4],dayStart:"06:00",dayEnd:"17:00",lunchFrom:"11:45",lunchTo:"13:30",lunchMin:60,minTravelH:8,minTravelFriH:4,maxVisits:5,
-  horizonWeeks:4,pullForward:7,defInterval:60,defDuration:45,dueX:14,freeDays:"24.12., 31.12.",custTypes:["Verarbeiter","Verarbeiter-Filiale","Großhandel","Abholmarkt","Planungsbüro","Bauträger","Fachberufsschule"],prodGroups:["Hausabfluss (POLO-KAL)","Kanal","Wohnraumlüftung (POLO-KWL)","Installationselemente (POLO-BOX)"],docTypes:["PL 2026","KWL Folder","POLO-KAL Folder","Weihnachtskampagne 2026"],vacationDays:25,sample:false,
+  horizonWeeks:4,pullForward:7,defInterval:60,defDuration:45,dueX:14,freeDays:"24.12., 31.12.",custTypes:["Verarbeiter","Verarbeiter-Filiale","Großhandel","Abholmarkt","Planungsbüro","Bauträger","Fachberufsschule"],prodGroups:["Hausabfluss (POLO-KAL)","Kanal","Wohnraumlüftung (POLO-KWL)","Installationselemente (POLO-BOX)"],visitTopics:["POLO-KAL (Abwasser-Auslegung)","POLO-KWL (Wohnraumlüftung)","POLO-BOX (Installationselemente)","Angebot / Projekt","Reklamation","Produktneuheit","Preise / Konditionen","Schulung / Veranstaltung"],docTypes:["PL 2026","KWL Folder","POLO-KAL Folder","Weihnachtskampagne 2026"],vacationDays:25,sample:false,
   cap:{perWeek:4,perDay:4.5,customers:250,withVacation:false}};
 const S={settings:clone(DEF),customers:[],appts:[],days:{}};
 function migrate(s){const o=Object.assign(clone(DEF),s||{});o.cap=Object.assign(clone(DEF.cap),o.cap||{});
@@ -1212,6 +1214,39 @@ function evDays(a){const out=[];for(let d=a.date;d<=evEnd(a)&&out.length<370;d=a
 function clearBlockedDays(days){const t=todayISO();let n=0;
   S.appts=S.appts.filter(a=>{if(days.includes(a.date)&&a.date>=t&&isAutoE(a)&&dayMode(a.date)!=="reise"){if(a.type==="visit")n++;return false}return true});return n}
 
+/* Besuchsbericht: beim „Wahrgenommen“ und bei „Besuch erfassen“ in der Kundenansicht */
+function openReport(a,c){c=c||custById(a.customerId);if(!c){toast("Kunde nicht gefunden");return}
+  const now=nowMin(),t=todayISO(),rp=(a&&a.report)||{};
+  let d=a?a.date:t,s0=a?a.startMin:Math.max(0,Math.floor((now-c.duration)/5)*5),e0=a?a.startMin+a.dur:now;
+  if(a&&a.status!=="wahrgenommen"&&a.date===t&&now>a.startMin&&now<a.startMin+a.dur)e0=now;
+  const cons=contactsOf(c),tops=[...new Set(listOf("visitTopics").concat(rp.topics||[]))],docs=listOf("docTypes");
+  const chip=(name,val,on)=>`<label class="chip"><input type="checkbox" name="${name}" value="${esc(val)}" ${on?"checked":""}><span>${esc(val)}</span></label>`;
+  const w=modal(`<div class="hd"><div style="min-width:0"><h2>Besuchsbericht</h2><div class="muted">${esc(c.name)}${c.city?" · "+esc(c.city):""}</div></div><button class="x" data-close aria-label="Schließen">×</button></div>
+  <div class="fld2 f3"><label class="fld"><span>Datum</span><input type="date" id="r-d" value="${d}"></label><label class="fld"><span>von</span><input type="time" id="r-s" value="${hm(s0)}" step="300"></label><label class="fld"><span>bis</span><input type="time" id="r-e" value="${hm(e0)}" step="300"></label></div>
+  <div class="fld"><span>Gesprochen mit</span><div class="chips">${cons.map(p=>chip("r-p",p.name+(p.role?" ("+p.role+")":""),(rp.contacts||[]).includes(p.id)).replace('value="','data-pid="'+p.id+'" value="')).join("")||'<span class="muted small">Keine Ansprechpartner hinterlegt</span>'}</div>
+    <input type="text" id="r-pt" value="${esc(rp.contactsTxt||"")}" placeholder="weitere Personen (frei)"></div>
+  <div class="fld"><span>Themen</span><div class="chips">${tops.map(x=>chip("r-t",x,(rp.topics||[]).includes(x))).join("")}</div></div>
+  <label class="fld"><span>Gesprächsnotiz</span><textarea id="r-n" rows="4" placeholder="Was wurde besprochen? Stimmung, Projekte, Mitbewerb …">${esc(rp.notes||"")}</textarea></label>
+  <label class="fld"><span>Vereinbart / nächste Schritte</span><input type="text" id="r-x" value="${esc(rp.next||"")}" placeholder="z. B. Angebot POLO-BOX bis Freitag, Rückruf Bauleiter"></label>
+  ${docs.length?`<div class="fld"><span>Unterlagen übergeben</span><div class="chips">${docs.map(x=>chip("r-doc",x,(rp.docs||[]).includes(x))).join("")}</div></div>`:""}
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn okb" data-act="reportSave">${a&&a.status==="wahrgenommen"?"Bericht speichern":"Als wahrgenommen speichern"}</button></div>`,true);
+  w.dataset.aid=a?a.id:"";w.dataset.cid=c.id;const f=$("#r-n",w);if(f&&!a)setTimeout(()=>{},0)}
+function saveReport(w){const c=custById(w.dataset.cid);if(!c)return;let a=w.dataset.aid?S.appts.find(x=>x.id===w.dataset.aid):null;
+  const d=$("#r-d",w).value||todayISO(),s0=toMin($("#r-s",w).value||"00:00"),e0=toMin($("#r-e",w).value||"00:00");
+  if(e0<=s0){toast("„bis“ muss nach „von“ liegen.");return}
+  const rp={contacts:$$('input[name="r-p"]:checked',w).map(x=>x.dataset.pid),contactsTxt:$("#r-pt",w).value.trim(),topics:$$('input[name="r-t"]:checked',w).map(x=>x.value),
+    notes:$("#r-n",w).value.trim(),next:$("#r-x",w).value.trim(),docs:$$('input[name="r-doc"]:checked',w).map(x=>x.value),at:Date.now()};
+  const isNewV=!a;
+  if(!a){a={id:uid(),type:"visit",customerId:c.id,date:d,startMin:s0,dur:e0-s0,status:"wahrgenommen",manual:true};S.appts.push(a)}
+  else{if(a.status!=="wahrgenommen"&&(a.startMin!==s0||a.dur!==e0-s0||a.date!==d)){a.planDur=a.planDur||a.dur;a.doneAt=e0}a.date=d;a.startMin=s0;a.dur=e0-s0}
+  if(a.status!=="wahrgenommen"){a.status="wahrgenommen";a.prevLast=c.lastVisit||null}
+  a.report=rp;if(!c.lastVisit||d>c.lastVisit)c.lastVisit=d;
+  if(rp.docs.length){c.docs=(c.docs||[]).filter(x=>!rp.docs.includes(x.d)).concat(rp.docs.map(x=>({d:x,date:d})))}
+  /* Kunde wurde besucht: offene Vorschläge für ihn fallen weg, „Touren planen“ rechnet die nächste Fälligkeit neu */
+  const rm=S.appts.filter(x=>x.customerId===c.id&&x.id!==a.id&&isDropV(x)&&x.date>=d).map(x=>x.date);S.appts=S.appts.filter(x=>!(x.customerId===c.id&&x.id!==a.id&&isDropV(x)&&x.date>=d));
+  if(rm.length)reflow([...new Set(rm)]);
+  save("appts","customers");closeModal();render(true);
+  toast((isNewV?"Besuch bei "+c.name+" erfasst":"Wahrgenommen"+(a.doneAt!=null&&d===todayISO()?" – beendet um "+hm(e0):""))+(rm.length?" · "+rm.length+" Vorschlag entfernt":""))}
 function openMissed(a){const w=modal(`<div class="hd"><h2>Nicht wahrgenommen</h2><button class="x" data-close aria-label="Schließen">×</button></div>
   <p class="muted" style="margin:0">${evLabel(a)} · ${fmtD(a.date)} ${hm(a.startMin)}</p>
   <div class="mrs">${["Nicht angetroffen","Keine Zeit"].map(v=>`<label class="row" style="gap:8px"><input type="radio" name="mr" value="${v}"> ${v}</label>`).join("")}</div>
@@ -1439,10 +1474,10 @@ function openCust(id){
     <button class="btn sm" data-addrow="contact">+ Ansprechpartner</button></div></details>
   <details class="acc" ${isNew?"open":""}><summary>Besuche <span class="muted small">${isActive(c)?"alle "+c.interval+" Tage · "+c.duration+" min":"kein Intervall"}</span></summary><div class="accb">
     <div class="fld2"><label class="fld"><span>Besuchsintervall (Tage, leer = kein aktiver Besuch)</span><input type="number" id="c-interval" min="1" value="${isActive(c)?c.interval:""}" placeholder="kein Intervall"></label><label class="fld"><span>Besuchsdauer (min)</span><input type="number" id="c-duration" min="5" step="5" value="${c.duration}"></label></div>
-    <div class="fld2"><label class="fld"><span>Letzter Besuch</span><input type="date" id="c-last" value="${c.lastVisit||""}"></label><div></div></div>
+    <div class="fld2"><label class="fld"><span>Letzter Besuch</span><input type="date" id="c-last" value="${c.lastVisit||""}"></label>${isNew?"<div></div>":`<div class="fld" style="justify-content:flex-end"><button class="btn okb" data-act="custVisit" data-cid="${c.id}">Besuch erfassen</button></div>`}</div>
     ${isNew?"":`<div class="lbl">Termin vereinbaren</div><div class="row"><input type="date" id="c-ad" value="${addDays(t,1)}" aria-label="Datum"><input type="time" id="c-at" value="${st.dayStart}" step="900" aria-label="Uhrzeit"><label class="row" style="gap:5px"><input type="checkbox" id="c-afix" checked>mit Kunde fixiert</label><button class="btn sm" data-act="custAppt">Termin anlegen</button></div>
     ${linked.length?`<div class="lbl">Verknüpfte Termine</div><div style="font-size:13.5px">${linked.map(a=>`<button class="lnk" data-appt="${a.id}">${fmtD(a.date)} ${a.date.slice(0,4)} · ${esc(a.title||CAT[a.cat])}</button>`).join("<br>")}</div>`:""}
-    ${hist.length?`<div class="lbl">Letzte Termine</div><div style="font-size:13.5px">${hist.map(a=>`${fmtD(a.date)} ${a.date.slice(0,4)} · ${a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"+(a.missReason?" ("+esc(a.missReason)+")":"")}${a.notes?" · "+esc(a.notes):""}`).join("<br>")}</div>`:""}`}
+    ${hist.length?`<div class="lbl">Letzte Termine</div><div style="font-size:13.5px">${hist.map(a=>`<button class="lnk hrow" data-appt="${a.id}">${fmtD(a.date)} ${a.date.slice(0,4)} · ${a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"+(a.missReason?" ("+esc(a.missReason)+")":"")}${a.report&&a.report.topics&&a.report.topics.length?" · "+esc(a.report.topics.map(x=>x.split(" (")[0]).join(", ")):""}${a.report&&a.report.notes?`<span class="muted"> – ${esc(a.report.notes.slice(0,90))}${a.report.notes.length>90?"…":""}</span>`:a.notes?" · "+esc(a.notes):""}</button>`).join("")}</div>`:""}`}
   </div></details>
   <details class="acc"><summary>Potenzial <span class="muted small">${pt?fmtEUR(pt)+" / Jahr":""}</span></summary><div class="accb">
     <div class="pott"><div class="poth"><span>Produktgruppe</span><span>Potenzial €/Jahr</span>${years.map(x=>`<span>${x} %</span>`).join("")}</div>
@@ -1541,6 +1576,7 @@ function renderSettings(m){
   <div class="panel"><h3>Listen</h3>
     <label class="fld"><span>Kundentypen (eine Zeile je Typ)</span><textarea data-list="custTypes" rows="5">${esc(listOf("custTypes").join("\n"))}</textarea></label>
     <label class="fld"><span>Produktgruppen für das Potenzial</span><textarea data-list="prodGroups" rows="4">${esc(listOf("prodGroups").join("\n"))}</textarea></label>
+    <label class="fld"><span>Gesprächsthemen beim Besuch</span><textarea data-list="visitTopics" rows="5">${esc(listOf("visitTopics").join("\n"))}</textarea></label>
     <label class="fld"><span>Unterlagen (z. B. Preisliste, Folder, Kampagnen)</span><textarea data-list="docTypes" rows="4">${esc(listOf("docTypes").join("\n"))}</textarea></label>
     <p class="hint">Änderungen gelten sofort für alle Kunden. Bereits erfasste Werte bleiben erhalten, auch wenn du einen Eintrag umbenennst.</p>
   </div>
@@ -1598,6 +1634,7 @@ function openAppt(id){
   modal(`<div class="hd"><div><h2>${c?esc(c.name):"(Kunde gelöscht)"}</h2><div class="muted">${fmtD(a.date)} ${a.date.slice(0,4)} · ${hm(a.startMin)}–${hm(a.startMin+a.dur)}</div></div><button class="x" data-close aria-label="Schließen">×</button></div>
   <div class="row">${pillFor(a)}<span class="muted">${st}</span></div>
   ${c?`<dl class="kv"><dt>Adresse</dt><dd>${esc([c.street,[c.zip,c.city].filter(Boolean).join(" ")].filter(Boolean).join(", "))||"–"}</dd><dt>Telefon</dt><dd>${c.phone?`<span style="user-select:all">${esc(c.phone)}</span>`:"–"}</dd><dt>Fälligkeit</dt><dd>${dueText(c)} · alle ${c.interval} Tage</dd>${c.notes?`<dt>Notizen</dt><dd>${esc(c.notes)}</dd>`:""}</dl>`:""}
+  ${a.status==="wahrgenommen"?`<div class="sep"></div><div class="lbl">Besuchsbericht</div>${a.report?`<dl class="kv">${a.report.topics.length?`<dt>Themen</dt><dd>${esc(a.report.topics.join(", "))}</dd>`:""}${a.report.contacts.length||a.report.contactsTxt?`<dt>Gesprochen mit</dt><dd>${esc(a.report.contacts.map(id=>(contactsOf(c||{}).find(p=>p.id===id)||{}).name).filter(Boolean).concat(a.report.contactsTxt?[a.report.contactsTxt]:[]).join(", "))}</dd>`:""}${a.report.notes?`<dt>Notiz</dt><dd style="white-space:pre-wrap">${esc(a.report.notes)}</dd>`:""}${a.report.next?`<dt>Vereinbart</dt><dd>${esc(a.report.next)}</dd>`:""}${a.report.docs&&a.report.docs.length?`<dt>Unterlagen</dt><dd>${esc(a.report.docs.join(", "))}</dd>`:""}</dl>`:'<p class="muted small" style="margin:0">Noch kein Bericht.</p>'}<div class="row"><button class="btn sm" data-act="reportEdit">${a.report?"Bericht bearbeiten":"Bericht ergänzen"}</button></div>`:""}
   ${open?`<div class="sep"></div><div class="lbl">${fbk?"Wie lief der Termin?":"Ergebnis"}</div>
     <div class="row"><button class="btn okb" data-act="done">Wahrgenommen</button><button class="btn warn" data-act="missed">Nicht wahrgenommen – neu einplanen</button></div>
     <div class="sep"></div><div class="lbl">Termin bearbeiten</div>
@@ -1988,7 +2025,10 @@ document.addEventListener("click",async e=>{
     case"unfix":{const ds=applyApptForm(a,w);a.status="geplant";a.manual=true;save("appts");closeModal();render(true);toast("Fixierung gelöst");break}
     case"release":{const ds0=applyApptForm(a,w);a.manual=false;a.lunchMeet=false;reflow(ds0);a.status="geplant";save("appts");closeModal();render(true);toast("Freigegeben – „Touren planen“ verteilt den Termin neu");break}
     case"saveAppt":{const ds=applyApptForm(a,w);reflow(ds);save("appts");closeModal();render(true);toast("Gespeichert");if(TT.key()&&ds.length)refineRoutes(ds,true);break}
-    case"done":{a.status="wahrgenommen";{const n=nowMin();if(a.date===todayISO()&&n>a.startMin&&n<a.startMin+a.dur){a.planDur=a.dur;a.dur=Math.max(5,n-a.startMin);a.doneAt=n}}const c=custById(a.customerId);if(c){a.prevLast=c.lastVisit||null;if(!c.lastVisit||a.date>c.lastVisit)c.lastVisit=a.date}save("appts","customers");closeModal();render(true);toast(a.doneAt!=null?"Wahrgenommen – beendet um "+hm(a.doneAt):"Als wahrgenommen eingetragen");break}
+    case"done":openReport(a);break;
+    case"custVisit":{const c=custById(t.dataset.cid);if(c)openReport(null,c);break}
+    case"reportSave":saveReport(t.closest(".modal"));break;
+    case"reportEdit":openReport(a);break;
     case"missed":openMissed(a);break;
     case"missedSave":{const w=t.closest(".modal");const r=$('input[name="mr"]:checked',w);const txt=$("#mr-txt",w).value.trim();if(!r&&!txt){toast("Bitte einen Grund wählen oder eintragen.");break}
       a.status="nicht";a.missReason=[r?r.value:"",txt].filter(Boolean).join(": ");save("appts");closeModal();render(true);toast("Nicht wahrgenommen ("+a.missReason+") – der Kunde ist wieder zur Planung frei.");break}
