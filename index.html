@@ -422,7 +422,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 11:00";
+const APPVER="2026-11-02 11:05";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1424,7 +1424,7 @@ function renderCustomers(m){
     <td class="cx"><input type="checkbox" data-csel="${c.id}" ${ui.csel.has(c.id)?"checked":""} aria-label="${esc(c.name)} auswählen"></td><td class="cn"><b>${esc(c.name)}</b><span class="muted small">${esc([c.type,mc&&mc.name].filter(Boolean).join(" · "))}</span></td>
     <td class="co">${esc([c.zip,c.city].filter(Boolean).join(" "))}${hasXY(c)?"":' <span class="pill p-over" title="Koordinaten fehlen">Lage?</span>'}</td>
     <td class="cs"><span class="pill p-${dueClass(c)}">${isActive(c)?dueText(c):"kein Intervall"}</span></td>
-    <td class="ct"><button class="btn sm okb" data-act="custVisit" data-cid="${c.id}" title="Besuch jetzt als wahrgenommen erfassen">Jetzt wahrgenommen</button></td></tr>`}).join("")}
+    <td class="ct"><button class="btn sm okb" data-act="custVisit" data-cid="${c.id}" title="Besuch jetzt als wahrgenommen erfassen">Besucht</button></td></tr>`}).join("")}
   </tbody></table>
   <div class="bulk ${ui.csel.size?"sel":""}" id="bulkbar"><span class="lbl" id="bulklbl">${ui.csel.size?ui.csel.size+" ausgewählt – setzen:":"Für "+list.length+" angezeigte Kunden setzen:"}</span>Intervall <input type="number" id="bInt" min="1" placeholder="Tage" aria-label="Intervall in Tagen"> Dauer <input type="number" id="bDur" min="5" step="5" placeholder="min" aria-label="Dauer in Minuten"><button class="btn sm pri" data-act="bulk">Übernehmen</button>${ui.csel.size?'<button class="btn sm" data-act="cselClear">Auswahl aufheben</button>':""}</div></div>`;
   $("#cfilter").value=ui.custFilter;$("#csort").value=ui.sort;$("#ctype").value=ui.typeFilter||"";$("#cdoc").value=ui.docFilter||"";
