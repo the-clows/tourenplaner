@@ -211,7 +211,7 @@ textarea{width:100%;min-height:60px}
 .dbt{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 2px 5px;cursor:pointer;color:var(--ink);min-width:0}
 .dbt b{font-family:var(--f-display);font-size:16px}.dbt small{font-size:11px;color:var(--muted)}
 .dbt i{width:5px;height:5px;border-radius:50%;background:transparent;margin-top:2px}.dbt i.has{background:var(--accent)}
-.dbt.cur b{color:var(--accent)}.dbt.off{background:var(--surface-2)}
+.dbt.cur b{color:var(--accent)}.dbt.noreise{background:var(--surface-2)}.dbt.noreise b{color:var(--muted)}.dbt.noreise.on b{color:var(--accent-ink)}
 .dbt.on{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}.dbt.on small{color:var(--accent-ink);opacity:.85}.dbt.on b{color:var(--accent-ink)}.dbt.on i.has{background:var(--accent-ink)}
 @media (max-width:760px){.caltool .lg{display:none}.caltool h2{width:100%;font-size:19px}.caltool .btn.pri,.caltool [data-act="refine"]{flex:1}}
 .aday .ah{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
@@ -410,7 +410,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 03:15";
+const APPVER="2026-11-02 03:25";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1240,7 +1240,7 @@ function renderCalendar(m){
   const dayBtn=d=>`<button class="daybtn" data-day="${d}" aria-label="Tagesart für ${fmtD(d)} ändern">${fmtD(d)}</button>`;
   if(narrow){
     if(!ui.selDay||!days.includes(ui.selDay))ui.selDay=days.includes(t)?t:(days.find(d=>daySummary(d))||days[0]);
-    const row=`<div class="drow">${days.map(d=>{const s0=daySummary(d),md=dayMode(d);return`<button class="dbt ${d===ui.selDay?"on":""} ${d===t?"cur":""} ${md!=="reise"?"off":""}" data-sel="${d}"><b>${DOW[dow(d)]}</b><small>${d.slice(8,10)}.${d.slice(5,7)}.</small><i class="${s0?"has":""}"></i></button>`}).join("")}</div>`;
+    const row=`<div class="drow">${days.map(d=>{const s0=daySummary(d),md=dayMode(d);return`<button class="dbt ${d===ui.selDay?"on":""} ${d===t?"cur":""} ${md!=="reise"?"noreise":""}" data-sel="${d}"><b>${DOW[dow(d)]}</b><small>${d.slice(8,10)}.${d.slice(5,7)}.</small><i class="${s0?"has":""}"></i></button>`}).join("")}</div>`;
     m.innerHTML=sampleBanner()+nh+tools+row+`<div class="agenda">${[ui.selDay].map(d=>{const as=dayAppts(d);const r=gmapsRoute(d);const md=dayMode(d);
       let prev=startLoc(d);
       return`<div class="panel aday"><div class="ah"><h3 style="${d===t?"color:var(--accent)":""}">${dayBtn(d)}</h3><span>${dayLabel(d)}</span><span class="muted" style="font-size:13px;width:100%">${spanTxt(d)}${r?` · <a href="${r}" target="_blank" rel="noopener">Route</a>`:""}</span></div>
