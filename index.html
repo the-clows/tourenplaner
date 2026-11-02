@@ -1055,7 +1055,7 @@ function accSettings(m){let st={};try{st=JSON.parse(localStorage.getItem("tp.sac
     d.append(sm,b);d.addEventListener("toggle",()=>{try{const x=JSON.parse(localStorage.getItem("tp.sacc")||"{}");x[key]=d.open;localStorage.setItem("tp.sacc",JSON.stringify(x))}catch(e){}});
     p.replaceWith(d)});
   const g=$(".sgrid",m);if(!g)return;g.classList.add("sacc-list");
-  let cur=ui.sgrp;try{cur=cur||localStorage.getItem("tp.sgrp")}catch(e){}if(!GN[cur])cur=needG.sys&&!needG.plan?"sys":"plan";ui.sgrp=cur;
+  let cur=ui.sgrp;try{cur=cur||localStorage.getItem("tp.sgrp")}catch(e){}if(!GN[cur])cur=needG.sys?"sys":"plan";ui.sgrp=cur;
   const seg=document.createElement("div");seg.className="sseg";seg.setAttribute("role","tablist");
   seg.innerHTML=Object.keys(GN).map(k=>`<button role="tab" data-sgrp="${k}" aria-selected="${k===cur}">${GN[k]}${needG[k]?'<i class="dot"></i>':""}</button>`).join("");
   g.prepend(seg);const show=k=>{$$(".sacc",g).forEach(d=>d.hidden=d.dataset.grp!==k);$$("[data-sgrp]",seg).forEach(b=>b.setAttribute("aria-selected",b.dataset.sgrp===k))};show(cur);
@@ -2379,7 +2379,7 @@ document.addEventListener("click",async e=>{
   switch(act){
     case"import":$("#fileIn").click();break;
     case"sample":loadSample();break;
-    case"goCloud":ui.tab="settings";render(true);window.scrollTo(0,0);setTimeout(()=>{const e=$("#gh-token");if(e)e.focus()},50);break;
+    case"goCloud":ui.sgrp="sys";try{const x=JSON.parse(localStorage.getItem("tp.sacc")||"{}");x.Abgleich=true;localStorage.setItem("tp.sacc",JSON.stringify(x))}catch(e){}ui.tab="settings";render(true);window.scrollTo(0,0);setTimeout(()=>{const e=$("#gh-token");if(e)e.focus()},50);break;
     case"plan":planTours();break;
     case"addPrivate":openPrivate(null);break;
     case"addTourAppt":openTourAppt({date:ui.selDay&&mondayOf(ui.selDay)===ui.week?ui.selDay:null});break;
