@@ -106,6 +106,7 @@ h3{font-family:var(--f-display);font-weight:600;font-size:17px;margin:0}
 .btn:disabled{opacity:.5;cursor:default}
 input[type=text],input[type=tel],input[type=email],input[type=password],input[type=number],input[type=date],input[type=time],input[type=search],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 9px;min-width:0}
 textarea{width:100%;min-height:60px}
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-height:34px;display:block;max-width:100%}input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px}
 .pill{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
 .p-over{background:var(--over-soft);color:var(--over)} .p-soon{background:var(--soon-soft);color:var(--soon)} .p-ok{background:var(--ok-soft);color:var(--ok)}
@@ -351,6 +352,13 @@ td.num{text-align:right}
 .sgrid .panel{padding:16px;display:flex;flex-direction:column;gap:12px}
 .updbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:3050;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:8px 10px 8px 14px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow);white-space:nowrap}
 .sgrid.sacc-list{display:flex;flex-direction:column;gap:8px;max-width:760px;margin:0 auto}
+.sseg{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px}
+.sseg button{flex:1;border:0;background:none;border-radius:7px;padding:7px 4px;font-family:var(--f-display);font-weight:600;font-size:15px;color:var(--muted);cursor:pointer;position:relative}.sseg button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}.sseg .dot{position:absolute;top:6px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--soon)}
+.sacc>summary .st{flex:1;min-width:0}.sacc .ib{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--muted);background:none;color:var(--muted);font:italic 600 13px/1 Georgia,serif;cursor:pointer;display:grid;place-items:center;padding:0}.sacc.showh .ib{border-color:var(--accent);color:var(--accent)}
+.sacc .hint-h{display:none}.sacc.showh .hint-h{display:block}
+.sacc>.accb{gap:8px}.sacc .fld:has(>input[type=number]),.sacc .fld:has(>input[type=time]){display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
+.sacc .fld:has(>input[type=number])>input,.sacc .fld:has(>input[type=time])>input{width:104px}.sacc .fld>span{font-size:14px;color:var(--ink)}
+.sacc .fld2{gap:8px 16px}.sacc .wd{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.sacc .wd label{min-width:0;padding:5px 2px!important;justify-content:center;flex-direction:column;align-items:center;text-align:center}
 .sacc>summary .pill{font-family:var(--f-body);font-weight:600}
 .sacc>.accb>.hint{margin:0}
 .fld{display:flex;flex-direction:column;gap:4px}
@@ -450,7 +458,7 @@ button.brand{background:none;border:0;padding:4px 6px 4px 0;margin:0;cursor:poin
 
 <script>
 "use strict";
-const APPVER="2026-11-02 15:50";
+const APPVER="2026-11-02 16:40";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1033,14 +1041,25 @@ function planDay(d,fixed,proj,last){
 /* Einstellungen als Akkordeon: nur Relevantes ist offen, der Rest zugeklappt (Zustand je Gerät gemerkt) */
 function accSettings(m){let st={};try{st=JSON.parse(localStorage.getItem("tp.sacc")||"{}")}catch(e){}
   const S0=S.settings,need={"Zuhause":!(S0.home&&S0.home.lat!=null),"Karte":!TT.key(),"Abgleich":!GH.on()};
+  /* Gruppen: Planung (wie geplant wird) · Listen (Auswahllisten) · System (Verbindungen, Darstellung, Sicherung) */
+  const GRP={Zuhause:"plan",Reisetage:"plan",Planung:"plan",Puffer:"plan","Besuchskapazität":"plan","Schätzung":"plan",Abwesenheiten:"plan",Listen:"list",Abgleich:"sys",Karte:"sys",Darstellung:"sys",Datensicherung:"sys"};
+  const GN={plan:"Planung",list:"Listen",sys:"System"};const needG={};
   $$(".sgrid>.panel",m).forEach(p=>{const h=p.querySelector("h3");if(!h)return;const key=h.childNodes[0].textContent.trim().split(/[ (]/)[0];
-    const d=document.createElement("details");d.className="acc sacc";d.dataset.k=key;
+    const d=document.createElement("details");d.className="acc sacc";d.dataset.k=key;d.dataset.grp=GRP[key]||"sys";if(need[key])needG[d.dataset.grp]=true;
     const open=key in st?st[key]:!!need[key];if(open)d.open=true;
-    const sm=document.createElement("summary");sm.innerHTML=h.innerHTML;if(need[key])sm.insertAdjacentHTML("beforeend",'<span class="pill p-soon">einrichten</span>');h.remove();
+    const sm=document.createElement("summary");sm.innerHTML=`<span class="st">${h.innerHTML}</span>`;if(need[key])sm.insertAdjacentHTML("beforeend",'<span class="pill p-soon">einrichten</span>');h.remove();
     const b=document.createElement("div");b.className="accb";while(p.firstChild)b.appendChild(p.firstChild);
+    /* Beschreibungen hinter (i) */
+    const hints=$$(".hint",b);if(hints.length){hints.forEach(x=>x.classList.add("hint-h"));sm.insertAdjacentHTML("beforeend",'<button type="button" class="ib" aria-label="Erklärung anzeigen" title="Erklärung">i</button>');
+      sm.querySelector(".ib").addEventListener("click",ev=>{ev.preventDefault();ev.stopPropagation();d.classList.toggle("showh");if(!d.open)d.open=true})}
     d.append(sm,b);d.addEventListener("toggle",()=>{try{const x=JSON.parse(localStorage.getItem("tp.sacc")||"{}");x[key]=d.open;localStorage.setItem("tp.sacc",JSON.stringify(x))}catch(e){}});
     p.replaceWith(d)});
-  const g=$(".sgrid",m);if(g)g.classList.add("sacc-list")}
+  const g=$(".sgrid",m);if(!g)return;g.classList.add("sacc-list");
+  let cur=ui.sgrp;try{cur=cur||localStorage.getItem("tp.sgrp")}catch(e){}if(!GN[cur])cur=needG.sys&&!needG.plan?"sys":"plan";ui.sgrp=cur;
+  const seg=document.createElement("div");seg.className="sseg";seg.setAttribute("role","tablist");
+  seg.innerHTML=Object.keys(GN).map(k=>`<button role="tab" data-sgrp="${k}" aria-selected="${k===cur}">${GN[k]}${needG[k]?'<i class="dot"></i>':""}</button>`).join("");
+  g.prepend(seg);const show=k=>{$$(".sacc",g).forEach(d=>d.hidden=d.dataset.grp!==k);$$("[data-sgrp]",seg).forEach(b=>b.setAttribute("aria-selected",b.dataset.sgrp===k))};show(cur);
+  seg.addEventListener("click",ev=>{const b=ev.target.closest("[data-sgrp]");if(!b)return;ui.sgrp=b.dataset.sgrp;try{localStorage.setItem("tp.sgrp",ui.sgrp)}catch(e){}show(ui.sgrp)})}
 /* ================= Menü hinter dem Logo (Dropdown) ================= */
 function closeMenu(){const m=$("#dmenu");if(m)m.remove();const b=$("button.brand");if(b)b.setAttribute("aria-expanded","false")}
 function toggleMenu(){if($("#dmenu")){closeMenu();return}const fu=followUps().filter(x=>!x.l.fuDone&&x.l.fuDate&&x.l.fuDate<=addDays(todayISO(),7)).length;
@@ -1897,7 +1916,7 @@ function renderSettings(m){
   const wd=[1,2,3,4,5,6,0].map(d=>`<label><input type="checkbox" data-wd="${d}" ${s.travelDays.includes(d)?"checked":""}>${DOW[d]}</label>`).join("");
   const f=(k,l,type="number",extra="")=>`<label class="fld"><span>${l}</span><input type="${type}" data-k="${k}" id="s-${k}" value="${esc(s[k])}" ${extra}></label>`;
   m.innerHTML=`<div class="sgrid">${GH.on()?"":ghPanel()}
-  <div class="panel"><h3>Zuhause (Start und Ende jeder Tour)</h3>
+  <div class="panel"><h3>Zuhause</h3><p class="hint">Start und Ende jeder Tour (außer bei Hotelübernachtung).</p>
     <label class="fld"><span>Bezeichnung</span><input type="text" id="h-label" value="${esc(h.label)}"></label>
     <label class="fld"><span>Adresse</span><input type="text" id="h-address" value="${esc(h.address)}" placeholder="Straße, PLZ Ort"></label>
     <div class="fld2"><label class="fld"><span>Breitengrad</span><input type="text" id="h-lat" value="${h.lat??""}" placeholder="48.3069"></label><label class="fld"><span>Längengrad</span><input type="text" id="h-lng" value="${h.lng??""}" placeholder="14.2858"></label></div>
@@ -1921,7 +1940,7 @@ function renderSettings(m){
     <p class="hint">Die Schätzung dient zur Auswahl der Kunden. Mit TomTom-Schlüssel werden die Zeiten danach automatisch mit echten Fahrzeiten ersetzt.</p>
   </div>
   <div class="panel"><h3>Reisetage und Reisezeit</h3>
-    <div class="fld"><span>Reisetage (übrige Werktage gelten als Büro / Homeoffice)</span><div class="wd">${wd}</div></div>
+    <div class="fld"><span>Reisetage</span><p class="hint" style="margin:0">Übrige Werktage gelten als Büro / Homeoffice.</p><div class="wd">${wd}</div></div>
     <div class="fld2">${f("dayStart","Abfahrt frühestens","time")}${f("dayEnd","Ankunft zuhause spätestens","time")}</div>
     ${f("earliestVisit","Erster Kundentermin frühestens","time")}
     <div class="fld2">${f("minTravelH","Mindest-Reisezeit Mo–Do (h)","number",'min="0" max="14" step="0.5"')}${f("minTravelFriH","Mindest-Reisezeit Freitag (h)","number",'min="0" max="14" step="0.5"')}</div>
@@ -1958,7 +1977,7 @@ function renderSettings(m){
   </div>
   <div class="panel"><h3>Darstellung</h3><div class="fld"><span>Farbschema (nur dieses Gerät)</span><select id="s-theme">${[["dark","Dunkel"],["light","Hell"],["system","wie Gerät"]].map(([v,l])=>`<option value="${v}"${(document.documentElement.dataset.theme||"dark")===v?" selected":""}>${l}</option>`).join("")}</select></div></div>
   ${GH.on()?ghPanel():""}
-  <div class="panel"><h3>Daten <span class="muted small" style="font-weight:400">· Version ${APPVER}</span></h3>
+  <div class="panel"><h3>Datensicherung <span class="muted small" style="font-weight:400">· Version ${APPVER}</span></h3>
     <div class="row"><button class="btn" data-act="backup">Sicherung speichern (JSON)</button><button class="btn" data-act="restore">Sicherung laden</button></div>
     <div class="row"><button class="btn warn" data-act="clearAll">Alle Daten löschen</button></div>
     <p class="hint">${GH.on()?"Die Daten werden über GitHub zwischen deinen Geräten abgeglichen. Eine Sicherungsdatei ist trotzdem sinnvoll, z. B. einmal im Monat.":"Die Daten liegen nur in diesem Browser auf diesem Gerät. Speichere regelmäßig eine Sicherung oder richte den Abgleich über GitHub ein."}</p>
