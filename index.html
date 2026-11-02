@@ -391,6 +391,7 @@ td.num{text-align:right}
 .leaflet-container{font:inherit;background:var(--surface-2)}
 .homeic span{display:block;width:18px;height:18px;background:var(--ink);border:3px solid var(--surface);border-radius:3px;box-shadow:0 0 0 1px var(--ink)}
 .hotelic{background:var(--soon);color:#fff;border-radius:4px;font-weight:700;font-size:12px;text-align:center;line-height:18px}
+.numic{cursor:pointer}.numpop .leaflet-popup-content-wrapper{border-radius:8px;padding:0;background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}.numpop .leaflet-popup-content{margin:6px 9px;font-size:12px;line-height:1.35}.numpop .leaflet-popup-tip{background:var(--surface)}
 .numic span{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-weight:700;font-size:11.5px;border:2px solid #fff}
 .panel.today{display:grid;grid-template-columns:minmax(0,1.4fr) auto minmax(0,1fr) auto;gap:18px;align-items:center;padding:14px 16px;margin-bottom:16px;border-color:var(--accent)}
 .panel.today h3{margin-top:2px}.panel.today .big{font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1.1}
@@ -419,7 +420,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 10:00";
+const APPVER="2026-11-02 10:15";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1178,7 +1179,7 @@ const mapView={
       for(let i=0;i<seq.length-1;i++){const a=seq[i],b=seq[i+1];if(km(a,b)<0.3)continue;const g=GEO.get(a,b);
         L.polyline(g||[[a.lat,a.lng],[b.lat,b.lng]],{color,weight:g?5:3,opacity:.85,dashArray:g?null:"6 7"}).addTo(this.routes)}
       dayEntries(d).filter(a=>a.type==="visit").forEach((a,i)=>{const l=apptLoc(a);if(!l)return;
-        L.marker([l.lat,l.lng],{icon:L.divIcon({className:"numic",html:`<span style="background:${color}">${i+1}</span>`,iconSize:[22,22],iconAnchor:[-2,24]}),interactive:false}).addTo(this.routes)})});
+        L.marker([l.lat,l.lng],{icon:L.divIcon({className:"numic",html:`<span style="background:${color}">${i+1}</span>`,iconSize:[22,22],iconAnchor:[-2,24]}),interactive:true,zIndexOffset:500,keyboard:false}).bindPopup(`<b>${evLabel(a)}</b><br>${fmtD(d)} · ${hm(a.startMin)}–${hm(a.startMin+a.dur)}`,{className:"numpop",closeButton:false,offset:[13,-17],autoPanPadding:[20,20]}).addTo(this.routes)})});
     if(missing.length)this.fetchGeo(missing)},
   draw(){if(this.map){this.drawMarkers();this.drawRoutes()}},
   /* Streckenverlauf nach Straßen nachladen, wenn er auf diesem Gerät noch fehlt (z. B. am iPhone nach dem Abgleich) */
