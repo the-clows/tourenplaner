@@ -67,6 +67,9 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:2500;backgro
 nav.tabs{display:flex;gap:4px;overflow-x:auto;width:100%;scrollbar-width:none}
 nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px 9px;font-family:var(--f-display);font-weight:600;font-size:16px;color:var(--muted);cursor:pointer;white-space:nowrap}
 nav.tabs .gear{margin-left:auto;display:inline-flex;align-items:center;padding:6px 10px 7px}
+nav.tabs .ring{display:block;width:26px;height:26px;fill:none;stroke:var(--brand);stroke-width:4}
+nav.tabs button.home{display:flex;align-items:center;justify-content:center}
+@media (max-width:640px){nav.tabs .ring{width:30px;height:30px;margin:2px 0}}
 nav.tabs .ti{display:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 html{-webkit-text-size-adjust:100%}
 main{overflow-x:clip}
@@ -400,9 +403,9 @@ td.num{text-align:right}
   <div class="brand"><span class="logo" role="img" aria-label="Poloplast"></span><span class="app">Cockpit</span></div>
   <div class="save" id="saveState" title="Speicherort"><i></i><span>Lokal</span></div>
   <nav class="tabs" role="tablist" id="tabs">
-    <button role="tab" data-tab="overview"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg><span class="tl" data-s="Übersicht">Übersicht</span></button>
     <button role="tab" data-tab="calendar"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/></svg><span class="tl" data-s="Touren">Tourenplaner</span></button>
     <button role="tab" data-tab="map"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14M15 6v14"/></svg><span class="tl" data-s="Karte">Karte</span></button>
+    <button role="tab" data-tab="overview" class="home" aria-label="Übersicht" title="Übersicht"><svg class="ring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.1"/></svg></button>
     <button role="tab" data-tab="customers"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.2 6-5.2s5.4 1.8 6 5.2"/><path d="M16 4.9a3.2 3.2 0 0 1 0 6.2M18 14.9c1.6.7 2.6 2.4 3 5.1"/></svg><span class="tl" data-s="Kunden">Kunden</span></button>
     <button role="tab" data-tab="kalender"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg><span class="tl" data-s="Kalender">Kalender</span></button>
     <button role="tab" data-tab="settings" class="gear" aria-label="Einstellungen" title="Einstellungen"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9c.26.6.86 1 1.51 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg></button>
@@ -414,7 +417,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 03:45";
+const APPVER="2026-11-02 04:00";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1027,11 +1030,11 @@ function briefingCard(){
   const route=gmapsRoute(d),ck=checkDay(d);
   const fixedN=vs.filter(a=>a.status==="fixiert").length;
   return`<section class="panel brief">
-    <div class="bhead"><div><div class="lbl">${d===t?"Heute":"Nächster Reisetag"}</div><h2>${d===t?"Dein Tag":longDate(d)}</h2></div>
+    <div class="bhead"><div>${d===t?"":`<div class="lbl">Nächster Reisetag</div>`}<h2>${d===t?"Heute":longDate(d)}</h2></div>
       <div class="row">${dayRegion(d)?`<span class="pill p-plan">${esc(dayRegion(d))}</span>`:""}${s.ok===false?`<span class="pill p-soon">unter ${s.target/60} h Reisezeit</span>`:""}${ck.conflict?'<span class="pill p-over">Zeitkonflikt</span>':""}${s.real?'<span class="pill p-ok">Verkehr ✓</span>':""}</div></div>
     <div class="kpis">
       <div class="kpi"><div class="lbl">Losfahren</div><div class="big">${hm(s.dep)}</div><div class="muted">ab ${esc(from)}</div></div>
-      <div class="kpi"><div class="lbl">Erster Kundentermin</div><div class="big">${first?hm(first.startMin):"–"}</div><div class="muted">${fc?esc(fc.city||fc.name):""}</div></div>
+      <div class="kpi"><div class="lbl">Erster Termin</div><div class="big">${first?hm(first.startMin):"–"}</div><div class="muted">${fc?esc(fc.city||fc.name):""}</div></div>
       <div class="kpi"><div class="lbl">Ankunft ${to}</div><div class="big">${hm(s.ret)}</div><div class="muted">Reisezeit ${hm(s.span)} h</div></div>
       <div class="kpi"><div class="lbl">Tour</div><div class="big">${s.n} <small>Besuche</small></div><div class="muted">${s.km} km · ${hm(s.min)} h Fahrt${fixedN?` · ${fixedN} fixiert`:""}</div></div>
     </div>
