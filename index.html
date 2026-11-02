@@ -404,6 +404,9 @@ button.brand{background:none;border:0;padding:4px 6px 4px 0;margin:0;cursor:poin
 @media (max-width:420px){.tact .ibtn{padding:5px}.tact{gap:2px}}
 .scanbox{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:1/1;max-height:60vh}.scanbox video{width:100%;height:100%;object-fit:cover;display:block}.scanframe{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
 .qrbox{display:grid;place-items:center;background:#fff;border-radius:10px;padding:10px;min-height:200px}.qrbox svg{width:min(260px,70vw);height:auto}
+.todo{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.todo:last-child{border-bottom:0}.tchk{padding-top:2px}.tchk input{width:18px;height:18px}.ttl{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;color:inherit;cursor:pointer;display:flex;flex-direction:column}.todo.done .ttl b{text-decoration:line-through;color:var(--muted)}
+.hist{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:4px}.hitem{position:relative;display:flex;flex-direction:column;gap:1px;text-align:left;background:none;border:0;padding:6px 0 8px 14px;color:var(--ink);cursor:pointer}.hitem::before{content:"";position:absolute;left:-6px;top:10px;width:10px;height:10px;border-radius:50%;background:var(--muted);border:2px solid var(--surface)}
+.hitem.hv::before{background:var(--ok)}.hitem.hn::before{background:var(--over)}.hitem.hm::before{background:var(--accent)}.hitem.ht::before{background:var(--soon)}.hd2{display:flex;gap:8px;align-items:baseline}.hk{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.htxt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sugg{position:absolute;left:0;right:0;top:100%;z-index:50;background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 24px rgba(0,0,0,.3);margin-top:3px;max-height:280px;overflow:auto;padding:4px}.sugg button{display:flex;flex-direction:column;align-items:flex-start;width:100%;background:none;border:0;border-radius:6px;padding:7px 9px;color:var(--ink);cursor:pointer;text-align:left}.sugg button:hover{background:var(--surface-2)}.sugg span{font-size:12px;color:var(--muted)}.sugg .sn{padding:8px 9px;font-size:13px;color:var(--muted)}
 .evlist{display:flex;flex-direction:column;gap:8px}.evc{display:grid;grid-template-columns:1fr auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;color:var(--ink);overflow:hidden}
 .evmain{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;text-align:left;background:none;border:0;padding:12px;cursor:pointer;color:inherit;min-width:0}
@@ -446,7 +449,7 @@ button.brand{background:none;border:0;padding:4px 6px 4px 0;margin:0;cursor:poin
 
 <script>
 "use strict";
-const APPVER="2026-11-02 14:45";
+const APPVER="2026-11-02 15:30";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -475,7 +478,7 @@ const DEF={ver:5,ttKey:"",briefMin:5,notesMin:10,travelPct:10,earliestVisit:"07:
   travelDays:[1,2,3,4],dayStart:"06:00",dayEnd:"17:00",lunchFrom:"11:45",lunchTo:"13:30",lunchMin:60,minTravelH:8,minTravelFriH:4,maxVisits:5,
   horizonWeeks:4,pullForward:7,defInterval:60,defDuration:45,dueX:14,freeDays:"24.12., 31.12.",custTypes:["Verarbeiter","Verarbeiter-Filiale","Großhandel","Abholmarkt","Planungsbüro","Bauträger","Fachberufsschule"],prodGroups:["Hausabfluss (POLO-KAL)","Kanal","Wohnraumlüftung (POLO-KWL)","Installationselemente (POLO-BOX)"],visitTopics:["POLO-KAL (Abwasser-Auslegung)","POLO-KWL (Wohnraumlüftung)","POLO-BOX (Installationselemente)","Angebot / Projekt","Reklamation","Produktneuheit","Preise / Konditionen","Schulung / Veranstaltung"],docTypes:["PL 2026","KWL Folder","POLO-KAL Folder","Weihnachtskampagne 2026"],vacationDays:25,sample:false,
   cap:{perWeek:4,perDay:4.5,customers:250,withVacation:false}};
-const S={settings:clone(DEF),customers:[],appts:[],days:{},events:[],team:[]};
+const S={settings:clone(DEF),customers:[],appts:[],days:{},events:[],team:[],todos:[]};
 function migrate(s){const o=Object.assign(clone(DEF),s||{});o.cap=Object.assign(clone(DEF.cap),o.cap||{});
   if(!s||!s.ver||s.ver<2){Object.assign(o,{travelDays:[1,2,3,4],dayStart:"07:00",dayEnd:"17:00",lunchFrom:"11:45",lunchTo:"13:30",lunchMin:60,defDuration:60,maxVisits:6});delete o.workdays;delete o.lunchStart}
   if(!s||!s.ver||s.ver<3){if(!s||!s.ver||s.ver<2||o.defInterval===101)o.defInterval=60}
@@ -487,10 +490,10 @@ const ui={csel:new Set(),showActive:(()=>{try{return localStorage.getItem("tp.sh
 
 /* ---------- Speicherung: Konto (db) mit lokalem Zwischenspeicher ---------- */
 const store={db:null,uid:null,refs:{},timers:{},busy:{},again:{},pending:{},loaded:{}};
-const KEYS=["settings","customers","appts","days","events","team"];
+const KEYS=["settings","customers","appts","days","events","team","todos"];
 function lsGet(k){try{const v=localStorage.getItem("tp."+k);return v?JSON.parse(v):null}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem("tp."+k,JSON.stringify(v))}catch(e){}}
-function loadLocal(){const s=lsGet("settings");if(s){S.settings=migrate(s);if(!S.settings.ttKey&&lsGet("ttkey"))S.settings.ttKey=lsGet("ttkey");if(S.settings.ttKey)lsSet("ttkey",S.settings.ttKey);if(S.settings._migrated){delete S.settings._migrated;lsSet("settings",S.settings)}}const c=lsGet("customers");if(Array.isArray(c))S.customers=c;const a=lsGet("appts");if(Array.isArray(a))S.appts=a;const d=lsGet("days");if(d&&typeof d==="object")S.days=d;const ev=lsGet("events");if(Array.isArray(ev))S.events=ev;const tm=lsGet("team");if(Array.isArray(tm))S.team=tm}
+function loadLocal(){const s=lsGet("settings");if(s){S.settings=migrate(s);if(!S.settings.ttKey&&lsGet("ttkey"))S.settings.ttKey=lsGet("ttkey");if(S.settings.ttKey)lsSet("ttkey",S.settings.ttKey);if(S.settings._migrated){delete S.settings._migrated;lsSet("settings",S.settings)}}const c=lsGet("customers");if(Array.isArray(c))S.customers=c;const a=lsGet("appts");if(Array.isArray(a))S.appts=a;const d=lsGet("days");if(d&&typeof d==="object")S.days=d;const ev=lsGet("events");if(Array.isArray(ev))S.events=ev;const tm=lsGet("team");if(Array.isArray(tm))S.team=tm;const td=lsGet("todos");if(Array.isArray(td))S.todos=td}
 function applyLoaded(k,v){if(k==="settings"){const m=migrate(v);if(!m.ttKey&&(S.settings.ttKey||lsGet("ttkey"))){m.ttKey=S.settings.ttKey||lsGet("ttkey");setTimeout(()=>persist("settings"),100)}if(m.ttKey)lsSet("ttkey",m.ttKey);const mig=m._migrated;delete m._migrated;S.settings=m;if(mig)setTimeout(()=>persist("settings"),50)}else if(k==="days")S.days=v&&typeof v==="object"&&!Array.isArray(v)?clone(v):{};else S[k]=Array.isArray(v)?clone(v):[]}
 function setSaveState(){const el=$("#saveState");const busy=KEYS.some(k=>store.pending[k]||store.busy[k]);
   el.className="save"+(store.db?(busy?" busy":" cloud"):"");
@@ -546,7 +549,7 @@ const GH={
     let o;try{o=JSON.parse(txt)}catch(e){throw new Error("Datei data/"+k+".json ist beschädigt")}
     return{sha:j.sha,v:o.v,at:o.at||0,dev:o.dev||""}},
   async put(k,sha){const at=this.dirty()[k]||Date.now();if(k==="settings"&&!S.settings.ttKey&&lsGet("ttkey"))S.settings.ttKey=lsGet("ttkey");
-    const body={message:"Tourenplaner: "+({settings:"Einstellungen",customers:"Kunden",appts:"Termine",days:"Tage",events:"Events",team:"Kontakte"}[k]||k)+" ("+this.dev()+")",content:this.b64e(JSON.stringify({v:S[k],at,dev:this.dev()}))};if(sha)body.sha=sha;
+    const body={message:"Tourenplaner: "+({settings:"Einstellungen",customers:"Kunden",appts:"Termine",days:"Tage",events:"Events",team:"Kontakte",todos:"To-dos"}[k]||k)+" ("+this.dev()+")",content:this.b64e(JSON.stringify({v:S[k],at,dev:this.dev()}))};if(sha)body.sha=sha;
     const r=await this.api("PUT","/contents/data/"+k+".json",body);
     if(r.status===409||r.status===422){const e=new Error("conflict");e.conflict=true;throw e}
     if(!r.ok)throw new Error(this.errText(r));
@@ -573,7 +576,7 @@ const GH={
     }catch(e){this.err=e.offline?"offline":e.message}
     this.busy=false;setSaveState();
     if(changed){healSample();mapView.fitted=false;render()}
-    if(lost.length)toast("Auf einem anderen Gerät gab es neuere Änderungen ("+lost.map(k=>({settings:"Einstellungen",customers:"Kunden",appts:"Termine",days:"Tage",events:"Events",team:"Kontakte"}[k])).join(", ")+"). Sie wurden übernommen.");
+    if(lost.length)toast("Auf einem anderen Gerät gab es neuere Änderungen ("+lost.map(k=>({settings:"Einstellungen",customers:"Kunden",appts:"Termine",days:"Tage",events:"Events",team:"Kontakte",todos:"To-dos"}[k])).join(", ")+"). Sie wurden übernommen.");
     if(this.err&&this.err!=="offline"&&!quiet)toast("Abgleich fehlgeschlagen: "+this.err);
     if(this.again){this.again=false;setTimeout(()=>this.sync(),500)}
   },
@@ -1042,7 +1045,7 @@ function closeMenu(){const m=$("#dmenu");if(m)m.remove();const b=$("button.brand
 function toggleMenu(){if($("#dmenu")){closeMenu();return}const fu=followUps().filter(x=>!x.l.fuDone&&x.l.fuDate&&x.l.fuDate<=addDays(todayISO(),7)).length;
   const it=(act,tab,label,sub)=>`<button role="menuitem" data-act="${act}" class="${ui.tab===tab?"on":""}"><b>${label}</b>${sub?`<span>${sub}</span>`:""}</button>`;
   const d=document.createElement("div");d.id="dmenu";d.className="dmenu";d.setAttribute("role","menu");
-  d.innerHTML=it("goHome","overview","Cockpit","Übersicht")+it("goTeam","team","Interne Kontakte",(S.team||[]).length+" Kontakte")+it("goEvents","events","Eventmanager",fu?`<em>${fu} nachfassen</em>`:"Messen, Großhandel");
+  d.innerHTML=it("goHome","overview","Cockpit","Übersicht")+it("goTeam","team","Interne Kontakte",(S.team||[]).length+" Kontakte")+it("goTodos","todos","To-dos",(()=>{const n=(S.todos||[]).filter(todoActive).length,o=(S.todos||[]).filter(t=>!t.done).length;return n?`<em>${n} fällig</em> · ${o} offen`:o+" offen"})())+it("goEvents","events","Eventmanager",fu?`<em>${fu} nachfassen</em>`:"Messen, Großhandel");
   const b=$("button.brand");b.setAttribute("aria-expanded","true");const r=b.getBoundingClientRect();d.style.left=Math.max(8,r.left)+"px";d.style.top=(r.bottom+6)+"px";document.body.appendChild(d)}
 document.addEventListener("pointerdown",e=>{const m=$("#dmenu");if(m&&!m.contains(e.target)&&!e.target.closest("button.brand"))closeMenu()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu()});
@@ -1251,6 +1254,7 @@ async function saveLead(w){const e=S.events.find(x=>x.id===w.dataset.ev);if(!e)r
   const data={customerId:c.id,custName:c.name,isNew:l?l.isNew:isNew,date:$("#l-d",w).value||e.from,time:$("#l-t",w).value,person,topics:$$('input[name="lt"]:checked',w).map(x=>x.value),
     fuDate:$("#l-fd",w).value,fuWho:$("#l-fw",w).value.trim(),fuTopic:$("#l-ft",w).value.trim(),fuDone:$("#l-fdone",w)?$("#l-fdone",w).checked:false,notes:$("#l-n",w).value.trim()};
   if(l)Object.assign(l,data);else{l=Object.assign({id:uid()},data);e.leads.push(l)}
+  if(data.fuDate||data.fuTopic)upsertTodo("lead:"+l.id,{title:"Nachfassen"+(data.fuTopic?": "+data.fuTopic:"")+(data.fuWho?" ("+data.fuWho+")":""),customerId:c.id,due:data.fuDate||"",done:!!data.fuDone,note:"Messe: "+(e.title||e.no)});else dropTodo("lead:"+l.id);save("todos");
   /* Freitext aus „Erwartete Kunden“ mit dem Kunden verknüpfen */
   if(w.dataset.exptxt){const k=(e.expected||[]).findIndex(x=>x&&x.txt===w.dataset.exptxt);if(k>=0)e.expected[k]=c.id}
   save("events","customers");closeModal();render(true);toast(isNew?"Neuer Kunde „"+c.name+"“ angelegt und Kontakt erfasst":"Kontakt erfasst")}
@@ -1258,6 +1262,57 @@ async function saveLead(w){const e=S.events.find(x=>x.id===w.dataset.ev);if(!e)r
 function leadsOf(cid){const out=[];(S.events||[]).forEach(e=>(e.leads||[]).forEach(l=>{if(l.customerId===cid)out.push({e,l})}));return out.sort((a,b)=>b.l.date.localeCompare(a.l.date))}
 function tileFollow(){const t=todayISO(),fus=followUps().filter(x=>!x.l.fuDone&&x.l.fuDate&&x.l.fuDate<=addDays(t,7));if(!fus.length)return"";
   return`<section class="panel tile"><div class="thead"><h3>Nachfassen</h3><span class="pill p-soon">${fus.length}</span></div>${fus.slice(0,6).map(({e,l})=>`<button class="srow" data-lead="${e.id}|${l.id}"><span class="tm ${l.fuDate<=t?"warnt":""}">${fmtD(l.fuDate)}</span><span class="nm">${esc(leadName(l))}<span class="muted"> · ${esc([l.fuWho,l.fuTopic].filter(Boolean).join(" – ")||e.title)}</span></span></button>`).join("")}</section>`}
+
+/* ================= To-dos (mit Erinnerung eine Woche vorher) ================= */
+const REMIND_DAYS=7;
+function todoRemind(t){return t.due?addDays(t.due,-REMIND_DAYS):null}
+function upsertTodo(src,data){S.todos=S.todos||[];let t=S.todos.find(x=>x.src===src);
+  if(!t){t={id:uid(),src,created:todayISO(),done:false};S.todos.push(t)}Object.assign(t,data);if(t.done&&!t.doneAt)t.doneAt=todayISO();if(!t.done)delete t.doneAt;return t}
+function dropTodo(src){S.todos=(S.todos||[]).filter(x=>x.src!==src)}
+function todoActive(t){return!t.done&&!!t.due&&todoRemind(t)<=todayISO()}
+function todoDueTxt(t){if(!t.due)return"ohne Datum";const n=diff(todayISO(),t.due);return n<0?(-n)+" T. überfällig":n===0?"heute":n===1?"morgen":fmtD(t.due)+(n<=REMIND_DAYS?" · in "+n+" T.":"")}
+function todoRow(t,showCust){const c=t.customerId?custById(t.customerId):null;const over=t.due&&t.due<todayISO()&&!t.done;
+  return`<div class="todo ${t.done?"done":""}"><label class="tchk"><input type="checkbox" data-tdone="${t.id}" ${t.done?"checked":""} aria-label="erledigt"></label><button class="ttl" data-todo="${t.id}"><b>${esc(t.title)}</b><span class="muted small">${showCust&&c?esc(c.name)+" · ":""}<span class="${over?"warnt":""}">${t.done?"erledigt "+fmtD(t.doneAt||todayISO()):todoDueTxt(t)}</span>${t.src&&t.src.startsWith("lead:")?" · Messe":t.src&&t.src.startsWith("rep:")?" · Besuch":""}</span></button></div>`}
+function setTodoDone(t,on){t.done=on;if(on)t.doneAt=todayISO();else delete t.doneAt;
+  if(t.src&&t.src.startsWith("lead:")){const id=t.src.slice(5);(S.events||[]).forEach(e=>(e.leads||[]).forEach(l=>{if(l.id===id)l.fuDone=on}));save("events")}save("todos")}
+function renderTodos(m){const all=(S.todos||[]).slice(),d=todayISO();const open=all.filter(t=>!t.done),done=all.filter(t=>t.done).sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||""));
+  const by=k=>open.filter(k).sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));
+  const over=by(t=>t.due&&t.due<d),now=by(t=>t.due&&t.due>=d&&todoRemind(t)<=d),later=by(t=>t.due&&todoRemind(t)>d),nod=by(t=>!t.due);
+  const grp=(h,l,cls)=>l.length?`<section class="panel tile ${cls||""}"><div class="thead"><h3>${h}</h3><span class="muted small">${l.length}</span></div>${l.map(t=>todoRow(t,true)).join("")}</section>`:"";
+  m.innerHTML=`<div class="dhead"><h2>To-dos</h2><span class="muted">${open.length} offen</span></div>
+  <div class="ctool"><button class="btn sm pri" data-act="todoAdd">+ To-do</button><span class="muted small">Erinnerung ${REMIND_DAYS} Tage vor dem Datum in der Übersicht</span></div>
+  <div class="evgrid">${grp("Überfällig",over)}${grp("Fällig in den nächsten "+REMIND_DAYS+" Tagen",now)}${grp("Ohne Datum",nod)}${grp("Später",later)}
+  ${!open.length?'<p class="muted">Keine offenen To-dos. To-dos entstehen beim Besuchsbericht („To-do“, „Folgetermin“), beim Nachfassen auf Messen oder mit „+ To-do“.</p>':""}
+  ${done.length?`<details class="acc"><summary>Erledigt <span class="muted small">${done.length}</span></summary><div class="accb">${done.slice(0,50).map(t=>todoRow(t,true)).join("")}</div></details>`:""}</div>`}
+function openTodo(id,cid){const t=id?(S.todos||[]).find(x=>x.id===id):{id:uid(),title:"",customerId:cid||null,due:"",note:"",done:false,src:"man:"+uid()};if(!t)return;const c=t.customerId?custById(t.customerId):null;
+  const w=modal(`<div class="hd"><h2>${id?"To-do":"Neues To-do"}</h2><button class="x" data-close aria-label="Schließen">×</button></div>
+  <label class="fld"><span>Was ist zu tun?</span><input type="text" id="td-t" value="${esc(t.title)}" placeholder="z. B. Angebot POLO-BOX nachfassen"></label>
+  <label class="fld"><span>Kunde (optional)</span><input type="text" id="td-c" value="${c?esc(custLabel(c)):""}" placeholder="Kunde suchen …"></label>
+  <label class="fld"><span>Fällig am (optional)</span><input type="date" id="td-d" value="${t.due||""}"></label>
+  <p class="hint" style="margin:0">Mit Datum erscheint das To-do ab ${REMIND_DAYS} Tage vorher als Erinnerung in der Übersicht. Ohne Datum steht es in der To-do-Liste.</p>
+  <label class="fld"><span>Notiz</span><input type="text" id="td-n" value="${esc(t.note||"")}"></label>
+  ${t.src&&!t.src.startsWith("man:")?`<p class="muted small" style="margin:0">Entstanden aus: ${t.src.startsWith("lead:")?"Messegespräch":"Besuchsbericht"}</p>`:""}
+  <div class="row" style="justify-content:space-between">${id?'<button class="btn warn" data-act="todoDel">Löschen</button>':"<span></span>"}<span class="row"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="todoSave">Speichern</button></span></div>`);
+  w.dataset.tdid=t.id;w.dataset.tdsrc=t.src||"";custSearch($("#td-c",w))}
+function saveTodo(w){const title=$("#td-t",w).value.trim();if(!title){toast("Bitte eintragen, was zu tun ist.");return}
+  const cv=$("#td-c",w).value.trim(),c=cv?custFromLabel(cv):null;
+  S.todos=S.todos||[];let t=S.todos.find(x=>x.id===w.dataset.tdid);if(!t){t={id:w.dataset.tdid,src:w.dataset.tdsrc||"man:"+uid(),created:todayISO(),done:false};S.todos.push(t)}
+  Object.assign(t,{title,customerId:c?c.id:null,due:$("#td-d",w).value||"",note:$("#td-n",w).value.trim()});
+  if(t.src.startsWith("lead:")){const id=t.src.slice(5);(S.events||[]).forEach(e=>(e.leads||[]).forEach(l=>{if(l.id===id){l.fuDate=t.due}}));save("events")}
+  save("todos");closeModal();render(true);toast("To-do gespeichert")}
+function tileTodos(){const d=todayISO(),l=(S.todos||[]).filter(todoActive).sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));if(!l.length)return"";
+  return`<section class="panel tile"><div class="thead"><h3>To-dos</h3><button class="btn sm" data-goto="todos">alle</button></div>${l.slice(0,7).map(t=>todoRow(t,true)).join("")}${l.length>7?`<p class="muted small">und ${l.length-7} weitere</p>`:""}</section>`}
+/* Historie eines Kunden: Besuche, nicht wahrgenommene Termine, Messegespräche, erledigte To-dos */
+function custHistory(c){const out=[];
+  S.appts.filter(a=>a.customerId===c.id&&a.type==="visit"&&(a.status==="wahrgenommen"||a.status==="nicht")).forEach(a=>{const r=a.report||{};
+    out.push({d:a.date,t:hm(a.startMin),k:a.status==="wahrgenommen"?"Besuch":"nicht wahrgenommen",cls:a.status==="wahrgenommen"?"hv":"hn",open:`data-appt="${a.id}"`,
+      sub:a.status==="wahrgenommen"?[r.topics&&r.topics.length?r.topics.map(x=>x.split(" (")[0]).join(", "):"",r.contacts&&r.contacts.length?"mit "+r.contacts.map(id=>(contactsOf(c).find(p=>p.id===id)||{}).name).filter(Boolean).join(", "):""].filter(Boolean).join(" · "):(a.missReason||""),
+      txt:a.status==="wahrgenommen"?[r.notes,r.next?"Vereinbart: "+r.next:""].filter(Boolean).join(" — ")||a.notes||"":""})});
+  leadsOf(c.id).forEach(({e,l})=>out.push({d:l.date,t:l.time||"",k:"Messe",cls:"hm",open:`data-lead="${e.id}|${l.id}"`,sub:[e.title||e.no,l.person,l.topics&&l.topics.length?l.topics.map(x=>x.split(" (")[0]).join(", "):""].filter(Boolean).join(" · "),txt:l.notes||""}));
+  (S.todos||[]).filter(t=>t.customerId===c.id&&t.done).forEach(t=>out.push({d:t.doneAt||t.due||t.created,t:"",k:"To-do erledigt",cls:"ht",open:`data-todo="${t.id}"`,sub:t.title,txt:""}));
+  return out.sort((a,b)=>(b.d+b.t).localeCompare(a.d+a.t))}
+function histHtml(c){const h=custHistory(c);if(!h.length)return'<p class="muted small" style="margin:0">Noch keine Besuche oder Messegespräche aufgezeichnet.</p>';
+  return`<div class="hist">${h.map(x=>`<button class="hitem ${x.cls}" ${x.open}><span class="hd2"><b>${fmtD(x.d)} ${x.d.slice(0,4)}</b><span class="hk">${x.k}</span></span>${x.sub?`<span class="small">${esc(x.sub)}</span>`:""}${x.txt?`<span class="muted small htxt">${esc(x.txt)}</span>`:""}</button>`).join("")}</div>`}
 
 /* Vergangene, nicht erfasste Besuche, nach denen schon ein späterer Besuch als wahrgenommen eingetragen ist, fallen weg:
    Vorschläge werden gelöscht, fixierte Termine als „nicht wahrgenommen (nicht erfasst)“ abgelegt. Der Kunde ist damit wieder zur Planung frei. */
@@ -1282,6 +1337,7 @@ function render(force){
   else if(ui.tab==="customers")renderCustomers(m);
   else if(ui.tab==="events")renderEvents(m);
   else if(ui.tab==="team")renderTeam(m);
+  else if(ui.tab==="todos")renderTodos(m);
   else{renderSettings(m);accSettings(m)}
 }
 document.addEventListener("focusout",()=>setTimeout(()=>{if(ui.deferred)render()},0));
@@ -1356,7 +1412,7 @@ function tileWeek(){const t=todayISO();let m=mondayOf(t);if(dow(t)===0||dow(t)==
   const rows=[];for(let i=0;i<7;i++){const d=addDays(m,i),md=dayMode(d),s=daySummary(d);if(!s&&(dow(d)===0||dow(d)===6))continue;
     rows.push(`<button class="wrow ${d===t?"cur":""}" data-gocal="${d}"><span class="tm">${fmtD(d)}</span><span class="nm">${s?esc(dayRegion(d)||"Tour"):`<span class="muted">${esc(md==="feiertag"?holidayOf(d):md==="blockiert"?(blockEvent(d)||{}).title||MODE[md]:MODE[md])}</span>`}</span><span class="muted small">${s?`${s.n} Besuche · ${hm(s.dep)}–${hm(s.ret)}`:""}</span></button>`)}
   return`<section class="panel tile"><div class="thead"><h3>${m===mondayOf(t)?"Diese Woche":"Nächste Woche"}</h3><button class="btn sm" data-gomap="w:${m}">Woche auf Karte</button></div>${rows.join("")}</section>`}
-const DASH_TILES=[tileFeedback,tileFollow,tileDue];
+const DASH_TILES=[tileFeedback,tileTodos,tileDue];
 function renderOverview(m){
   if(!S.customers.length){m.innerHTML=emptyState();return}
   const t=todayISO(),h=holidayOf(t),md=dayMode(t);
@@ -1484,6 +1540,8 @@ function openReport(a,c){c=c||custById(a.customerId);if(!c){toast("Kunde nicht g
   <div class="fld"><span>Themen</span><div class="chips">${tops.map(x=>chip("r-t",x,(rp.topics||[]).includes(x))).join("")}</div></div>
   <label class="fld"><span>Gesprächsnotiz</span><textarea id="r-n" rows="4" placeholder="Was wurde besprochen? Stimmung, Projekte, Mitbewerb …">${esc(rp.notes||"")}</textarea></label>
   <label class="fld"><span>Vereinbart / nächste Schritte</span><input type="text" id="r-x" value="${esc(rp.next||"")}" placeholder="z. B. Angebot POLO-BOX bis Freitag, Rückruf Bauleiter"></label>
+  ${(()=>{const td=a&&(S.todos||[]).find(x=>x.src==="rep:"+a.id+":td"),fo=a&&(S.todos||[]).find(x=>x.src==="rep:"+a.id+":fol");return`<div class="fld2"><label class="fld"><span>To-do (z. B. Angebot nachfassen)</span><input type="text" id="r-td" value="${esc(td?td.title:"")}" placeholder="landet in der To-do-Liste"></label><label class="fld"><span>fällig am (optional)</span><input type="date" id="r-tdd" value="${td&&td.due||""}"></label></div>
+  <label class="fld"><span>Folgetermin vereinbart am</span><input type="date" id="r-fol" value="${fo&&fo.due||""}"></label>`})()}
   ${docs.length?`<div class="fld"><span>Unterlagen übergeben</span><div class="chips">${docs.map(x=>chip("r-doc",x,(rp.docs||[]).includes(x))).join("")}</div></div>`:""}
   <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn okb" data-act="reportSave">${a&&a.status==="wahrgenommen"?"Bericht speichern":"Als wahrgenommen speichern"}</button></div>`,true);
   w.dataset.aid=a?a.id:"";w.dataset.cid=c.id;const f=$("#r-n",w);if(f&&!a)setTimeout(()=>{},0)}
@@ -1497,6 +1555,9 @@ function saveReport(w){const c=custById(w.dataset.cid);if(!c)return;let a=w.data
   else{if(a.status!=="wahrgenommen"&&(a.startMin!==s0||a.dur!==e0-s0||a.date!==d)){a.planDur=a.planDur||a.dur;a.doneAt=e0}a.date=d;a.startMin=s0;a.dur=e0-s0}
   if(a.status!=="wahrgenommen"){a.status="wahrgenommen";a.prevLast=c.lastVisit||null}
   a.report=rp;if(!c.lastVisit||d>c.lastVisit)c.lastVisit=d;
+  {const tt=$("#r-td",w).value.trim(),tdd=$("#r-tdd",w).value,fol=$("#r-fol",w).value;
+    if(tt||tdd)upsertTodo("rep:"+a.id+":td",{title:tt||"Nachfassen",customerId:c.id,due:tdd||"",note:"Besuch "+fmtD(d)});else dropTodo("rep:"+a.id+":td");
+    if(fol)upsertTodo("rep:"+a.id+":fol",{title:"Folgetermin bei "+c.name,customerId:c.id,due:fol,note:"vereinbart beim Besuch "+fmtD(d)});else dropTodo("rep:"+a.id+":fol");save("todos")}
   if(rp.docs.length){c.docs=(c.docs||[]).filter(x=>!rp.docs.includes(x.d)).concat(rp.docs.map(x=>({d:x,date:d})))}
   /* Kunde wurde besucht: offene Vorschläge für ihn fallen weg, „Touren planen“ rechnet die nächste Fälligkeit neu */
   const rm=S.appts.filter(x=>x.customerId===c.id&&x.id!==a.id&&isDropV(x)&&x.date>=d).map(x=>x.date);S.appts=S.appts.filter(x=>!(x.customerId===c.id&&x.id!==a.id&&isDropV(x)&&x.date>=d));
@@ -1759,9 +1820,10 @@ function openCust(id){
     <div class="fld2"><label class="fld"><span>Letzter Besuch</span><input type="date" id="c-last" value="${c.lastVisit||""}"></label>${isNew?"<div></div>":`<div class="fld" style="justify-content:flex-end"><button class="btn okb" data-act="custVisit" data-cid="${c.id}">Besuch erfassen</button></div>`}</div>
     ${isNew?"":`<div class="lbl">Termin vereinbaren</div><div class="row"><input type="date" id="c-ad" value="${addDays(t,1)}" aria-label="Datum"><input type="time" id="c-at" value="${st.dayStart}" step="900" aria-label="Uhrzeit"><label class="row" style="gap:5px"><input type="checkbox" id="c-afix" checked>mit Kunde fixiert</label><button class="btn sm" data-act="custAppt">Termin anlegen</button></div>
     ${linked.length?`<div class="lbl">Verknüpfte Termine</div><div style="font-size:13.5px">${linked.map(a=>`<button class="lnk" data-appt="${a.id}">${fmtD(a.date)} ${a.date.slice(0,4)} · ${esc(a.title||CAT[a.cat])}</button>`).join("<br>")}</div>`:""}
-    ${(()=>{const ls=isNew?[]:leadsOf(c.id);return ls.length?`<div class="lbl">Messekontakte</div>${ls.map(({e,l})=>`<button class="lnk hrow" data-lead="${e.id}|${l.id}">${fmtD(l.date)} ${l.date.slice(0,4)} · ${esc(e.title||e.no)}${l.topics&&l.topics.length?" · "+esc(l.topics.map(x=>x.split(" (")[0]).join(", ")):""}${l.fuDate&&!l.fuDone?` <span class="pill p-soon">nachfassen ${fmtD(l.fuDate)}</span>`:""}</button>`).join("")}`:""})()}
-    ${hist.length?`<div class="lbl">Letzte Termine</div><div style="font-size:13.5px">${hist.map(a=>`<button class="lnk hrow" data-appt="${a.id}">${fmtD(a.date)} ${a.date.slice(0,4)} · ${a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"+(a.missReason?" ("+esc(a.missReason)+")":"")}${a.report&&a.report.topics&&a.report.topics.length?" · "+esc(a.report.topics.map(x=>x.split(" (")[0]).join(", ")):""}${a.report&&a.report.notes?`<span class="muted"> – ${esc(a.report.notes.slice(0,90))}${a.report.notes.length>90?"…":""}</span>`:a.notes?" · "+esc(a.notes):""}</button>`).join("")}</div>`:""}`}
+`}
   </div></details>
+  ${isNew?"":`<details class="acc" ${(S.todos||[]).some(t=>t.customerId===c.id&&!t.done)?"open":""}><summary>To-dos <span class="muted small">${(S.todos||[]).filter(t=>t.customerId===c.id&&!t.done).length||""}</span></summary><div class="accb">${(S.todos||[]).filter(t=>t.customerId===c.id&&!t.done).sort((a,b)=>(a.due||"9").localeCompare(b.due||"9")).map(t=>todoRow(t,false)).join("")||'<p class="muted small" style="margin:0">Keine offenen To-dos.</p>'}<button class="btn sm" data-act="todoAdd" data-cid="${c.id}">+ To-do</button></div></details>
+  <details class="acc" open><summary>Historie <span class="muted small">${custHistory(c).length||""}</span></summary><div class="accb">${histHtml(c)}</div></details>`}
   <details class="acc"><summary>Potenzial <span class="muted small">${pt?fmtEUR(pt)+" / Jahr":""}</span></summary><div class="accb">
     <div class="pott"><div class="poth"><span>Produktgruppe</span><span>Potenzial €/Jahr</span>${years.map(x=>`<span>${x} %</span>`).join("")}</div>
     ${pots.map(p=>`<div class="potr" data-g="${esc(p.g)}"><span class="pg">${esc(p.g)}</span><input type="number" class="pot-v" min="0" step="500" value="${p.pot??""}" placeholder="€" aria-label="Potenzial ${esc(p.g)}">${years.map(x=>`<input type="number" class="pot-s" data-y="${x}" min="0" max="100" value="${p.share&&p.share[x]!=null?p.share[x]:""}" placeholder="%" aria-label="${esc(p.g)} ${x} Prozent">`).join("")}</div>`).join("")}</div>
@@ -2233,12 +2295,14 @@ async function saveTourAppt(w,t){
 
 /* ---------- Aktionen ---------- */
 document.addEventListener("click",async e=>{
-  const t=e.target.closest("[data-csel],[data-addrow],[data-rm],[data-sel],[data-act],[data-close],[data-cust],[data-appt],[data-f],[data-wk],[data-goto],[data-day],[data-cf],[data-gocal],[data-gomap],[data-mon],[data-newcat],[data-newev],[data-dayl],[data-dlnav],[data-mkw],[data-mtog],[data-mall],[data-tedit],[data-tshare],[data-tqr],[data-evopen],[data-lead],[data-evexprm],[data-evinfo],[data-evedit]");if(!t)return;
+  const t=e.target.closest("[data-csel],[data-addrow],[data-rm],[data-sel],[data-act],[data-close],[data-cust],[data-appt],[data-f],[data-wk],[data-goto],[data-day],[data-cf],[data-gocal],[data-gomap],[data-mon],[data-newcat],[data-newev],[data-dayl],[data-dlnav],[data-mkw],[data-mtog],[data-mall],[data-tedit],[data-tshare],[data-tqr],[data-evopen],[data-lead],[data-evexprm],[data-evinfo],[data-evedit],[data-todo],[data-tdone]");if(!t)return;
   const w=$("#modal");
   if(t.hasAttribute("data-close")){closeModal();return}
   if(t.dataset.tedit){openTeam(t.dataset.tedit);return}
   if(t.dataset.tshare){const p=S.team.find(x=>x.id===t.dataset.tshare);if(p)shareVcard(p);return}
   if(t.dataset.tqr){const p=S.team.find(x=>x.id===t.dataset.tqr);if(p)showQr(p);return}
+  if(t.dataset.tdone){const td=(S.todos||[]).find(x=>x.id===t.dataset.tdone);if(td){setTodoDone(td,t.checked);const inModal=!!t.closest("#modal");if(inModal){const r=t.closest(".todo");if(r)r.classList.toggle("done",t.checked)}else render(true);toast(t.checked?"Erledigt":"Wieder offen")}return}
+  if(t.dataset.todo){openTodo(t.dataset.todo);return}
   if(t.dataset.evinfo){ui.evInfo=ui.evInfo||new Set();const id=t.dataset.evinfo;ui.evInfo.has(id)?ui.evInfo.delete(id):ui.evInfo.add(id);render(true);return}
   if(t.dataset.evedit){ui.evSel=t.dataset.evedit;ui.evMode="edit";ui.evPrev=null;render(true);window.scrollTo(0,0);return}
   if(t.dataset.evopen){ui.evMode="capture";ui.evSel=t.dataset.evopen;ui.tab="events";render(true);window.scrollTo(0,0);return}
@@ -2280,7 +2344,7 @@ document.addEventListener("click",async e=>{
     case"geocode":geocode(S.customers.filter(c=>!hasXY(c)));break;
     case"geocodeHome":geocode(null,true);break;
     case"exportCsv":exportCsv();break;
-    case"backup":download("Tourenplaner_Sicherung_"+todayISO()+".json",JSON.stringify({settings:S.settings,customers:S.customers,appts:S.appts,days:S.days,events:S.events,team:S.team},null,1));break;
+    case"backup":download("Tourenplaner_Sicherung_"+todayISO()+".json",JSON.stringify({settings:S.settings,customers:S.customers,appts:S.appts,days:S.days,events:S.events,team:S.team,todos:S.todos},null,1));break;
     case"restore":$("#backupIn").click();break;
     case"doImport":doImport(w);break;
     case"refine":refineRoutes(plannedDates());break;
@@ -2321,6 +2385,10 @@ document.addEventListener("click",async e=>{
     case"done":openReport(a);break;
     case"menu":toggleMenu();break;
     case"goHome":closeMenu();ui.tab="overview";render(true);window.scrollTo(0,0);break;
+    case"goTodos":closeMenu();ui.tab="todos";render(true);window.scrollTo(0,0);break;
+    case"todoAdd":openTodo(null,t.dataset.cid);break;
+    case"todoSave":saveTodo(w);break;
+    case"todoDel":{if(t.dataset.sure){const td=(S.todos||[]).find(x=>x.id===w.dataset.tdid);if(td&&td.src.startsWith("lead:")){const id=td.src.slice(5);S.events.forEach(e=>(e.leads||[]).forEach(l=>{if(l.id===id){l.fuDate="";l.fuDone=false}}));save("events")}S.todos=(S.todos||[]).filter(x=>x.id!==w.dataset.tdid);save("todos");closeModal();render(true)}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
     case"goTeam":closeMenu();ui.tab="team";render(true);window.scrollTo(0,0);break;
     case"goEvents":closeMenu();ui.tab="events";ui.evSel=null;ui.evMode=null;render(true);window.scrollTo(0,0);break;
     case"teamAdd":openTeam(null);break;
@@ -2331,11 +2399,11 @@ document.addEventListener("click",async e=>{
     case"teamImport":{closeModal();const i=document.createElement("input");i.type="file";i.accept=".vcf,text/vcard,text/x-vcard";i.multiple=true;i.onchange=async()=>{let n=0;for(const f of i.files){parseVcf(await f.text()).forEach(p=>{if(!S.team.some(x=>x.name===p.name)){S.team.push(p);n++}})}save("team");render(true);toast(n+" Kontakte importiert")};i.click();break}
     case"evAdd":newEvent();break;
     case"evBack":{const e=S.events.find(x=>x.id===ui.evSel);if(e&&e.isNew){delete e.isNew;save("events")}}ui.evSel=null;ui.evPrev=null;ui.evMode=null;render(true);window.scrollTo(0,0);break;
-    case"evDel":{if(t.dataset.sure){const id=ui.evSel;S.events=S.events.filter(x=>x.id!==id);const ds=S.appts.filter(a=>a.eventId===id).map(a=>a.date);S.appts=S.appts.filter(a=>a.eventId!==id);reflow(ds);ui.evSel=null;save("events","appts");render(true);toast("Event gelöscht")}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
+    case"evDel":{if(t.dataset.sure){const id=ui.evSel;{const ev=S.events.find(x=>x.id===id);(ev&&ev.leads||[]).forEach(l=>dropTodo("lead:"+l.id));save("todos")}S.events=S.events.filter(x=>x.id!==id);const ds=S.appts.filter(a=>a.eventId===id).map(a=>a.date);S.appts=S.appts.filter(a=>a.eventId!==id);reflow(ds);ui.evSel=null;save("events","appts");render(true);toast("Event gelöscht")}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
     case"evExpAdd":expAdd();break;
     case"leadAdd":{if(t.dataset.exptxt!=null){const e=S.events.find(x=>x.id===ui.evSel),x=e&&e.expected[+t.dataset.exptxt];openLead(ui.evSel,null,null,x&&x.txt||"")}else openLead(ui.evSel,null,t.dataset.cid);break}
     case"leadSave":await saveLead(w);break;
-    case"leadDel":{if(t.dataset.sure){const e=S.events.find(x=>x.id===w.dataset.ev);if(e)e.leads=(e.leads||[]).filter(x=>x.id!==w.dataset.lead);save("events");closeModal();render(true)}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
+    case"leadDel":{if(t.dataset.sure){dropTodo("lead:"+w.dataset.lead);save("todos");const e=S.events.find(x=>x.id===w.dataset.ev);if(e)e.leads=(e.leads||[]).filter(x=>x.id!==w.dataset.lead);save("events");closeModal();render(true)}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
     case"custVisit":{const c=custById(t.dataset.cid);if(c)openReport(null,c);break}
     case"reportSave":saveReport(t.closest(".modal"));break;
     case"reportEdit":openReport(a);break;
@@ -2350,7 +2418,7 @@ document.addEventListener("click",async e=>{
   }
 });
 $("#backupIn").addEventListener("change",async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!Array.isArray(d.customers))throw new Error("kein Tourenplaner-Format");S.settings=d.settings||{};S.customers=d.customers;S.appts=Array.isArray(d.appts)?d.appts:[];S.days=d.days&&typeof d.days==="object"?d.days:{};S.events=Array.isArray(d.events)?d.events:[];S.team=Array.isArray(d.team)?d.team:[];S.settings=migrate(S.settings);delete S.settings._migrated;save("settings","customers","appts","days","events","team");mapView.fitted=false;render(true);toast("Sicherung geladen: "+S.customers.length+" Kunden")}catch(err){toast("Sicherung konnte nicht gelesen werden: "+err.message)}});
+  try{const d=JSON.parse(await f.text());if(!Array.isArray(d.customers))throw new Error("kein Tourenplaner-Format");S.settings=d.settings||{};S.customers=d.customers;S.appts=Array.isArray(d.appts)?d.appts:[];S.days=d.days&&typeof d.days==="object"?d.days:{};S.events=Array.isArray(d.events)?d.events:[];S.team=Array.isArray(d.team)?d.team:[];S.todos=Array.isArray(d.todos)?d.todos:[];S.settings=migrate(S.settings);delete S.settings._migrated;save("settings","customers","appts","days","events","team","todos");mapView.fitted=false;render(true);toast("Sicherung geladen: "+S.customers.length+" Kunden")}catch(err){toast("Sicherung konnte nicht gelesen werden: "+err.message)}});
 let rt;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(ui.tab==="calendar")render()},200)});
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>mapView.draw());
 new MutationObserver(()=>mapView.draw()).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
