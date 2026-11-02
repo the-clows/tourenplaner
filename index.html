@@ -393,15 +393,23 @@ td.num{text-align:right}
 .hotelic{background:var(--soon);color:#fff;border-radius:4px;font-weight:700;font-size:12px;text-align:center;line-height:18px}
 button.brand{background:none;border:0;padding:4px 6px 4px 0;margin:0;cursor:pointer;color:inherit;font:inherit;font-family:var(--f-display);font-weight:700;font-size:20px}
 .bchev{width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-left:-4px}
+.dmenu{position:fixed;z-index:3200;min-width:230px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:5px;display:flex;flex-direction:column}
+.dmenu button{display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;border-radius:7px;padding:9px 12px;color:var(--ink);cursor:pointer;text-align:left}.dmenu button:hover,.dmenu button:focus-visible{background:var(--surface-2)}.dmenu button.on{background:var(--accent-soft)}
+.dmenu b{font-family:var(--f-display);font-size:16px;font-weight:600}.dmenu span{font-size:12px;color:var(--muted)}.dmenu em{font-style:normal;color:var(--soon);font-weight:600}
 .menug{display:grid;gap:8px}.mtile{display:grid;grid-template-columns:34px 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:12px;cursor:pointer;color:var(--ink)}
 .mtile svg{grid-row:1/3;width:28px;height:28px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.mtile b{font-family:var(--f-display);font-size:17px}.mtile span{font-size:13px;color:var(--muted)}
 .tlist{padding:4px 12px}.trow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.trow:last-child{border-bottom:0}
 .tn{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;color:inherit;cursor:pointer;display:flex;flex-direction:column}.tn b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tact{display:flex;gap:4px;flex:none}.tact .ibtn{padding:6px}.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
 @media (max-width:420px){.tact .ibtn{padding:5px}.tact{gap:2px}}
+.scanbox{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:1/1;max-height:60vh}.scanbox video{width:100%;height:100%;object-fit:cover;display:block}.scanframe{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
 .qrbox{display:grid;place-items:center;background:#fff;border-radius:10px;padding:10px;min-height:200px}.qrbox svg{width:min(260px,70vw);height:auto}
-.evlist{display:flex;flex-direction:column;gap:8px}.evc{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px;cursor:pointer;color:var(--ink)}
-.evno{font-family:var(--f-display);font-weight:700;color:var(--accent);font-size:13px;padding-top:2px}.evt{display:flex;flex-direction:column;min-width:0}.evp{grid-column:2;display:flex;flex-wrap:wrap;gap:4px}
+.evlist{display:flex;flex-direction:column;gap:8px}.evc{display:grid;grid-template-columns:1fr auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;color:var(--ink);overflow:hidden}
+.evmain{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;text-align:left;background:none;border:0;padding:12px;cursor:pointer;color:inherit;min-width:0}
+.evib{align-self:start;margin:10px 10px 0 0;display:inline-flex;align-items:center;gap:3px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:5px 8px;font-size:13px;color:var(--muted);cursor:pointer}.evib svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;transition:transform .15s}.evc.open .evib svg{transform:rotate(180deg)}
+.evinfo{grid-column:1/-1;border-top:1px solid var(--line);padding:10px 12px 12px;background:var(--surface-2)}
+.btn.big{padding:12px 16px;font-size:16px;justify-content:center}.chip.done span{background:var(--ok-soft);border-color:transparent;color:var(--ok)}button.chip{background:none;border:0;padding:0}
+.evno{font-family:var(--f-display);font-weight:700;color:var(--accent);font-size:13px;padding-top:2px}.evt{display:flex;flex-direction:column;min-width:0}.evp{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .evgrid{display:flex;flex-direction:column;gap:10px;max-width:820px}.prow{display:flex;align-items:center;gap:6px}.prow>label{min-width:96px}.prow input[type=time]{width:auto;min-width:0;flex:1 1 0;max-width:130px}
 .erow{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}.erow .lnk{flex:1;text-align:left}
 .lrow2{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:9px;padding:9px 10px;cursor:pointer;color:var(--ink)}
@@ -420,7 +428,7 @@ button.brand{background:none;border:0;padding:4px 6px 4px 0;margin:0;cursor:poin
 <body>
 
 <header class="top"><div class="topin wrap">
-  <button class="brand" data-act="menu" aria-label="Menü: Interne Kontakte, Eventmanager" title="Menü"><span class="logo" role="img" aria-label="Poloplast"></span><span class="app">Cockpit</span><svg class="bchev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
+  <button class="brand" data-act="menu" aria-haspopup="menu" aria-expanded="false" aria-label="Menü: Cockpit, Interne Kontakte, Eventmanager" title="Menü"><span class="logo" role="img" aria-label="Poloplast"></span><span class="app">Cockpit</span><svg class="bchev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
   <div class="save" id="saveState" title="Speicherort"><i></i><span>Lokal</span></div>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="calendar"><svg class="ti" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/></svg><span class="tl" data-s="Touren">Tourenplaner</span></button>
@@ -437,7 +445,7 @@ button.brand{background:none;border:0;padding:4px 6px 4px 0;margin:0;cursor:poin
 
 <script>
 "use strict";
-const APPVER="2026-11-02 13:30";
+const APPVER="2026-11-02 14:15";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1028,16 +1036,16 @@ function accSettings(m){let st={};try{st=JSON.parse(localStorage.getItem("tp.sac
     d.append(sm,b);d.addEventListener("toggle",()=>{try{const x=JSON.parse(localStorage.getItem("tp.sacc")||"{}");x[key]=d.open;localStorage.setItem("tp.sacc",JSON.stringify(x))}catch(e){}});
     p.replaceWith(d)});
   const g=$(".sgrid",m);if(g)g.classList.add("sacc-list")}
-/* ================= Menü hinter dem Logo ================= */
-function openMenu(){const nx=(S.events||[]).filter(e=>(e.to||e.from)>=todayISO()).sort((a,b)=>a.from.localeCompare(b.from))[0];
-  const fu=followUps().filter(x=>!x.l.fuDone&&x.l.fuDate&&x.l.fuDate<=addDays(todayISO(),7)).length;
-  modal(`<div class="hd"><h2>Menü</h2><button class="x" data-close aria-label="Schließen">×</button></div>
-  <div class="menug">
-    <button class="mtile" data-act="goTeam"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg><b>Interne Kontakte</b><span>${(S.team||[]).length} Kontakte · anrufen, Mail, Visitenkarte</span></button>
-    <button class="mtile" data-act="goEvents"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6M4 20h16"/></svg><b>Eventmanager</b><span>${nx?esc(nx.title)+" · "+fmtD(nx.from):"Messen und Großhandelsveranstaltungen"}${fu?` · <b style="color:var(--soon)">${fu} nachfassen</b>`:""}</span></button>
-    <button class="mtile" data-act="goSettings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><b>Einstellungen</b><span>Zuhause, Planung, Abgleich</span></button>
-  </div>`)}
-
+/* ================= Menü hinter dem Logo (Dropdown) ================= */
+function closeMenu(){const m=$("#dmenu");if(m)m.remove();const b=$("button.brand");if(b)b.setAttribute("aria-expanded","false")}
+function toggleMenu(){if($("#dmenu")){closeMenu();return}const fu=followUps().filter(x=>!x.l.fuDone&&x.l.fuDate&&x.l.fuDate<=addDays(todayISO(),7)).length;
+  const it=(act,tab,label,sub)=>`<button role="menuitem" data-act="${act}" class="${ui.tab===tab?"on":""}"><b>${label}</b>${sub?`<span>${sub}</span>`:""}</button>`;
+  const d=document.createElement("div");d.id="dmenu";d.className="dmenu";d.setAttribute("role","menu");
+  d.innerHTML=it("goHome","overview","Cockpit","Übersicht")+it("goTeam","team","Interne Kontakte",(S.team||[]).length+" Kontakte")+it("goEvents","events","Eventmanager",fu?`<em>${fu} nachfassen</em>`:"Messen, Großhandel");
+  const b=$("button.brand");b.setAttribute("aria-expanded","true");const r=b.getBoundingClientRect();d.style.left=Math.max(8,r.left)+"px";d.style.top=(r.bottom+6)+"px";document.body.appendChild(d)}
+document.addEventListener("pointerdown",e=>{const m=$("#dmenu");if(m&&!m.contains(e.target)&&!e.target.closest("button.brand"))closeMenu()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu()});
+window.addEventListener("scroll",()=>closeMenu(),{passive:true});
 /* ================= Interne Kontakte ================= */
 function vcardOf(p){const parts=String(p.name||"").trim().split(/\s+/),last=parts.length>1?parts.pop():parts[0]||"",first=parts.join(" ");
   const e=x=>String(x||"").replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n");
@@ -1056,12 +1064,12 @@ const ICO={tel:'<svg viewBox="0 0 24 24"><path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0
 function renderTeam(m){const q=(ui.teamQ||"").toLowerCase();const all=(S.team||[]).slice().sort((a,b)=>(b.me?1:0)-(a.me?1:0)||a.name.localeCompare(b.name,"de"));
   const list=all.filter(p=>!q||[p.name,p.role,p.phone,p.mobile,p.email,p.org].join(" ").toLowerCase().includes(q));
   m.innerHTML=`<div class="dhead"><h2>Interne Kontakte</h2><span class="muted">${all.length}</span></div>
-  <div class="ctool"><input type="search" id="tsearch" placeholder="Suchen: Name, Funktion …" value="${esc(ui.teamQ||"")}" aria-label="Kontakte suchen"><button class="btn sm pri" data-act="teamAdd">+ Kontakt</button><button class="btn sm" data-act="teamImport">Visitenkarten (.vcf) importieren</button></div>
+  <div class="ctool"><input type="search" id="tsearch" placeholder="Suchen: Name, Funktion …" value="${esc(ui.teamQ||"")}" aria-label="Kontakte suchen"><button class="btn sm pri" data-act="teamAdd">+ Kontakt</button><button class="btn sm" data-act="teamScan">QR scannen</button><button class="btn sm" data-act="teamPick">Aus Kontakten</button></div>
   <div class="panel tlist">${list.map(p=>`<div class="trow"><button class="tn" data-tedit="${p.id}"><b>${esc(p.name)}${p.me?' <span class="pill p-plan">ich</span>':""}</b><span class="muted small">${esc([p.role,p.org&&p.org!=="Poloplast"?p.org:""].filter(Boolean).join(" · "))}</span></button>
     <span class="tact">${p.mobile?`<a class="ibtn" href="${telHref(p.mobile)}" title="Mobil anrufen" aria-label="Mobil anrufen">${ICO.mob}</a>`:""}${p.phone?`<a class="ibtn" href="${telHref(p.phone)}" title="Anrufen" aria-label="Anrufen">${ICO.tel}</a>`:""}${p.email?`<a class="ibtn" href="mailto:${esc(p.email)}" title="E-Mail" aria-label="E-Mail">${ICO.mail}</a>`:""}<button class="ibtn" data-tshare="${p.id}" title="Visitenkarte senden" aria-label="Visitenkarte senden">${ICO.share}</button><button class="ibtn" data-tqr="${p.id}" title="QR-Code" aria-label="QR-Code">${ICO.qr}</button></span></div>`).join("")||`<p class="muted" style="margin:6px 0">${all.length?"Kein Treffer.":"Noch keine Kontakte. Lege Kolleginnen und Kollegen an oder importiere Visitenkarten (.vcf) – z. B. vom iPhone aus „Kontakte“ teilen."}</p>`}</div>
   <p class="hint">Senden öffnet am iPhone das Teilen-Menü (AirDrop, WhatsApp, Mail …). Der QR-Code enthält die Visitenkarte – das Gegenüber scannt ihn mit der Kamera.</p>`;
   const s=$("#tsearch");if(s)s.addEventListener("input",()=>{ui.teamQ=s.value;const pos=s.selectionStart;renderTeam(m);const n=$("#tsearch");n.focus();n.setSelectionRange(pos,pos)})}
-function openTeam(id){const p=id?S.team.find(x=>x.id===id):{id:uid(),name:"",role:"",phone:"",mobile:"",email:"",org:"Poloplast",note:"",me:false};if(!p)return;
+function openTeam(id,pre){const p=id?S.team.find(x=>x.id===id):Object.assign({id:uid(),name:"",role:"",phone:"",mobile:"",email:"",org:"Poloplast",note:"",me:false},pre||{});if(!p)return;
   const w=modal(`<div class="hd"><h2>${id?"Kontakt bearbeiten":"Neuer Kontakt"}</h2><button class="x" data-close aria-label="Schließen">×</button></div>
   <label class="fld"><span>Name</span><input type="text" id="t-name" value="${esc(p.name)}"></label>
   <div class="fld2"><label class="fld"><span>Funktion / Abteilung</span><input type="text" id="t-role" value="${esc(p.role)}" placeholder="z. B. Innendienst Tirol"></label><label class="fld"><span>Firma</span><input type="text" id="t-org" value="${esc(p.org||"")}"></label></div>
@@ -1083,33 +1091,80 @@ async function showQr(p){const w=modal(`<div class="hd"><h2>${esc(p.name)}</h2><
   try{await loadQr();if(qrcode.stringToBytesFuncs&&qrcode.stringToBytesFuncs["UTF-8"])qrcode.stringToBytes=qrcode.stringToBytesFuncs["UTF-8"];const q=qrcode(0,"M");q.addData(vcardOf(p));q.make();const b=$("#qrbox",w);if(b)b.innerHTML=q.createSvgTag({cellSize:5,margin:3,scalable:true})}
   catch(e){const b=$("#qrbox",w);if(b)b.innerHTML=`<span class="muted">${esc(e.message)}</span>`}}
 
+/* Kontakt per QR-Code (vCard/MeCard) – Kamera live (jsQR) oder Foto */
+let jsqrLib=null;
+function loadJsQR(){if(window.jsQR)return Promise.resolve();if(jsqrLib)return jsqrLib;jsqrLib=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js";sc.onload=()=>res();sc.onerror=()=>{jsqrLib=null;rej(new Error("QR-Leser nicht erreichbar"))};document.head.appendChild(sc)});return jsqrLib}
+function parseMecard(t){if(!/^MECARD:/i.test(t))return null;const p={id:uid(),name:"",role:"",phone:"",mobile:"",email:"",org:"",note:""};
+  t.slice(7).split(/;(?=[A-Z\-]+:)/i).forEach(x=>{const i=x.indexOf(":");const k=x.slice(0,i).toUpperCase(),v=x.slice(i+1).replace(/;+$/,"");if(k==="N")p.name=v.split(",").reverse().join(" ").trim();else if(k==="TEL"){if(!p.mobile)p.mobile=v;else p.phone=v}else if(k==="EMAIL")p.email=v;else if(k==="ORG")p.org=v;else if(k==="TITLE")p.role=v;else if(k==="NOTE")p.note=v});return p.name?p:null}
+function qrToContact(txt){const v=parseVcf(txt)[0]||parseMecard(txt);if(v){openTeam(null,v);return true}toast("Der QR-Code enthält keine Visitenkarte.");return false}
+async function scanQr(){let stream=null,raf=0,stop=false;
+  const w=modal(`<div class="hd"><h2>Visitenkarte scannen</h2><button class="x" data-close aria-label="Schließen">×</button></div>
+  <div class="scanbox"><video id="qv" playsinline muted></video><div class="scanframe"></div></div><p class="muted small" id="qs" style="margin:0;text-align:center">Kamera wird gestartet …</p>
+  <div class="row" style="justify-content:center"><label class="btn sm">Foto eines QR-Codes wählen<input type="file" id="qf" accept="image/*" hidden></label></div>`);
+  const end=()=>{stop=true;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop())};
+  new MutationObserver((_,o)=>{if(!document.body.contains(w)){end();o.disconnect()}}).observe(document.body,{childList:true});
+  const decode=(src,W,H)=>{const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(src,0,0,W,H);const d=x.getImageData(0,0,W,H);return jsQR(d.data,W,H,{inversionAttempts:"attemptBoth"})};
+  $("#qf",w).addEventListener("change",async ev=>{const f=ev.target.files[0];if(!f)return;try{await loadJsQR();const im=new Image();im.onload=()=>{const k=Math.min(1,1200/Math.max(im.width,im.height));const r=decode(im,Math.round(im.width*k),Math.round(im.height*k));if(r){end();closeModal();qrToContact(r.data)}else $("#qs",w).textContent="Kein QR-Code im Foto erkannt."};im.src=URL.createObjectURL(f)}catch(e){$("#qs",w).textContent=e.message}});
+  try{await loadJsQR();stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});if(stop){end();return}
+    const v=$("#qv",w);v.srcObject=stream;await v.play();$("#qs",w).textContent="QR-Code ins Bild halten";
+    const tick=()=>{if(stop)return;if(v.videoWidth){const k=Math.min(1,640/v.videoWidth);const r=decode(v,Math.round(v.videoWidth*k),Math.round(v.videoHeight*k));if(r&&r.data){end();closeModal();qrToContact(r.data);return}}raf=requestAnimationFrame(tick)};tick()}
+  catch(e){const q=$("#qs",w);if(q)q.textContent=(e&&e.name==="NotAllowedError"?"Kamera nicht erlaubt – ":"Kamera nicht verfügbar – ")+"du kannst ein Foto des QR-Codes wählen."}}
+/* Aus den Gerätekontakten: Contact Picker (Android/Chrome), sonst .vcf-Datei (iPhone: Kontakt teilen → In „Dateien“ sichern) */
+async function pickContacts(){if(navigator.contacts&&navigator.contacts.select){try{const r=await navigator.contacts.select(["name","tel","email"],{multiple:true});let n=0;
+    r.forEach(x=>{const name=(x.name||[])[0];if(!name||S.team.some(p=>p.name===name))return;S.team.push({id:uid(),name,role:"",phone:(x.tel||[])[1]||"",mobile:(x.tel||[])[0]||"",email:(x.email||[])[0]||"",org:"Poloplast",note:""});n++});save("team");render(true);toast(n+" Kontakte übernommen");return}catch(e){if(e&&e.name==="AbortError")return}}
+  const w=modal(`<div class="hd"><h2>Aus Kontakten übernehmen</h2><button class="x" data-close aria-label="Schließen">×</button></div>
+  <p style="margin:0">Am iPhone kann eine Web-App nicht direkt auf die Kontakte zugreifen. So geht es trotzdem:</p>
+  <ol style="margin:0;padding-left:20px;line-height:1.6"><li>App „Kontakte“ → Kontakt öffnen → <b>Kontakt teilen</b></li><li><b>In „Dateien“ sichern</b> (mehrere: in der Liste markieren und teilen)</li><li>Hier die gesicherte <b>.vcf-Datei</b> wählen</li></ol>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="teamImport">.vcf-Datei wählen</button></div>`)}
+
 /* ================= Eventmanager ================= */
 const EVTYPES=["Messe","Großhandelsveranstaltung","Hausmesse","Sonstiges"];
 function evNextId(from){const y=(from||todayISO()).slice(0,4);const n=(S.events||[]).filter(e=>e.no&&e.no.startsWith("EV-"+y)).map(e=>+e.no.slice(8)||0);return"EV-"+y+"-"+String((n.length?Math.max(...n):0)+1).padStart(2,"0")}
 function evRange(e){return fmtD(e.from)+(e.to&&e.to!==e.from?" – "+fmtD(e.to):"")+" "+e.from.slice(0,4)}
 function followUps(){const out=[];(S.events||[]).forEach(e=>(e.leads||[]).forEach(l=>{if(l.fuDate||l.fuTopic||l.fuWho)out.push({e,l})}));return out.sort((a,b)=>(a.l.fuDate||"9").localeCompare(b.l.fuDate||"9"))}
 function leadName(l){const c=l.customerId?custById(l.customerId):null;return c?c.name:(l.custName||"(Kunde gelöscht)")}
-function renderEvents(m){if(ui.evSel&&(S.events||[]).some(e=>e.id===ui.evSel))return renderEvent(m,S.events.find(e=>e.id===ui.evSel));
+function evInfoHtml(e){const exp=(e.expected||[]).map(id=>custById(id)).filter(Boolean);const met=new Set((e.leads||[]).map(l=>l.customerId));
+  const pres=(e.presence||[]).map(p=>fmtD(p.date)+(p.fromT&&p.toT?" "+p.fromT+"–"+p.toT:" ganztags")).join(", ");
+  return`<div class="evinfo"><dl class="kv">${e.organizer?`<dt>Veranstalter</dt><dd>${esc(e.organizer)}</dd>`:""}${e.addr?`<dt>Adresse</dt><dd>${esc(e.addr)}${hasXY(e)?` · <a href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lng}" target="_blank" rel="noopener">Karte</a>`:""}</dd>`:""}
+    <dt>Dauer</dt><dd>${evRange(e)}</dd><dt>Teilnahme</dt><dd>${e.stand==="stand"?"eigener Stand":"nur Besuch"}</dd><dt>Ich bin dort</dt><dd>${pres||"–"}</dd>
+    ${(e.focus||[]).length||e.focusTxt?`<dt>Schwerpunkt</dt><dd>${esc((e.focus||[]).map(x=>x.split(" (")[0]).concat(e.focusTxt?[e.focusTxt]:[]).join(", "))}</dd>`:""}
+    ${exp.length?`<dt>Erwartet</dt><dd>${exp.map(c=>esc(c.name)+(met.has(c.id)?" ✓":"")).join(", ")}</dd>`:""}${e.info?`<dt>Infos</dt><dd style="white-space:pre-wrap">${esc(e.info)}</dd>`:""}</dl>
+    <div class="row" style="justify-content:flex-end"><button class="btn sm" data-evedit="${e.id}">Bearbeiten</button></div></div>`}
+function renderEvents(m){const e0=ui.evSel&&(S.events||[]).find(e=>e.id===ui.evSel);
+  if(e0)return ui.evMode==="edit"?renderEvent(m,e0):renderCapture(m,e0);
   const t=todayISO(),all=(S.events||[]).slice().sort((a,b)=>a.from.localeCompare(b.from));const up=all.filter(e=>(e.to||e.from)>=t),past=all.filter(e=>(e.to||e.from)<t).reverse();
-  const card=e=>{const fo=(e.leads||[]).filter(l=>l.fuDate&&!l.fuDone).length;return`<button class="evc" data-evopen="${e.id}"><span class="evno">${esc(e.no)}</span><span class="evt"><b>${esc(e.title||"(ohne Titel)")}</b><span class="muted small">${evRange(e)}${e.city||e.addr?" · "+esc(e.city||e.addr):""}</span></span>
-    <span class="evp"><span class="pill p-grey">${esc(e.type)}</span><span class="pill ${e.stand==="stand"?"p-plan":"p-grey"}">${e.stand==="stand"?"eigener Stand":"Besuch"}</span>${(e.leads||[]).length?`<span class="pill p-ok">${e.leads.length} Kontakte</span>`:""}${fo?`<span class="pill p-soon">${fo} nachfassen</span>`:""}</span></button>`};
+  ui.evInfo=ui.evInfo||new Set();
+  const card=e=>{const fo=(e.leads||[]).filter(l=>l.fuDate&&!l.fuDone).length,open=ui.evInfo.has(e.id);return`<div class="evc ${open?"open":""}"><button class="evmain" data-evopen="${e.id}"><span class="evno">${esc(e.no)}</span><span class="evt"><b>${esc(e.title||"(ohne Titel)")}</b><span class="muted small">${evRange(e)}${e.city||e.addr?" · "+esc(e.city||e.addr):""}</span>
+    <span class="evp"><span class="pill p-grey">${esc(e.type)}</span>${e.stand==="stand"?'<span class="pill p-plan">eigener Stand</span>':""}${(e.leads||[]).length?`<span class="pill p-ok">${e.leads.length} Kontakte</span>`:""}${fo?`<span class="pill p-soon">${fo} nachfassen</span>`:""}</span></span></button>
+    <button class="evib" data-evinfo="${e.id}" aria-expanded="${open}">Infos <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>${open?evInfoHtml(e):""}</div>`};
   const fus=followUps().filter(x=>!x.l.fuDone&&x.l.fuDate);
   m.innerHTML=`<div class="dhead"><h2>Eventmanager</h2><span class="muted">${all.length} Events</span></div>
-  <div class="ctool"><button class="btn sm pri" data-act="evAdd">+ Event</button></div>
+  <div class="ctool"><button class="btn sm pri" data-act="evAdd">+ Event anlegen</button><span class="muted small">Event antippen = Kunden erfassen · „Infos“ = Eckdaten ansehen und bearbeiten</span></div>
   ${fus.length?`<section class="panel tile"><div class="thead"><h3>Nachfassen</h3><span class="pill p-soon">${fus.length}</span></div>${fus.slice(0,8).map(({e,l})=>`<button class="srow" data-lead="${e.id}|${l.id}"><span class="tm ${l.fuDate<=t?"warnt":""}">${fmtD(l.fuDate)}</span><span class="nm">${esc(leadName(l))}<span class="muted"> · ${esc([l.fuWho,l.fuTopic].filter(Boolean).join(" – "))}</span></span></button>`).join("")}</section>`:""}
-  <div class="evlist">${up.map(card).join("")||'<p class="muted">Keine kommenden Events. Mit „+ Event“ eine Messe oder Großhandelsveranstaltung anlegen.</p>'}</div>
+  <div class="evlist">${up.map(card).join("")||'<p class="muted">Keine kommenden Events. Mit „+ Event anlegen“ eine Messe oder Großhandelsveranstaltung anlegen.</p>'}</div>
   ${past.length?`<details class="acc" style="margin-top:12px"><summary>Vergangene Events <span class="muted small">${past.length}</span></summary><div class="accb evlist">${past.map(card).join("")}</div></details>`:""}`}
+/* Kunden auf dem Event erfassen */
+function renderCapture(m,e){const exp=(e.expected||[]).map(id=>custById(id)).filter(Boolean);const met=new Set((e.leads||[]).map(l=>l.customerId));
+  m.innerHTML=`<div class="ctool"><button class="btn sm" data-act="evBack">‹ Alle Events</button><span class="muted small" style="margin-left:auto">${esc(e.no)}</span></div>
+  <div class="dhead"><h2>${esc(e.title||"Event")}</h2><span class="muted">${evRange(e)}</span></div>
+  <div class="evgrid">
+  <button class="btn okb big" data-act="leadAdd">+ Kunde erfassen</button>
+  ${exp.length?`<section class="panel tile"><div class="thead"><h3>Erwartete Kunden</h3><span class="muted small">${exp.filter(c=>met.has(c.id)).length} von ${exp.length} getroffen</span></div>
+    <div class="chips">${exp.map(c=>met.has(c.id)?`<span class="chip done"><span>✓ ${esc(c.name)}</span></span>`:`<button class="chip" data-act="leadAdd" data-cid="${c.id}"><span>${esc(c.name)}${c.city?" · "+esc(c.city):""}</span></button>`).join("")}</div><p class="hint" style="margin:0">Antippen, um den Kunden als getroffen zu erfassen.</p></section>`:""}
+  <section class="panel tile"><div class="thead"><h3>Erfasste Kunden</h3><span class="pill p-ok">${(e.leads||[]).length}</span></div>
+    ${(e.leads||[]).slice().sort((a,b)=>((b.date||"")+(b.time||"")).localeCompare((a.date||"")+(a.time||""))).map(l=>`<button class="lrow2" data-lead="${e.id}|${l.id}"><span><b>${esc(leadName(l))}</b>${l.isNew?' <span class="pill p-plan">neu</span>':""}<br><span class="muted small">${fmtD(l.date)} ${esc(l.time||"")}${l.person?" · "+esc(l.person):""}${l.topics&&l.topics.length?" · "+esc(l.topics.map(x=>x.split(" (")[0]).join(", ")):""}</span></span>${l.fuDate?`<span class="pill ${l.fuDone?"p-ok":"p-soon"}">${l.fuDone?"erledigt":"nachfassen "+fmtD(l.fuDate)}</span>`:""}</button>`).join("")||'<p class="muted small" style="margin:0">Noch niemand erfasst.</p>'}
+  </section></div>`}
 function newEvent(){const t=todayISO();const e={id:uid(),no:evNextId(t),type:"Messe",title:"",organizer:"",addr:"",city:"",lat:null,lng:null,info:"",from:t,to:t,stand:"besuch",presence:[],block:true,focus:[],focusTxt:"",expected:[],leads:[]};
-  S.events=S.events||[];S.events.push(e);save("events");ui.evSel=e.id;ui.tab="events";render(true);window.scrollTo(0,0)}
+  S.events=S.events||[];S.events.push(e);save("events");ui.evSel=e.id;ui.evMode="edit";ui.tab="events";render(true);window.scrollTo(0,0)}
 function renderEvent(m,e){const prev={};if(ui.evPrev===e.id)$$("details[data-k]",m).forEach(d=>prev[d.dataset.k]=d.open);ui.evPrev=e.id;const op=(k,def)=>(k in prev?prev[k]:def)?"open":"";const tops=[...new Set(listOf("visitTopics").concat(e.focus||[]))];
   const chip=(name,val,on)=>`<label class="chip"><input type="checkbox" data-evchip="${name}" value="${esc(val)}" ${on?"checked":""}><span>${esc(val)}</span></label>`;
   const days=[];for(let d=e.from;d<=(e.to||e.from)&&days.length<14;d=addDays(d,1))days.push(d);
   const pres=d=>(e.presence||[]).find(p=>p.date===d);
   const exp=(e.expected||[]).map(id=>custById(id)).filter(Boolean);const met=new Set((e.leads||[]).map(l=>l.customerId));
-  m.innerHTML=`<div class="ctool"><button class="btn sm" data-act="evBack">‹ Alle Events</button><span class="muted small" style="margin-left:auto">${esc(e.no)}</span></div>
+  m.innerHTML=`<div class="ctool"><button class="btn sm pri" data-act="evBack">Fertig</button><span class="muted small" style="margin-left:auto">${esc(e.no)} · wird automatisch gespeichert</span></div>
   <div class="dhead"><h2>${esc(e.title||"Neues Event")}</h2><span class="muted">${evRange(e)}</span></div>
   <div class="evgrid">
-  <details class="acc" data-k="eck" ${op("eck",!e.title)}><summary>Eckdaten</summary><div class="accb">
+  <details class="acc" data-k="eck" ${op("eck",true)}><summary>Eckdaten</summary><div class="accb">
     <div class="fld2"><label class="fld"><span>Art</span><select data-ev="type">${EVTYPES.map(x=>`<option ${x===e.type?"selected":""}>${x}</option>`).join("")}</select></label><label class="fld"><span>Teilnahme</span><select data-ev="stand"><option value="stand" ${e.stand==="stand"?"selected":""}>eigener Stand</option><option value="besuch" ${e.stand!=="stand"?"selected":""}>nur Besuch</option></select></label></div>
     <label class="fld"><span>Titel</span><input type="text" data-ev="title" value="${esc(e.title)}" placeholder="z. B. Hausmesse Holter Innsbruck"></label>
     <label class="fld"><span>Veranstalter</span><input type="text" data-ev="organizer" value="${esc(e.organizer)}"></label>
@@ -1124,13 +1179,9 @@ function renderEvent(m,e){const prev={};if(ui.evPrev===e.id)$$("details[data-k]"
   </div></details>
   <details class="acc" data-k="focus" ${op("focus",true)}><summary>Unser Messeschwerpunkt</summary><div class="accb"><div class="chips">${tops.map(x=>chip("focus",x,(e.focus||[]).includes(x))).join("")}</div>
     <input type="text" data-ev="focusTxt" value="${esc(e.focusTxt||"")}" placeholder="weitere Schwerpunkte, Aktionen, Neuheiten"></div></details>
-  <details class="acc" data-k="exp" ${op("exp",exp.length>0)}><summary>Erwartete Kunden <span class="muted small">${exp.length?met.size&&exp.filter(c=>met.has(c.id)).length+" von "+exp.length+" getroffen":""}</span></summary><div class="accb">
+  <details class="acc" data-k="exp" ${op("exp",true)}><summary>Erwartete Kunden <span class="muted small">${exp.length?met.size&&exp.filter(c=>met.has(c.id)).length+" von "+exp.length+" getroffen":""}</span></summary><div class="accb">
     <div class="row"><input type="text" id="ev-expc" list="ev-custlist" placeholder="Kunde hinzufügen …" autocomplete="off" style="flex:1;min-width:0"><datalist id="ev-custlist">${S.customers.map(x=>`<option value="${esc(custLabel(x))}">`).join("")}</datalist><button class="btn sm" data-act="evExpAdd">Hinzufügen</button></div>
-    ${exp.map(c=>`<div class="erow"><button class="lnk" data-cust="${c.id}">${esc(c.name)}</button><span class="muted small">${esc(c.city||"")}</span>${met.has(c.id)?'<span class="pill p-ok">getroffen</span>':`<button class="btn sm" data-act="leadAdd" data-cid="${c.id}">erfassen</button>`}<button class="btn sm warn" data-evexprm="${c.id}" aria-label="Entfernen">×</button></div>`).join("")}
-  </div></details>
-  <details class="acc" data-k="leads" ${op("leads",true)}><summary>Kundenkontakte <span class="muted small">${(e.leads||[]).length||""}</span></summary><div class="accb">
-    <button class="btn okb" data-act="leadAdd">+ Kontakt erfassen</button>
-    ${(e.leads||[]).slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).map(l=>`<button class="lrow2" data-lead="${e.id}|${l.id}"><span><b>${esc(leadName(l))}</b>${l.isNew?' <span class="pill p-plan">neu</span>':""}<br><span class="muted small">${fmtD(l.date)} ${esc(l.time||"")}${l.person?" · "+esc(l.person):""}${l.topics&&l.topics.length?" · "+esc(l.topics.map(x=>x.split(" (")[0]).join(", ")):""}</span></span>${l.fuDate?`<span class="pill ${l.fuDone?"p-ok":"p-soon"}">${l.fuDone?"erledigt":"nachfassen "+fmtD(l.fuDate)}</span>`:""}</button>`).join("")||'<p class="muted small" style="margin:0">Noch keine Kontakte erfasst.</p>'}
+    ${exp.map(c=>`<div class="erow"><button class="lnk" data-cust="${c.id}">${esc(c.name)}</button><span class="muted small">${esc(c.city||"")}</span>${met.has(c.id)?'<span class="pill p-ok">getroffen</span>':""}<button class="btn sm warn" data-evexprm="${c.id}" aria-label="Entfernen">×</button></div>`).join("")}
   </div></details>
   </div>`}
 function evApply(e){/* Präsenz → Kalender/Tourenplanung */const old=S.appts.filter(a=>a.eventId===e.id).map(a=>a.date);S.appts=S.appts.filter(a=>a.eventId!==e.id);const ds=new Set(old);
@@ -1808,7 +1859,7 @@ function renderSettings(m){
   </div></div>`;
 }
 document.addEventListener("change",e=>{
-  if(ui.tab==="events"&&ui.evSel&&!e.target.closest("#modal")&&(e.target.dataset.ev||e.target.dataset.pres||e.target.dataset.pfrom||e.target.dataset.pto||e.target.dataset.evchip)){evField(e.target);return}
+  if(ui.tab==="events"&&ui.evSel&&ui.evMode==="edit"&&!e.target.closest("#modal")&&(e.target.dataset.ev||e.target.dataset.pres||e.target.dataset.pfrom||e.target.dataset.pto||e.target.dataset.evchip)){evField(e.target);return}
   const t=e.target;const s=S.settings;
   if(t.id==="s-theme"){document.documentElement.dataset.theme=t.value;try{localStorage.setItem("tp.theme",t.value)}catch(err){}const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=getComputedStyle(document.documentElement).getPropertyValue("--surface").trim()||"#121e2a";return}
   if(t.dataset.k){const k=t.dataset.k;s[k]=t.type==="number"?(num(t.value)??DEF[k]):t.value.trim();if(k==="ttKey")lsSet("ttkey",s[k]);save("settings");if(["vacationDays","ttKey","briefMin","travelPct","overhead","freeDays"].includes(k)){if(k==="ttKey")mapView.fitted=false;render(true)}return}
@@ -2163,13 +2214,15 @@ async function saveTourAppt(w,t){
 
 /* ---------- Aktionen ---------- */
 document.addEventListener("click",async e=>{
-  const t=e.target.closest("[data-csel],[data-addrow],[data-rm],[data-sel],[data-act],[data-close],[data-cust],[data-appt],[data-f],[data-wk],[data-goto],[data-day],[data-cf],[data-gocal],[data-gomap],[data-mon],[data-newcat],[data-newev],[data-dayl],[data-dlnav],[data-mkw],[data-mtog],[data-mall],[data-tedit],[data-tshare],[data-tqr],[data-evopen],[data-lead],[data-evexprm]");if(!t)return;
+  const t=e.target.closest("[data-csel],[data-addrow],[data-rm],[data-sel],[data-act],[data-close],[data-cust],[data-appt],[data-f],[data-wk],[data-goto],[data-day],[data-cf],[data-gocal],[data-gomap],[data-mon],[data-newcat],[data-newev],[data-dayl],[data-dlnav],[data-mkw],[data-mtog],[data-mall],[data-tedit],[data-tshare],[data-tqr],[data-evopen],[data-lead],[data-evexprm],[data-evinfo],[data-evedit]");if(!t)return;
   const w=$("#modal");
   if(t.hasAttribute("data-close")){closeModal();return}
   if(t.dataset.tedit){openTeam(t.dataset.tedit);return}
   if(t.dataset.tshare){const p=S.team.find(x=>x.id===t.dataset.tshare);if(p)shareVcard(p);return}
   if(t.dataset.tqr){const p=S.team.find(x=>x.id===t.dataset.tqr);if(p)showQr(p);return}
-  if(t.dataset.evopen){ui.evSel=t.dataset.evopen;ui.tab="events";render(true);window.scrollTo(0,0);return}
+  if(t.dataset.evinfo){ui.evInfo=ui.evInfo||new Set();const id=t.dataset.evinfo;ui.evInfo.has(id)?ui.evInfo.delete(id):ui.evInfo.add(id);render(true);return}
+  if(t.dataset.evedit){ui.evSel=t.dataset.evedit;ui.evMode="edit";ui.evPrev=null;render(true);window.scrollTo(0,0);return}
+  if(t.dataset.evopen){ui.evMode="capture";ui.evSel=t.dataset.evopen;ui.tab="events";render(true);window.scrollTo(0,0);return}
   if(t.dataset.lead){const[ev,ld]=t.dataset.lead.split("|");openLead(ev,ld);return}
   if(t.dataset.evexprm){const e=S.events.find(x=>x.id===ui.evSel);if(e){e.expected=(e.expected||[]).filter(x=>x!==t.dataset.evexprm);save("events");render(true)}return}
   if(t.dataset.goto){ui.tab=t.dataset.goto;render(true);return}
@@ -2247,16 +2300,18 @@ document.addEventListener("click",async e=>{
     case"release":{const ds0=applyApptForm(a,w);a.manual=false;a.lunchMeet=false;reflow(ds0);a.status="geplant";save("appts");closeModal();render(true);toast("Freigegeben – „Touren planen“ verteilt den Termin neu");break}
     case"saveAppt":{const ds=applyApptForm(a,w);reflow(ds);save("appts");closeModal();render(true);toast("Gespeichert");if(TT.key()&&ds.length)refineRoutes(ds,true);break}
     case"done":openReport(a);break;
-    case"menu":openMenu();break;
-    case"goTeam":closeModal();ui.tab="team";render(true);window.scrollTo(0,0);break;
-    case"goEvents":closeModal();ui.tab="events";ui.evSel=null;render(true);window.scrollTo(0,0);break;
-    case"goSettings":closeModal();ui.tab="settings";render(true);window.scrollTo(0,0);break;
+    case"menu":toggleMenu();break;
+    case"goHome":closeMenu();ui.tab="overview";render(true);window.scrollTo(0,0);break;
+    case"goTeam":closeMenu();ui.tab="team";render(true);window.scrollTo(0,0);break;
+    case"goEvents":closeMenu();ui.tab="events";ui.evSel=null;ui.evMode=null;render(true);window.scrollTo(0,0);break;
     case"teamAdd":openTeam(null);break;
     case"teamSave":saveTeam(w);break;
     case"teamDel":{if(t.dataset.sure){S.team=S.team.filter(x=>x.id!==w.dataset.tid);save("team");closeModal();render(true)}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
-    case"teamImport":{const i=document.createElement("input");i.type="file";i.accept=".vcf,text/vcard,text/x-vcard";i.multiple=true;i.onchange=async()=>{let n=0;for(const f of i.files){parseVcf(await f.text()).forEach(p=>{if(!S.team.some(x=>x.name===p.name)){S.team.push(p);n++}})}save("team");render(true);toast(n+" Kontakte importiert")};i.click();break}
+    case"teamScan":scanQr();break;
+    case"teamPick":pickContacts();break;
+    case"teamImport":{closeModal();const i=document.createElement("input");i.type="file";i.accept=".vcf,text/vcard,text/x-vcard";i.multiple=true;i.onchange=async()=>{let n=0;for(const f of i.files){parseVcf(await f.text()).forEach(p=>{if(!S.team.some(x=>x.name===p.name)){S.team.push(p);n++}})}save("team");render(true);toast(n+" Kontakte importiert")};i.click();break}
     case"evAdd":newEvent();break;
-    case"evBack":ui.evSel=null;ui.evPrev=null;render(true);window.scrollTo(0,0);break;
+    case"evBack":ui.evSel=null;ui.evPrev=null;ui.evMode=null;render(true);window.scrollTo(0,0);break;
     case"evDel":{if(t.dataset.sure){const id=ui.evSel;S.events=S.events.filter(x=>x.id!==id);const ds=S.appts.filter(a=>a.eventId===id).map(a=>a.date);S.appts=S.appts.filter(a=>a.eventId!==id);reflow(ds);ui.evSel=null;save("events","appts");render(true);toast("Event gelöscht")}else{t.dataset.sure="1";t.textContent="Wirklich löschen?"}break}
     case"evExpAdd":{const e=S.events.find(x=>x.id===ui.evSel),c=custFromLabel($("#ev-expc").value);if(!e)break;if(!c){toast("Bitte einen Kunden aus der Liste wählen.");break}e.expected=e.expected||[];if(!e.expected.includes(c.id))e.expected.push(c.id);save("events");render(true);break}
     case"leadAdd":openLead(ui.evSel,null,t.dataset.cid);break;
