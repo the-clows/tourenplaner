@@ -419,7 +419,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 09:40";
+const APPVER="2026-11-02 10:00";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -894,16 +894,19 @@ function planTours(){
 /* Rest des heutigen Tages ab jetzt und ab dem aktuellen Standort neu takten.
    Läuft gerade ein Termin, geht es ab dessen Ende von dort weiter. Fixtermine bleiben, Vorschläge rücken nach; was nicht mehr passt, fällt heraus. */
 async function replanToday(){const t=todayISO(),now=up5(nowMin()),st=S.settings;
-  const es=dayEntries(t);const cur=es.find(a=>a.type!=="lunch"&&a.startMin<=now&&a.startMin+a.dur>now&&a.status!=="nicht");
+  const es=dayEntries(t);const cur=es.find(a=>a.type!=="lunch"&&a.status!=="wahrgenommen"&&a.startMin<=now&&a.startMin+a.dur>now&&a.status!=="nicht");
+  const fin=es.filter(a=>a.status==="wahrgenommen"&&a.startMin+a.dur<=now&&a.startMin+a.dur+postB(a)>now).pop();
   let L=null,how="";
   if(cur){const l=apptLoc(cur);L={min:up5(cur.startMin+cur.dur+postB(cur)),lat:l?l.lat:null,lng:l?l.lng:null};how="nach "+evLabel(cur).replace(/<[^>]+>/g,"")}
   if(!L||!hasXY(L)){let g=null;try{g=await new Promise((res,rej)=>{if(!navigator.geolocation)return rej();navigator.geolocation.getCurrentPosition(p=>res({lat:+p.coords.latitude.toFixed(5),lng:+p.coords.longitude.toFixed(5)}),rej,{timeout:10000,maximumAge:120000})})}catch(e){}
-    if(g){L={min:now,lat:g.lat,lng:g.lng};how="ab deinem Standort"}
+    const m0=fin?up5(fin.startMin+fin.dur+postB(fin)):now;
+    if(g){L={min:m0,lat:g.lat,lng:g.lng};how="ab deinem Standort"}
+    else if(fin&&apptLoc(fin)){const l=apptLoc(fin);L={min:m0,lat:l.lat,lng:l.lng};how="nach "+evLabel(fin).replace(/<[^>]+>/g,"")}
     else{const prev=es.filter(a=>apptLoc(a)&&a.startMin<now).pop();const l=prev?apptLoc(prev):startLoc(t);L={min:now,lat:l.lat,lng:l.lng};how=prev?"ab dem letzten Termin (Standort nicht verfügbar)":"ab Start (Standort nicht verfügbar)"}}
   L.at=Date.now();S.days[t]=Object.assign({},S.days[t],{live:L});persist("days");
-  const n=reflow([t]);save("appts");render();
-  toast("Heute neu getaktet ab "+hm(L.min)+" "+how+(n?"":""));
-  if(TT.key())refineRoutes([t],true)}
+  toast("Heute neu getaktet ab "+hm(L.min)+" "+how);
+  /* Mit TomTom erst echte Fahrzeiten holen, dann entscheiden, was noch passt; sonst mit geschätzten Zeiten */
+  if(TT.key()){scheduleDay(t);render();await refineRoutes([t],true)}else{reflow([t]);save("appts");render()}}
 /* Kandidaten für einen Tag: fällige (u ≥ 1) und bald fällige (u < 0,4, nur bei kleinem Umweg) */
 function candsFor(d,fixed,proj,last,lvl){
   const st=S.settings,used=new Set(fixed.map(a=>a.customerId).filter(Boolean)),out=[];
@@ -1208,6 +1211,11 @@ function evDays(a){const out=[];for(let d=a.date;d<=evEnd(a)&&out.length<370;d=a
 function clearBlockedDays(days){const t=todayISO();let n=0;
   S.appts=S.appts.filter(a=>{if(days.includes(a.date)&&a.date>=t&&isAutoE(a)&&dayMode(a.date)!=="reise"){if(a.type==="visit")n++;return false}return true});return n}
 
+function openMissed(a){const w=modal(`<div class="hd"><h2>Nicht wahrgenommen</h2><button class="x" data-close aria-label="Schließen">×</button></div>
+  <p class="muted" style="margin:0">${evLabel(a)} · ${fmtD(a.date)} ${hm(a.startMin)}</p>
+  <div class="mrs">${["Nicht angetroffen","Keine Zeit"].map(v=>`<label class="row" style="gap:8px"><input type="radio" name="mr" value="${v}"> ${v}</label>`).join("")}</div>
+  <label class="fld"><span>Anmerkung (frei)</span><input type="text" id="mr-txt" placeholder="z. B. Termin verschoben auf nächste Woche"></label>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Abbrechen</button><button class="btn pri" data-act="missedSave" data-id="${a.id}">Speichern</button></div>`);w.dataset.aid=a.id}
 function openDayList(d,dir){const its=calItems(d);
   const w=modal(`<div class="hd"><button class="x dnav" data-dlnav="${addDays(d,-1)}" aria-label="Vortag">‹</button><h2 style="flex:1;text-align:center">${fmtD(d)} ${d.slice(0,4)}</h2><button class="x dnav" data-dlnav="${addDays(d,1)}" aria-label="Folgetag">›</button><button class="x" data-close aria-label="Schließen">×</button></div>${holidayOf(d)?`<span class="pill p-over">${esc(holidayOf(d))}</span>`:""}<div>${its.length?its.map(x=>x.tour?`<button class="lrow" data-gocal="${d}">${x.html}</button>`:`<button class="lrow" data-appt="${x.a.id}">${x.html}</button>`).join(""):`<p class="muted" style="margin:8px 0">Keine Termine.</p>`}</div><div class="row" style="justify-content:flex-end"><button class="btn pri" data-newev="${d}">+ Termin an diesem Tag</button></div><p class="hint swhint" style="margin:0;text-align:center">Wischen: ← Folgetag · → Vortag · ↓ schließen</p>`);
   const g=$(".dlg",w);if(dir)g.classList.add(dir>0?"in-r":"in-l");
@@ -1433,7 +1441,7 @@ function openCust(id){
     <div class="fld2"><label class="fld"><span>Letzter Besuch</span><input type="date" id="c-last" value="${c.lastVisit||""}"></label><div></div></div>
     ${isNew?"":`<div class="lbl">Termin vereinbaren</div><div class="row"><input type="date" id="c-ad" value="${addDays(t,1)}" aria-label="Datum"><input type="time" id="c-at" value="${st.dayStart}" step="900" aria-label="Uhrzeit"><label class="row" style="gap:5px"><input type="checkbox" id="c-afix" checked>mit Kunde fixiert</label><button class="btn sm" data-act="custAppt">Termin anlegen</button></div>
     ${linked.length?`<div class="lbl">Verknüpfte Termine</div><div style="font-size:13.5px">${linked.map(a=>`<button class="lnk" data-appt="${a.id}">${fmtD(a.date)} ${a.date.slice(0,4)} · ${esc(a.title||CAT[a.cat])}</button>`).join("<br>")}</div>`:""}
-    ${hist.length?`<div class="lbl">Letzte Termine</div><div style="font-size:13.5px">${hist.map(a=>`${fmtD(a.date)} ${a.date.slice(0,4)} · ${a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"}${a.notes?" · "+esc(a.notes):""}`).join("<br>")}</div>`:""}`}
+    ${hist.length?`<div class="lbl">Letzte Termine</div><div style="font-size:13.5px">${hist.map(a=>`${fmtD(a.date)} ${a.date.slice(0,4)} · ${a.status==="wahrgenommen"?"wahrgenommen":"nicht wahrgenommen"+(a.missReason?" ("+esc(a.missReason)+")":"")}${a.notes?" · "+esc(a.notes):""}`).join("<br>")}</div>`:""}`}
   </div></details>
   <details class="acc"><summary>Potenzial <span class="muted small">${pt?fmtEUR(pt)+" / Jahr":""}</span></summary><div class="accb">
     <div class="pott"><div class="poth"><span>Produktgruppe</span><span>Potenzial €/Jahr</span>${years.map(x=>`<span>${x} %</span>`).join("")}</div>
@@ -1979,9 +1987,11 @@ document.addEventListener("click",async e=>{
     case"unfix":{const ds=applyApptForm(a,w);a.status="geplant";a.manual=true;save("appts");closeModal();render(true);toast("Fixierung gelöst");break}
     case"release":{const ds0=applyApptForm(a,w);a.manual=false;a.lunchMeet=false;reflow(ds0);a.status="geplant";save("appts");closeModal();render(true);toast("Freigegeben – „Touren planen“ verteilt den Termin neu");break}
     case"saveAppt":{const ds=applyApptForm(a,w);reflow(ds);save("appts");closeModal();render(true);toast("Gespeichert");if(TT.key()&&ds.length)refineRoutes(ds,true);break}
-    case"done":{a.status="wahrgenommen";const c=custById(a.customerId);if(c){a.prevLast=c.lastVisit||null;if(!c.lastVisit||a.date>c.lastVisit)c.lastVisit=a.date}save("appts","customers");closeModal();render(true);toast("Als wahrgenommen eingetragen");break}
-    case"missed":a.status="nicht";save("appts");closeModal();render(true);toast("Nicht wahrgenommen – der Kunde ist wieder zur Planung frei. „Touren planen“ schlägt einen neuen Termin vor.");break;
-    case"reset":{if(a.status==="wahrgenommen"){const c=custById(a.customerId);if(c&&c.lastVisit===a.date)c.lastVisit=a.prevLast||null}a.status="fixiert";save("appts","customers");closeModal();render(true);break}
+    case"done":{a.status="wahrgenommen";{const n=nowMin();if(a.date===todayISO()&&n>a.startMin&&n<a.startMin+a.dur){a.planDur=a.dur;a.dur=Math.max(5,n-a.startMin);a.doneAt=n}}const c=custById(a.customerId);if(c){a.prevLast=c.lastVisit||null;if(!c.lastVisit||a.date>c.lastVisit)c.lastVisit=a.date}save("appts","customers");closeModal();render(true);toast(a.doneAt!=null?"Wahrgenommen – beendet um "+hm(a.doneAt):"Als wahrgenommen eingetragen");break}
+    case"missed":openMissed(a);break;
+    case"missedSave":{const w=t.closest(".modal");const r=$('input[name="mr"]:checked',w);const txt=$("#mr-txt",w).value.trim();if(!r&&!txt){toast("Bitte einen Grund wählen oder eintragen.");break}
+      a.status="nicht";a.missReason=[r?r.value:"",txt].filter(Boolean).join(": ");save("appts");closeModal();render(true);toast("Nicht wahrgenommen ("+a.missReason+") – der Kunde ist wieder zur Planung frei.");break}
+    case"reset":{if(a.planDur){a.dur=a.planDur;delete a.planDur;delete a.doneAt}delete a.missReason;if(a.status==="wahrgenommen"){const c=custById(a.customerId);if(c&&c.lastVisit===a.date)c.lastVisit=a.prevLast||null}a.status="fixiert";save("appts","customers");closeModal();render(true);break}
 
     case"delAppt":{if(t.dataset.sure){S.appts=S.appts.filter(x=>x.id!==w.dataset.aid);save("appts");closeModal();render(true)}else{t.dataset.sure="1";t.textContent="Wirklich entfernen?"}break}
     case"savePrivate":{await savePrivateForm(w,t);break}
