@@ -419,7 +419,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 04:30";
+const APPVER="2026-11-02 09:40";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -475,7 +475,7 @@ function setSaveState(){const el=$("#saveState");const busy=KEYS.some(k=>store.p
   el.querySelector("span").textContent=ui.refining?"Fahrzeiten werden berechnet …":txt;if(ui.refining)el.className="save busy";el.title=typeof GH!=="undefined"&&GH.err&&GH.err!=="offline"?GH.err:"Speicherstatus";}
 function persist(k){
   if(k==="appts"){const lim=addDays(todayISO(),-400);S.appts=S.appts.filter(a=>!(["wahrgenommen","nicht"].includes(a.status)&&a.date<lim)&&!(a.type==="lunch"&&a.date<addDays(todayISO(),-60)))}
-  if(k==="days"){const lim=addDays(todayISO(),-500);Object.keys(S.days).forEach(d=>{const c=S.days[d];if(d<lim||(!c.mode&&!c.overnight&&!c.dep&&!c.arr))delete S.days[d]})}
+  if(k==="days"){const lim=addDays(todayISO(),-500);Object.keys(S.days).forEach(d=>{const c=S.days[d];if(d<lim||(!c.mode&&!c.overnight&&!c.dep&&!c.arr&&!c.live))delete S.days[d]})}
   lsSet(k,S[k]);GH.touch(k);
   if(!store.db){setSaveState();return}
   store.pending[k]=true;setSaveState();clearTimeout(store.timers[k]);store.timers[k]=setTimeout(()=>flush(k),600);
@@ -640,6 +640,12 @@ const isHotel=a=>a.type==="private"&&a.cat==="hotel";
 function hotelOf(d){return S.appts.find(a=>a.date===d&&isHotel(a)&&hasXY(a.loc))||null}
 const nightOf=d=>{const h=hotelOf(d);if(h)return Object.assign({label:h.title},h.loc);const o=dayCfg(d).overnight;return o&&hasXY(o)?o:null};
 function startLoc(d){return nightOf(addDays(d,-1))||S.settings.home}
+/* Neuplanung im Laufe des Tages: ab Uhrzeit und Ort (Standort) wird der Rest des Tages neu getaktet */
+function liveOf(d){if(d!==todayISO())return null;const v=dayCfg(d).live;return v&&v.min!=null&&hasXY(v)?v:null}
+function liveSplit(d,seq){const L=liveOf(d);if(!L)return null;const rest=seq.filter(a=>a.startMin>=L.min);
+  const past=seq.filter(a=>a.startMin<L.min);const LL=toMin(S.settings.lunchTo);
+  const noLunch=past.some(isLunchE)||S.appts.some(a=>a.date===d&&isAutoLunch(a)&&a.startMin<L.min)||L.min>LL-S.settings.lunchMin;
+  return{L,rest,past,noLunch}}
 function endLoc(d){return nightOf(d)||S.settings.home}
 function absenceDays(y,cat){const set=new Set(cat==="urlaub"?Object.keys(S.days).filter(d=>d.startsWith(y)&&S.days[d].mode==="urlaub"):[]);
   S.appts.filter(a=>isAllDay(a)&&a.cat===cat).forEach(a=>evDays(a).forEach(d=>{if(d.startsWith(y))set.add(d)}));
@@ -677,8 +683,9 @@ const isDropV=a=>!a.manual&&a.type==="visit"&&a.status==="geplant";
 const isAutoE=a=>!a.manual&&((a.type==="visit"&&a.status==="geplant")||a.type==="lunch");
 const isAutoLunch=a=>a.type==="lunch"&&!a.manual;
 /* Prüft, ob feste Termine erreichbar sind und die Rückkehr passt (ändert nichts) */
-function checkDay(d){const st=S.settings;const es=dayEntries(d);if(!es.some(a=>a.type==="visit"))return{};
+function checkDay(d){const st=S.settings;let es=dayEntries(d);if(!es.some(a=>a.type==="visit"))return{};
   let pos=startLoc(d),tm=-1e9,conflict=false,last=null,dropId=null,lastAuto=null,credit=0;
+  const L=liveOf(d);if(L){es=es.filter(a=>a.startMin>=L.min);if(!es.length)return{};pos=L;tm=L.min}
   es.forEach(a=>{if(isAutoLunch(a)&&a.pre){tm=a.startMin+a.dur;credit=a.pre;return}
     const l=apptLoc(a);const arr=tm+(l?Math.max(0,travelIn(pos,a)-credit):0)+preB(a);if(l)credit=0;
     if(tm>-1e9&&arr>a.startMin+2){conflict=true;if(!dropId){const j=es.indexOf(a);for(let i=isAutoV(a)?j:j-1;i>=0;i--)if(isDropV(es[i])){dropId=es[i].id;break}}}
@@ -693,16 +700,16 @@ function checkDay(d){const st=S.settings;const es=dayEntries(d);if(!es.some(a=>a
    Die eigene Mittagspause wird automatisch zwischen „frühestens“ und „spätestens“ gelegt, außer ein Kundenessen ersetzt sie.
    Liefert Abfahrt, Rückkehr, Reisezeit, Fahrminuten und Wartezeit. Wartezeit vor dem ersten festen Punkt zählt als „removable“:
    die fällt weg, wenn du einfach später losfährst. */
-function timeline(d,seq,t0){
-  if(!seq.length)return null;
+function timeline(d,seq,t0,o){
+  if(!seq.length)return null;o=o||{};
   const st=S.settings,LF=toMin(st.lunchFrom),LT=toMin(st.lunchTo),LM=st.lunchMin,LL=LT-LM,EV=toMin(st.earliestVisit);
-  const s0=startLoc(d),e0=endLoc(d);
-  let pos=s0,tm=t0,ok=true,why="",lunch=null,lunchPending=LM>0&&!seq.some(isLunchE)&&!(!isAutoV(seq[0])&&seq[0].startMin>=LL);
+  const s0=o.from||startLoc(d),e0=endLoc(d);
+  let pos=s0,tm=t0,ok=true,why="",lunch=null,lunchPending=!o.noLunch&&LM>0&&!seq.some(isLunchE)&&!(!o.from&&!isAutoV(seq[0])&&seq[0].startMin>=LL);
   let idle=0,removable=0,anchored=false,drive=0,dep=null,lastLocA=null,lunchLate=false;const times=[];
   const wait=w=>{if(w<5)return;if(!anchored)removable+=w;else idle+=w};
   for(let i=0;i<seq.length;i++){const a=seq[i],l=apptLoc(a),auto=isAutoV(a);
     let tr=l?(lastLocA?travelIn(pos,a):travelIn(s0,a)):0;
-    if(lunchPending&&i>0){
+    if(lunchPending&&(i>0||o.from)){
       /* Mittagspause vor diesem Termin (am Ort, unterwegs oder bei Ankunft), wenn es Zeit ist oder sie danach zu spät käme */
       const estStart=auto?Math.max(up5(tm+tr+preB(a)),EV):a.startMin,estEnd=estStart+a.dur;
       if(tm>=LF-20||estEnd+postB(a)>LL){
@@ -713,7 +720,7 @@ function timeline(d,seq,t0){
     }
     let start;
     if(auto){start=Math.max(up5(tm+tr+preB(a)),EV);if(i>0)wait(start-(tm+tr+preB(a)))}
-    else{const arr=tm+tr+preB(a);if(i>0&&arr>a.startMin+2){ok=false;why=why||"konflikt"}start=a.startMin;if(i>0)wait(start-arr);anchored=true}
+    else{const arr=tm+tr+preB(a);if((i>0||o.from)&&arr>a.startMin+2){ok=false;why=why||"konflikt"}start=a.startMin;if(i>0||o.from)wait(start-arr);anchored=true}
     if(dep===null)dep=start-preB(a)-tr;
     drive+=tr;times.push(start);tm=start+a.dur+postB(a);if(l){pos=l;lastLocA=a}
   }
@@ -737,15 +744,18 @@ function bestTimes(d,seq){
     best={t0,r}}
   return best}
 /* Zeiten anwenden: Vorschläge bekommen ihre Uhrzeit, die eigene Mittagspause wird neu gesetzt */
-function applyDay(d,seq,r){
+function applyDay(d,seq,r,from){
   seq.forEach((a,i)=>{if(isAutoV(a))a.startMin=r.times[i]});
-  S.appts=S.appts.filter(a=>!(a.date===d&&isAutoLunch(a)));
+  S.appts=S.appts.filter(a=>!(a.date===d&&isAutoLunch(a)&&(from==null||a.startMin>=from)));
   if(r.lunch){const L=lunchItem(d,r.lunch.start);if(r.lunch.pre)L.pre=r.lunch.pre;S.appts.push(L)}
 }
 /* Tag nach Änderungen (Ziehen, Bearbeiten, echte Fahrzeiten) neu takten */
 function scheduleDay(d){
   const seq=dayEntries(d).filter(a=>!isAutoLunch(a));
   if(!seq.some(a=>a.type==="visit")){S.appts=S.appts.filter(a=>!(a.date===d&&isAutoLunch(a)));return}
+  const lv=liveSplit(d,seq);
+  if(lv){if(!lv.rest.length)return{dropId:null};const r=timeline(d,lv.rest,lv.L.min,{from:lv.L,noLunch:lv.noLunch});if(!r)return null;applyDay(d,lv.rest,r,lv.L.min);
+    if(r.lunchLate&&r.lunch){const v=lv.rest.filter(a=>isDropV(a)&&a.startMin<r.lunch.start).pop();return{dropId:v?v.id:null}}return{dropId:null}}
   const b=bestTimes(d,seq);if(!b)return null;applyDay(d,seq,b.r);
   if(b.r.lunchLate&&b.r.lunch){const v=seq.filter(a=>isDropV(a)&&a.startMin<b.r.lunch.start).pop();return{dropId:v?v.id:null}}
   return{dropId:null}}
@@ -789,8 +799,8 @@ async function refineRoutes(dates,quiet){
   ui.refining=true;setSaveState();let calls=0,dropped=0,err=null;
   try{
     for(const d of dates){let es=dayEntries(d);if(!es.some(a=>a.type==="visit"))continue;
-      for(let it=0;it<6;it++){let fetched=0,pos=startLoc(d),last=null;
-        for(const a of es){const l=apptLoc(a);if(!l)continue;
+      for(let it=0;it<6;it++){let fetched=0,pos=startLoc(d),last=null;const L=liveOf(d);if(L){pos=L}
+        for(const a of (L?es.filter(x=>x.startMin>=L.min):es)){const l=apptLoc(a);if(!l)continue;
           if(km(pos,l)<0.3){a.tt={from:locKey(pos),min:0,km:0,dep:a.startMin};pos=l;last=a;continue}
           const depMin=a.startMin-preB(a)-travelIn(pos,a);
           if(!(a.tt&&a.tt.from===locKey(pos)&&Math.abs((a.tt.dep||0)-depMin)<=60)){
@@ -819,7 +829,7 @@ const plannedDates=()=>[...new Set(S.appts.filter(a=>a.type==="visit"&&isOpen(a)
 
 /* Nächster Termin heute: Abfahrtszeit mit aktuellem Verkehr */
 function nextToday(){const t=todayISO(),n=nowMin();return dayEntries(t).filter(a=>a.type!=="lunch"&&apptLoc(a)&&a.startMin>n-5&&a.status!=="wahrgenommen")[0]||null}
-function prevLocToday(a){const es=dayEntries(a.date).filter(x=>apptLoc(x)&&x.startMin<a.startMin);return es.length?apptLoc(es[es.length-1]):startLoc(a.date)}
+function prevLocToday(a){const L=liveOf(a.date);const es=dayEntries(a.date).filter(x=>apptLoc(x)&&x.startMin<a.startMin&&(!L||x.startMin>=L.min));return es.length?apptLoc(es[es.length-1]):L&&a.startMin>=L.min?L:startLoc(a.date)}
 async function checkLive(useGps){
   const a=nextToday();if(!a)return;if(!TT.key()){toast("Für Live-Verkehr bitte den TomTom-Schlüssel eintragen.");return}
   let from=prevLocToday(a);
@@ -875,11 +885,25 @@ function planTours(){
     applyDay(d,best.seq,bestTimes(d,best.seq).r);
   }
   save("appts");
+  if(start!==t&&dayMode(t)==="reise"&&dayEntries(t).some(a=>a.type==="visit"&&a.startMin+a.dur>nowMin()))replanToday();
   const noXY=S.customers.filter(c=>isActive(c)&&!hasXY(c)).length;
   toast(nv+" Besuche an "+days+" Reisetagen vorgeschlagen"+(replaced?" ("+replaced+" alte Vorschläge ersetzt)":"")+(short?" · "+short+" Tage unter Mindest-Reisezeit":"")+(noXY?" · "+noXY+" Kunden ohne Koordinaten":""));
   render();
   if(TT.key())refineRoutes(plannedDates(),true);
 }
+/* Rest des heutigen Tages ab jetzt und ab dem aktuellen Standort neu takten.
+   Läuft gerade ein Termin, geht es ab dessen Ende von dort weiter. Fixtermine bleiben, Vorschläge rücken nach; was nicht mehr passt, fällt heraus. */
+async function replanToday(){const t=todayISO(),now=up5(nowMin()),st=S.settings;
+  const es=dayEntries(t);const cur=es.find(a=>a.type!=="lunch"&&a.startMin<=now&&a.startMin+a.dur>now&&a.status!=="nicht");
+  let L=null,how="";
+  if(cur){const l=apptLoc(cur);L={min:up5(cur.startMin+cur.dur+postB(cur)),lat:l?l.lat:null,lng:l?l.lng:null};how="nach "+evLabel(cur).replace(/<[^>]+>/g,"")}
+  if(!L||!hasXY(L)){let g=null;try{g=await new Promise((res,rej)=>{if(!navigator.geolocation)return rej();navigator.geolocation.getCurrentPosition(p=>res({lat:+p.coords.latitude.toFixed(5),lng:+p.coords.longitude.toFixed(5)}),rej,{timeout:10000,maximumAge:120000})})}catch(e){}
+    if(g){L={min:now,lat:g.lat,lng:g.lng};how="ab deinem Standort"}
+    else{const prev=es.filter(a=>apptLoc(a)&&a.startMin<now).pop();const l=prev?apptLoc(prev):startLoc(t);L={min:now,lat:l.lat,lng:l.lng};how=prev?"ab dem letzten Termin (Standort nicht verfügbar)":"ab Start (Standort nicht verfügbar)"}}
+  L.at=Date.now();S.days[t]=Object.assign({},S.days[t],{live:L});persist("days");
+  const n=reflow([t]);save("appts");render();
+  toast("Heute neu getaktet ab "+hm(L.min)+" "+how+(n?"":""));
+  if(TT.key())refineRoutes([t],true)}
 /* Kandidaten für einen Tag: fällige (u ≥ 1) und bald fällige (u < 0,4, nur bei kleinem Umweg) */
 function candsFor(d,fixed,proj,last,lvl){
   const st=S.settings,used=new Set(fixed.map(a=>a.customerId).filter(Boolean)),out=[];
@@ -1241,6 +1265,7 @@ function dayLabel(d){const h=holidayOf(d),i=infoOf(d),m=dayMode(d),c=dayCfg(d);c
   if(h)parts.push(`<span class="pill p-over">${esc(h)}</span>`);
   if(isAbs(m))parts.push(`<span class="pill p-priv">${MODE[m]}</span>`);else if(m==="buero")parts.push('<span class="pill p-grey">Büro / Homeoffice</span>');else if(m==="reise"&&(h||autoMode(d)!=="reise"))parts.push('<span class="pill p-plan">Reisetag</span>');
   if(i)parts.push(`<span class="pill p-grey" title="Hinweis, kein Feiertag">${esc(i)}</span>`);
+  {const L=liveOf(d);if(L)parts.push(`<span class="pill p-ok" title="Rest des Tages ab ${hm(L.min)} neu berechnet">neu ab ${hm(L.min)}</span>`)}
   if(c.dep||c.arr)parts.push(`<span class="pill p-soon">${c.dep?"ab "+c.dep:""}${c.dep&&c.arr?" · ":""}${c.arr?"bis "+c.arr:""}</span>`);
   if(nightOf(d))parts.push(`<span class="pill p-soon">Nacht: ${esc(nightOf(d).label||"auswärts")}</span>`);
   return parts.join(" ")}
