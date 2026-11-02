@@ -344,6 +344,7 @@ td.num{text-align:right}
 /* Einstellungen */
 .sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px}
 .sgrid .panel{padding:16px;display:flex;flex-direction:column;gap:12px}
+.updbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:3050;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:8px 10px 8px 14px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow);white-space:nowrap}
 .sgrid.sacc-list{display:flex;flex-direction:column;gap:8px;max-width:760px;margin:0 auto}
 .sacc>summary .pill{font-family:var(--f-body);font-weight:600}
 .sacc>.accb>.hint{margin:0}
@@ -413,7 +414,7 @@ td.num{text-align:right}
 
 <script>
 "use strict";
-const APPVER="2026-11-02 03:40";
+const APPVER="2026-11-02 03:45";
 /* ---------- Hilfen ---------- */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1965,6 +1966,10 @@ new MutationObserver(()=>mapView.draw()).observe(document.documentElement,{attri
 
 /* ---------- Start ---------- */
 try{const tb=sessionStorage.getItem("tp.tab");if(tb)ui.tab=tb}catch(e){}
+/* Prüft, ob online eine neuere Version liegt, und bietet Neuladen an */
+async function checkUpdate(){if(location.protocol!=="https:")return;try{const r=await fetch("./?v="+Date.now(),{cache:"no-store"});const t=await r.text();const v=(t.match(/APPVER="([^"]+)"/)||[])[1];
+  if(v&&v>APPVER&&!$("#updbar")){const d=document.createElement("div");d.id="updbar";d.className="updbar";d.innerHTML=`Neue Version ${esc(v)} verfügbar <button class="btn sm pri">Jetzt laden</button>`;d.querySelector("button").onclick=()=>location.reload();document.body.appendChild(d)}}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});setTimeout(checkUpdate,3000);
 loadLocal();healSample();setSaveState();render(true);initStore();
 </script>
 </body>
